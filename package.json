@@ -1,0 +1,36 @@
+{
+    "name": "signa",
+    "version": "1.0.0",
+    "type": "module",
+    "files": [
+        "dist"
+    ],
+    "main": "./dist/index.js",
+    "module": "./dist/index.esm.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.esm.js",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "dev": "node esbuild.config.js --dev",
+        "build": "node esbuild.config.js && tsc --emitDeclarationOnly",
+        "version": "npm run build && git add dist",
+        "postversion": "git push && git push --tags",
+        "release:patch": "npm version patch -m \"Release %s\"",
+        "release:minor": "npm version minor -m \"Release %s\"",
+        "release:major": "npm version major -m \"Release %s\""
+    },
+    "devDependencies": {
+        "@preact/signals-core": "^1.8.0",
+        "@vanilla-extract/esbuild-plugin": "^2.3.13",
+        "esbuild": "^0.24.2",
+        "esbuild-plugin-clean": "^1.0.1",
+        "live-server": "^1.2.2",
+        "typescript": "^5.7.2",
+        "uhtml": "^4.7.0"
+    }
+}
