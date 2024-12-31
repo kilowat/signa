@@ -36,6 +36,7 @@ function cloneDeep<T>(obj: T): T {
 
     return clonedObj as T;
 }
+//const computedSignal = preactComputed(() => computeFn(signal.value));
 /*
 export function compute<S, R>(
     signal: Signal<S>,
