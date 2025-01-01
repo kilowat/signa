@@ -1,7 +1,6 @@
 import { reactive } from 'uhtml/reactive';
 import { effect, ReadonlySignal } from '@preact/signals-core';
 import { State, createState, compute } from './state';
-import { StoreManager } from './store';
 
 // Component types
 type ComputedFn<S> = (context: {
@@ -12,7 +11,7 @@ type ComputedFn<S> = (context: {
 type ActionsFn<S, C> = (context: {
     state: State<S>;
     computed: ComputedProperties<C>;
-    store: StoreManager;
+    store: any;
 }) => Record<string, (...args: any[]) => any>;
 
 type ComputedProperties<C> = {
@@ -63,8 +62,6 @@ export interface CustomHtmlElement<S, C extends ComputedFn<S>, A extends Actions
     subscribeToState(callback: (params: StateSubscriptionCallback<S>) => void): () => void;
 }
 
-export const store = new StoreManager();
-
 export function defineComponent<
     S,
     C extends ComputedFn<S>,
@@ -104,7 +101,7 @@ export function defineComponent<
                 actions: this.actions,
                 element: this,
                 slots: this.slots,
-                store: store
+                store: null
             };
         }
 
@@ -150,7 +147,7 @@ export function defineComponent<
             const context = {
                 state: this.state,
                 computed: this.computed,
-                store,
+                store: null,
             };
 
             return actionsFn(context) as ReturnType<A>;
