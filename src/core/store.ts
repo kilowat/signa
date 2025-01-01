@@ -1,7 +1,6 @@
 import { ReadonlySignal } from '@preact/signals-core';
 import { State, createState, compute } from './state';
 
-// Типы для функций вычислений и действий
 type ComputedFn<S> = (context: {
     state: State<S>;
 }) => Record<string, (...args: any[]) => any>;
@@ -17,15 +16,12 @@ type ComputedProperties<C> = {
     : never;
 };
 
-// Тип опций для создания Store
 interface StoreOptions<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
     state: S;
     computed?: C;
     actions?: A;
 }
 
-
-// Тип возвращаемого Store
 interface StoreContext<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
     state: State<S>;
     computed: ComputedProperties<ReturnType<C>>;
@@ -37,10 +33,8 @@ export function createStore<S, C extends ComputedFn<S>, A extends ActionsFn<S, R
 ): StoreContext<S, C, A> {
     const { state: initialState, computed: computedFn, actions: actionsFn } = options;
 
-    // Создаем состояние
     const state = createState(initialState);
 
-    // Инициализация вычисляемых свойств
     const computed = computedFn
         ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => ({
             ...acc,
@@ -48,22 +42,21 @@ export function createStore<S, C extends ComputedFn<S>, A extends ActionsFn<S, R
         }), {}) as ComputedProperties<ReturnType<C>>
         : ({} as ComputedProperties<ReturnType<C>>);
 
-    // Инициализация действий
     const actions = actionsFn
         ? (actionsFn({
             state,
             computed
-        }) as ReturnType<A>) // Явное приведение типов
+        }) as ReturnType<A>)
         : ({} as ReturnType<A>);
 
     return { state, computed, actions };
 }
 
-type GlobalStore = Record<string, StoreContext<any, any, any>>;
+export type GlobalStore = Record<string, StoreContext<any, any, any>>;
 
 export const globalStore: GlobalStore = {};
 
-function registerStore<K extends string, S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>(
+export function registerStore<K extends string, S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>(
     key: K,
     store: StoreContext<S, C, A>
 ): void {
@@ -81,15 +74,3 @@ export function getStore<K extends keyof typeof globalStore>(key: K): typeof glo
     return store;
 }
 
-const counterStore = createStore({
-    state: { count: 0 },
-    computed: ({ state }) => ({
-        isEven: () => state.value.count % 2 === 0,
-    }),
-    actions: ({ state }) => ({
-        inc: () => state.value.count + 1
-    })
-})
-
-registerStore('counter', counterStore);
-const cStore = getStore('counter') 

@@ -1,19 +1,22 @@
 import { reactive } from 'uhtml/reactive';
 import { effect, ReadonlySignal } from '@preact/signals-core';
 import { State, createState, compute } from './state';
-import { globalStore } from './store';
+import { GlobalStore, globalStore } from './store';
 
 // Component types
 type ComputedFn<S> = (context: {
     state: State<S>;
-    store: any;
+    store: GlobalStore;
 }) => Record<string, (...args: any[]) => any>;
 
 type ActionsFn<S, C> = (context: {
     state: State<S>;
     computed: ComputedProperties<C>;
-    store: any;
+    store: GlobalStore;
 }) => Record<string, (...args: any[]) => any>;
+
+
+type GettersFn<S> = ComputedFn<S>
 
 type ComputedProperties<C> = {
     [K in keyof C]: C[K] extends (...args: any[]) => any
@@ -21,43 +24,52 @@ type ComputedProperties<C> = {
     : never;
 };
 
-interface BaseContext<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
+type GettersProperties<C> = {
+    [K in keyof C]: C[K] extends (...args: any[]) => any
+    ? ReturnType<C[K]>
+    : never;
+};
+
+interface BaseContext<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
     state: State<S>;
+    getters: GettersProperties<ReturnType<G>>;
     computed: ComputedProperties<ReturnType<C>>;
     actions: ReturnType<A>;
     store: typeof globalStore; // Глобальный store
 }
 
-interface ComponentContext<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>
-    extends BaseContext<S, C, A> {
+interface ComponentContext<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>
+    extends BaseContext<S, G, C, A> {
     element: HTMLElement;
     slots: Record<string, Node[]>;
 }
 
-interface ListenerParams<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>
-    extends ComponentContext<S, C, A> {
+interface ListenerParams<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>
+    extends ComponentContext<S, G, C, A> {
     newValue: S;
     oldValue: S;
 }
 
-interface ComponentOptions<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
+interface ComponentOptions<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
     tagName: string;
     state?: S;
+    getters?: G;
     computed?: C;
     actions?: A;
-    connected?: (context: ComponentContext<S, C, A>) => void;
-    render?: (context: ComponentContext<S, C, A>) => unknown;
-    listen?: (params: ListenerParams<S, C, A>) => void;
-    disconnected?: (context: ComponentContext<S, C, A>) => void;
+    connected?: (context: ComponentContext<S, G, C, A>) => void;
+    render?: (context: ComponentContext<S, G, C, A>) => unknown;
+    listen?: (params: ListenerParams<S, G, C, A>) => void;
+    disconnected?: (context: ComponentContext<S, G, C, A>) => void;
 }
 export interface StateSubscriptionCallback<S> {
     newValue: S;
     oldValue: S;
 }
 
-export interface CustomHtmlElement<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> extends HTMLElement {
-    readonly context: ComponentContext<S, C, A>;
+export interface CustomHtmlElement<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> extends HTMLElement {
+    readonly context: ComponentContext<S, G, C, A>;
     readonly state: State<S>;
+    readonly getters: G;
     readonly computed: C;
     readonly actions: A;
     subscribeToState(callback: (params: StateSubscriptionCallback<S>) => void): () => void;
@@ -65,12 +77,14 @@ export interface CustomHtmlElement<S, C extends ComputedFn<S>, A extends Actions
 
 export function defineComponent<
     S,
+    G extends GettersFn<S>,
     C extends ComputedFn<S>,
     A extends ActionsFn<S, ReturnType<C>>
->(options: ComponentOptions<S, C, A>) {
+>(options: ComponentOptions<S, G, C, A>) {
     const {
         tagName,
         state: initialState,
+        getters: gettersFn,
         computed: computedFn,
         actions: actionsFn,
         connected,
@@ -83,6 +97,7 @@ export function defineComponent<
 
     class CustomElement extends HTMLElement {
         state: State<S>;
+        getters: GettersProperties<ReturnType<G>>;
         computed: ComputedProperties<ReturnType<C>>;
         actions: ReturnType<A>;
         slots: Record<string, Node[]> = {};
@@ -91,13 +106,15 @@ export function defineComponent<
         constructor() {
             super();
             this.state = createState(initialState as S);
+            this.getters = this.setupGetters();
             this.computed = this.setupComputed();
             this.actions = this.setupActions();
         }
 
-        get context(): ComponentContext<S, C, A> {
+        get context(): ComponentContext<S, G, C, A> {
             return {
                 state: this.state,
+                getters: this.getters,
                 computed: this.computed,
                 actions: this.actions,
                 element: this,
@@ -127,13 +144,27 @@ export function defineComponent<
                 disposer();
             };
         }
+        setupGetters(): GettersProperties<ReturnType<G>> {
+            if (!gettersFn) return {} as GettersProperties<ReturnType<G>>;
+
+            const getterObj = gettersFn({
+                state: this.state,
+                store: globalStore
+            });
+
+            return Object.entries(getterObj).reduce((acc, [key, fn]) => ({
+                ...acc,
+                [key]: () => fn()
+            }), {}) as GettersProperties<ReturnType<G>>;
+        }
+
 
         setupComputed(): ComputedProperties<ReturnType<C>> {
             if (!computedFn) return {} as ComputedProperties<ReturnType<C>>;
 
             const computedObj = computedFn({
                 state: this.state,
-                store: null
+                store: globalStore
             });
 
             return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
@@ -147,8 +178,9 @@ export function defineComponent<
 
             const context = {
                 state: this.state,
+                getters: this.getters,
                 computed: this.computed,
-                store: null,
+                store: globalStore,
             };
 
             return actionsFn(context) as ReturnType<A>;

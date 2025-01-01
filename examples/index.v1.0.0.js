@@ -943,11 +943,34 @@ var Signa = (() => {
     return w(() => computeFn(signal.value));
   }
 
+  // src/core/store.ts
+  function createStore(options) {
+    const { state: initialState, computed: computedFn, actions: actionsFn } = options;
+    const state = createState(initialState);
+    const computed = computedFn ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => ({
+      ...acc,
+      [key]: compute(state, () => fn())
+    }), {}) : {};
+    const actions = actionsFn ? actionsFn({
+      state,
+      computed
+    }) : {};
+    return { state, computed, actions };
+  }
+  var globalStore = {};
+  function registerStore(key, store) {
+    if (globalStore[key]) {
+      throw new Error(`Store \u0441 \u043A\u043B\u044E\u0447\u043E\u043C "${key}" \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442.`);
+    }
+    globalStore[key] = store;
+  }
+
   // src/core/component.ts
   function defineComponent(options) {
     const {
       tagName,
       state: initialState,
+      getters: gettersFn,
       computed: computedFn,
       actions: actionsFn,
       connected,
@@ -962,17 +985,19 @@ var Signa = (() => {
         this.slots = {};
         this.cleanup = [];
         this.state = createState(initialState);
+        this.getters = this.setupGetters();
         this.computed = this.setupComputed();
         this.actions = this.setupActions();
       }
       get context() {
         return {
           state: this.state,
+          getters: this.getters,
           computed: this.computed,
           actions: this.actions,
           element: this,
           slots: this.slots,
-          store: null
+          store: globalStore
         };
       }
       subscribeToState(callback) {
@@ -994,11 +1019,22 @@ var Signa = (() => {
           disposer();
         };
       }
+      setupGetters() {
+        if (!gettersFn) return {};
+        const getterObj = gettersFn({
+          state: this.state,
+          store: globalStore
+        });
+        return Object.entries(getterObj).reduce((acc, [key, fn]) => ({
+          ...acc,
+          [key]: () => fn()
+        }), {});
+      }
       setupComputed() {
         if (!computedFn) return {};
         const computedObj = computedFn({
           state: this.state,
-          store: null
+          store: globalStore
         });
         return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
           ...acc,
@@ -1009,8 +1045,9 @@ var Signa = (() => {
         if (!actionsFn) return {};
         const context = {
           state: this.state,
+          getters: this.getters,
           computed: this.computed,
-          store: null
+          store: globalStore
         };
         return actionsFn(context);
       }
@@ -1065,9 +1102,22 @@ var Signa = (() => {
   }
 
   // src/components/button/button.ts
-  var button_default = defineComponent({
+  var counterStore = createStore({
+    state: { count: 0 },
+    computed: ({ state }) => ({
+      isEven: () => state.value.count % 2 === 0
+    }),
+    actions: ({ state }) => ({
+      inc: () => state.emit({ count: state.value.count + 1 })
+    })
+  });
+  registerStore("counter", counterStore);
+  defineComponent({
     tagName: "my-counter",
     state: { count: 0 },
+    getters: (context) => ({
+      counterStore: () => context.store.counter
+    }),
     computed: ({ state }) => ({
       doubleCount: () => state.value.count * 2,
       isEven: () => state.value.count % 2 === 0
@@ -1081,17 +1131,20 @@ var Signa = (() => {
       }
     }),
     listen(params) {
-      console.log("componnent liste");
+      console.log(params);
     },
-    render: ({ state, computed, actions }) => html`
+    render: ({ state, computed, actions, getters: { counterStore: counterStore2 } }) => {
+      return html`
         <div>
+             <button @click="${() => counterStore2.actions.inc()}">Count store: ${counterStore2.state.value.count}</button> 
             <p >Count: ${state.value.count}</p>
             <p>Double: ${computed.doubleCount.value}</p>
             <p>Is Even: ${computed.isEven.value}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
         </div>
-    `
+    `;
+    }
   });
   return __toCommonJS(index_exports);
 })();

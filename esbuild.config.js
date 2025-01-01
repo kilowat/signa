@@ -52,6 +52,7 @@ if (isDev) {
                 ...config,
                 sourcemap: true,
                 minify: false,
+                format: 'iife',
                 outfile: `examples/index.v${version}.js`,
             })
         )
