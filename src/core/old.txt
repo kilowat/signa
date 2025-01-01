@@ -2,16 +2,142 @@ import { reactive } from 'uhtml/reactive';
 import { effect, ReadonlySignal } from '@preact/signals-core';
 import { State, createState, compute } from './state';
 
+
+// Store types
+type StoreModule<S = any, C = any, A = any> = {
+    state: State<S>;
+    computed: C;
+    actions: A;
+};
+
+type StoreComputedFn<S> = (context: {
+    state: State<S>;
+    store: Store;
+}) => Record<string, (...args: any[]) => any>;
+
+type StoreComputedProperties<C> = {
+    [K in keyof C]: C[K] extends (...args: any[]) => any
+    ? ReadonlySignal<ReturnType<C[K]>>
+    : never;
+};
+
+type StoreActionsFn<S, C extends Record<string, (...args: any[]) => any>> = (context: {
+    state: State<S>;
+    computed: StoreComputedProperties<C>;
+    store: Store;
+}) => Record<string, (...args: any[]) => any>;
+
+interface StoreModuleOptions<
+    S,
+    C extends StoreComputedFn<S>,
+    A extends StoreActionsFn<S, ReturnType<C>>
+> {
+    state?: S;
+    computed?: C;
+    actions?: A;
+}
+
+// Type helper for extracting module type
+type RegisteredStoreModule<O> = O extends StoreModuleOptions<
+    infer S,
+    infer C,
+    infer A
+>
+    ? StoreModule<
+        S,
+        StoreComputedProperties<ReturnType<C>>,
+        ReturnType<A>
+    >
+    : never;
+
+// Dynamic store type
+type Store = {
+    [K in string]: StoreModule;
+};
+
+// Store singleton
+class StoreManager {
+    private static instance: StoreManager;
+    private modules: Store = {};
+
+    private constructor() { }
+    public $<T extends StoreModule>(namespace: string) {
+        return this.store[namespace] as T
+    }
+    static getInstance(): StoreManager {
+        if (!this.instance) {
+            this.instance = new StoreManager();
+        }
+        return this.instance;
+    }
+
+    registerModule<
+        S,
+        C extends StoreComputedFn<S>,
+        A extends StoreActionsFn<S, ReturnType<C>>
+    >(
+        namespace: string,
+        options: StoreModuleOptions<S, C, A>
+    ): RegisteredStoreModule<typeof options> {
+        if (this.modules[namespace]) {
+            throw new Error(`Module ${namespace} already exists`);
+        }
+
+        const state = createState(options.state as S);
+        const computed = this.setupComputed(options.computed, state);
+        const actions = this.setupActions(options.actions, state, computed);
+
+        const module = { state, computed, actions } as RegisteredStoreModule<typeof options>;
+        this.modules[namespace] = module;
+
+        return module;
+    }
+
+    private setupComputed<S, C extends StoreComputedFn<S>>(
+        computedFn: C | undefined,
+        state: State<S>
+    ): StoreComputedProperties<ReturnType<C>> {
+        if (!computedFn) return {} as StoreComputedProperties<ReturnType<C>>;
+
+        const computedObj = computedFn({ state, store: this.modules });
+        return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
+            ...acc,
+            [key]: compute(state, () => fn())
+        }), {}) as StoreComputedProperties<ReturnType<C>>;
+    }
+
+    private setupActions<S, C extends StoreComputedFn<S>, A extends StoreActionsFn<S, ReturnType<C>>>(
+        actionsFn: A | undefined,
+        state: State<S>,
+        computed: StoreComputedProperties<ReturnType<C>>
+    ): ReturnType<A> {
+        if (!actionsFn) return {} as ReturnType<A>;
+
+        const context = {
+            state,
+            computed,
+            store: this.modules
+        };
+
+        return actionsFn(context) as ReturnType<A>;
+    }
+
+    get store(): Store {
+        return this.modules;
+    }
+}
+
+export const storeManager = StoreManager.getInstance();
 // Component types
 type ComputedFn<S> = (context: {
     state: State<S>;
-    store: any;
+    store: Store;
 }) => Record<string, (...args: any[]) => any>;
 
 type ActionsFn<S, C> = (context: {
     state: State<S>;
     computed: ComputedProperties<C>;
-    store: any;
+    store: Store;
 }) => Record<string, (...args: any[]) => any>;
 
 type ComputedProperties<C> = {
@@ -24,7 +150,7 @@ interface BaseContext<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnT
     state: State<S>;
     computed: ComputedProperties<ReturnType<C>>;
     actions: ReturnType<A>;
-    store: any;
+    store: Store;
 }
 
 interface ComponentContext<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>
@@ -49,19 +175,6 @@ interface ComponentOptions<S, C extends ComputedFn<S>, A extends ActionsFn<S, Re
     listen?: (params: ListenerParams<S, C, A>) => void;
     disconnected?: (context: ComponentContext<S, C, A>) => void;
 }
-export interface StateSubscriptionCallback<S> {
-    newValue: S;
-    oldValue: S;
-}
-
-export interface CustomHtmlElement<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> extends HTMLElement {
-    readonly context: ComponentContext<S, C, A>;
-    readonly state: State<S>;
-    readonly computed: C;
-    readonly actions: A;
-    subscribeToState(callback: (params: StateSubscriptionCallback<S>) => void): () => void;
-}
-
 
 export function defineComponent<
     S,
@@ -102,29 +215,7 @@ export function defineComponent<
                 actions: this.actions,
                 element: this,
                 slots: this.slots,
-                store: null
-            };
-        }
-
-        public subscribeToState(callback: (params: StateSubscriptionCallback<S>) => void): () => void {
-            let previousValue = this.state.peek();
-
-            const disposer = effect(() => {
-                const currentValue = this.state.value;
-                callback({
-                    newValue: currentValue,
-                    oldValue: previousValue
-                });
-                previousValue = currentValue;
-            });
-
-            this.cleanup.push(disposer);
-            return () => {
-                const index = this.cleanup.indexOf(disposer);
-                if (index > -1) {
-                    this.cleanup.splice(index, 1);
-                }
-                disposer();
+                store: storeManager.store
             };
         }
 
@@ -133,7 +224,7 @@ export function defineComponent<
 
             const computedObj = computedFn({
                 state: this.state,
-                store: null
+                store: storeManager.store
             });
 
             return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
@@ -148,7 +239,7 @@ export function defineComponent<
             const context = {
                 state: this.state,
                 computed: this.computed,
-                store: null
+                store: storeManager.store
             };
 
             return actionsFn(context) as ReturnType<A>;
@@ -211,4 +302,6 @@ export function defineComponent<
     if (!customElements.get(tagName)) {
         customElements.define(tagName, CustomElement);
     }
+
+    return CustomElement;
 }

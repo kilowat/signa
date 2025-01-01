@@ -2,7 +2,7 @@ import * as esbuild from 'esbuild';
 import { vanillaExtractPlugin } from '@vanilla-extract/esbuild-plugin';
 import { clean } from 'esbuild-plugin-clean';
 import { readFileSync } from 'fs';
-
+import liveServer from "live-server";
 const isDev = process.argv.includes('--dev');
 const buildPath = 'dist';
 const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'));
@@ -52,13 +52,13 @@ if (isDev) {
                 ...config,
                 sourcemap: true,
                 minify: false,
+                outfile: `examples/index.v${version}.js`,
             })
         )
     );
 
     await Promise.all(ctx.map(c => c.watch()));
 
-    const liveServer = require('live-server');
     liveServer.start({
         port: 3000,
         root: "examples",

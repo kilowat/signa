@@ -1,6 +1,4 @@
-import { Signal, signal as createSignal, computed as preactComputed } from '@preact/signals-core';
-
-
+import { ReadonlySignal, Signal, signal as createSignal, computed as preactComputed } from '@preact/signals-core';
 
 export class State<T> extends Signal<T> {
     emit(value: Partial<T> | T): void {
@@ -36,26 +34,10 @@ function cloneDeep<T>(obj: T): T {
 
     return clonedObj as T;
 }
-//const computedSignal = preactComputed(() => computeFn(signal.value));
-/*
+
 export function compute<S, R>(
     signal: Signal<S>,
     computeFn: (state: S) => R
-): ComputedResult<R> {
-    const computedSignal = preactComputed(() => computeFn(signal.value));
-
-    const result = {
-        get value() {
-            return computedSignal.value;
-        },
-        valueOf() {
-            return computedSignal.value;
-        },
-        toString() {
-            return String(computedSignal.value);
-        }
-    };
-
-    return result;
+): ReadonlySignal<R> {
+    return preactComputed(() => computeFn(signal.value));
 }
-    */
