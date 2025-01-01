@@ -4,6 +4,9 @@ import { createStore, registerStore } from "../../core/store";
 //global store
 const counterStore = createStore({
     state: { count: 0 },
+    getters: (context) => ({
+        hi: () => 'hi'
+    }),
     computed: ({ state }) => ({
         isEven: () => state.value.count % 2 === 0,
     }),
@@ -19,6 +22,7 @@ defineComponent({
     tagName: 'my-counter',
     state: { count: 0 },
     getters: (context) => ({
+        hi: () => 'hi',
         counterStore: () => context.store.counter as CounterStore,
     }),
     computed: ({ state }) => ({
@@ -34,7 +38,7 @@ defineComponent({
         }
     }),
     listen(params) {
-        console.log(params)
+        console.log(params.getters.hi)
     },
     render: ({ state, computed, actions, getters: { counterStore } }) => {
         return html`

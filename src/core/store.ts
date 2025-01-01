@@ -1,5 +1,6 @@
 import { ReadonlySignal } from '@preact/signals-core';
 import { State, createState, compute } from './state';
+import { ComputedProperties, GettersProperties } from './component';
 
 type ComputedFn<S> = (context: {
     state: State<S>;
@@ -10,30 +11,35 @@ type ActionsFn<S, C> = (context: {
     computed: ComputedProperties<C>;
 }) => Record<string, (...args: any[]) => any>;
 
-type ComputedProperties<C> = {
-    [K in keyof C]: C[K] extends (...args: any[]) => any
-    ? ReadonlySignal<ReturnType<C[K]>>
-    : never;
-};
+type GettersFn<S> = ComputedFn<S>
 
-interface StoreOptions<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
+interface StoreOptions<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
     state: S;
+    getters?: G;
     computed?: C;
     actions?: A;
 }
 
-interface StoreContext<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
+interface StoreContext<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
     state: State<S>;
+    getters: GettersProperties<ReturnType<G>>;
     computed: ComputedProperties<ReturnType<C>>;
     actions: ReturnType<A>;
 }
 
-export function createStore<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>(
-    options: StoreOptions<S, C, A>
-): StoreContext<S, C, A> {
-    const { state: initialState, computed: computedFn, actions: actionsFn } = options;
+export function createStore<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>(
+    options: StoreOptions<S, G, C, A>
+): StoreContext<S, G, C, A> {
+    const { state: initialState, getters: gettersFn, computed: computedFn, actions: actionsFn } = options;
 
     const state = createState(initialState);
+
+    const getters = gettersFn
+        ? Object.entries(gettersFn({ state })).reduce((acc, [key, fn]) => ({
+            ...acc,
+            [key]: fn()
+        }), {}) as GettersProperties<ReturnType<G>>
+        : ({} as GettersProperties<ReturnType<G>>);
 
     const computed = computedFn
         ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => ({
@@ -49,16 +55,16 @@ export function createStore<S, C extends ComputedFn<S>, A extends ActionsFn<S, R
         }) as ReturnType<A>)
         : ({} as ReturnType<A>);
 
-    return { state, computed, actions };
+    return { state, getters, computed, actions };
 }
 
-export type GlobalStore = Record<string, StoreContext<any, any, any>>;
+export type GlobalStore = Record<string, StoreContext<any, any, any, any>>;
 
 export const globalStore: GlobalStore = {};
 
-export function registerStore<K extends string, S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>(
+export function registerStore<K extends string, S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>(
     key: K,
-    store: StoreContext<S, C, A>
+    store: StoreContext<S, G, C, A>
 ): void {
     if (globalStore[key]) {
         throw new Error(`Store с ключом "${key}" уже существует.`);
@@ -73,4 +79,3 @@ export function getStore<K extends keyof typeof globalStore>(key: K): typeof glo
     }
     return store;
 }
-

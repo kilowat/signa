@@ -945,8 +945,12 @@ var Signa = (() => {
 
   // src/core/store.ts
   function createStore(options) {
-    const { state: initialState, computed: computedFn, actions: actionsFn } = options;
+    const { state: initialState, getters: gettersFn, computed: computedFn, actions: actionsFn } = options;
     const state = createState(initialState);
+    const getters = gettersFn ? Object.entries(gettersFn({ state })).reduce((acc, [key, fn]) => ({
+      ...acc,
+      [key]: fn()
+    }), {}) : {};
     const computed = computedFn ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => ({
       ...acc,
       [key]: compute(state, () => fn())
@@ -955,7 +959,7 @@ var Signa = (() => {
       state,
       computed
     }) : {};
-    return { state, computed, actions };
+    return { state, getters, computed, actions };
   }
   var globalStore = {};
   function registerStore(key, store) {
@@ -1027,7 +1031,7 @@ var Signa = (() => {
         });
         return Object.entries(getterObj).reduce((acc, [key, fn]) => ({
           ...acc,
-          [key]: () => fn()
+          [key]: fn()
         }), {});
       }
       setupComputed() {
@@ -1104,6 +1108,9 @@ var Signa = (() => {
   // src/components/button/button.ts
   var counterStore = createStore({
     state: { count: 0 },
+    getters: (context) => ({
+      hi: () => "hi"
+    }),
     computed: ({ state }) => ({
       isEven: () => state.value.count % 2 === 0
     }),
@@ -1116,6 +1123,7 @@ var Signa = (() => {
     tagName: "my-counter",
     state: { count: 0 },
     getters: (context) => ({
+      hi: () => "hi",
       counterStore: () => context.store.counter
     }),
     computed: ({ state }) => ({
@@ -1131,7 +1139,7 @@ var Signa = (() => {
       }
     }),
     listen(params) {
-      console.log(params);
+      console.log(params.getters.hi);
     },
     render: ({ state, computed, actions, getters: { counterStore: counterStore2 } }) => {
       return html`

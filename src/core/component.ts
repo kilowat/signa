@@ -18,13 +18,13 @@ type ActionsFn<S, C> = (context: {
 
 type GettersFn<S> = ComputedFn<S>
 
-type ComputedProperties<C> = {
+export type ComputedProperties<C> = {
     [K in keyof C]: C[K] extends (...args: any[]) => any
     ? ReadonlySignal<ReturnType<C[K]>>
     : never;
 };
 
-type GettersProperties<C> = {
+export type GettersProperties<C> = {
     [K in keyof C]: C[K] extends (...args: any[]) => any
     ? ReturnType<C[K]>
     : never;
@@ -154,7 +154,7 @@ export function defineComponent<
 
             return Object.entries(getterObj).reduce((acc, [key, fn]) => ({
                 ...acc,
-                [key]: () => fn()
+                [key]: fn()
             }), {}) as GettersProperties<ReturnType<G>>;
         }
 
