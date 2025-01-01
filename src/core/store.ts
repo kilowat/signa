@@ -1,83 +1,95 @@
-import { effect, ReadonlySignal } from '@preact/signals-core';
+import { ReadonlySignal } from '@preact/signals-core';
 import { State, createState, compute } from './state';
 
-type BaseState = Record<string, any>;
+// Типы для функций вычислений и действий
+type ComputedFn<S> = (context: {
+    state: State<S>;
+}) => Record<string, (...args: any[]) => any>;
 
-type ComputedDef<S extends BaseState> = {
-    [key: string]: (state: S) => any;
-};
+type ActionsFn<S, C> = (context: {
+    state: State<S>;
+    computed: ComputedProperties<C>;
+}) => Record<string, (...args: any[]) => any>;
 
-type ActionFunction<S, Args extends any[]> = (...args: Args) => void;
-
-type ActionsDef<S extends BaseState> = {
-    [key: string]: ActionFunction<S, any[]>;
-};
-
-type StoreModule<S extends BaseState, C extends ComputedDef<S>, A extends ActionsDef<S>> = {
-    state: S;
-    computed: (context: { state: State<S> }) => C;
-    actions: (context: { state: State<S> }) => { [K in keyof A]: A[K] };
-};
-
-type ComputedStore<C> = {
+type ComputedProperties<C> = {
     [K in keyof C]: C[K] extends (...args: any[]) => any
     ? ReadonlySignal<ReturnType<C[K]>>
     : never;
 };
 
-export class Store<S extends BaseState, C extends ComputedDef<S>, A extends ActionsDef<S>> {
-    private stateSignal: State<S>;
-    public computed: ComputedStore<C>;
-    public actions: A;
+// Тип опций для создания Store
+interface StoreOptions<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
+    state: S;
+    computed?: C;
+    actions?: A;
+}
 
-    constructor(module: StoreModule<S, C, A>) {
-        this.stateSignal = createState(module.state);
 
-        const computedFns = module.computed({ state: this.stateSignal });
-        this.computed = Object.entries(computedFns).reduce((acc, [key, fn]) => ({
+// Тип возвращаемого Store
+interface StoreContext<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
+    state: State<S>;
+    computed: ComputedProperties<ReturnType<C>>;
+    actions: ReturnType<A>;
+}
+
+export function createStore<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>(
+    options: StoreOptions<S, C, A>
+): StoreContext<S, C, A> {
+    const { state: initialState, computed: computedFn, actions: actionsFn } = options;
+
+    // Создаем состояние
+    const state = createState(initialState);
+
+    // Инициализация вычисляемых свойств
+    const computed = computedFn
+        ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => ({
             ...acc,
-            [key]: compute(this.stateSignal, fn)
-        }), {} as ComputedStore<C>);
+            [key]: compute(state, () => fn())
+        }), {}) as ComputedProperties<ReturnType<C>>
+        : ({} as ComputedProperties<ReturnType<C>>);
 
-        this.actions = module.actions({ state: this.stateSignal });
-    }
+    // Инициализация действий
+    const actions = actionsFn
+        ? (actionsFn({
+            state,
+            computed
+        }) as ReturnType<A>) // Явное приведение типов
+        : ({} as ReturnType<A>);
 
-    public getState(): S {
-        return this.stateSignal.peek();
-    }
-
-    public subscribe(callback: (state: S) => void): () => void {
-        return effect(() => {
-            callback(this.stateSignal.value);
-        });
-    }
+    return { state, computed, actions };
 }
 
-type StoreRecord = {
-    [key: string]: Store<any, any, any>;
-};
+type GlobalStore = Record<string, StoreContext<any, any, any>>;
 
-export class StoreManager {
-    private stores: StoreRecord = {};
+export const globalStore: GlobalStore = {};
 
-    registerModule<S extends BaseState, C extends ComputedDef<S>, A extends ActionsDef<S>>(
-        name: keyof StoreRecord,
-        module: StoreModule<S, C, A>
-    ): Store<S, C, A> {
-        const store = new Store(module);
-        this.stores[name] = store;
-        return store;
+function registerStore<K extends string, S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>(
+    key: K,
+    store: StoreContext<S, C, A>
+): void {
+    if (globalStore[key]) {
+        throw new Error(`Store с ключом "${key}" уже существует.`);
     }
-
-    $<N extends keyof StoreRecord>(name: N): StoreRecord[N] {
-        const store = this.stores[name];
-        if (!store) {
-            throw new Error(`Store module '${String(name)}' not found`);
-        }
-        return store;
-    }
-
-    get list(): StoreRecord {
-        return this.stores;
-    }
+    globalStore[key] = store;
 }
+
+export function getStore<K extends keyof typeof globalStore>(key: K): typeof globalStore[K] {
+    const store = globalStore[key];
+    if (!store) {
+        throw new Error(`Store с ключом "${key}" не найден.`);
+    }
+    return store;
+}
+
+const counterStore = createStore({
+    state: { count: 0 },
+    computed: ({ state }) => ({
+        isEven: () => state.value.count % 2 === 0,
+    }),
+    actions: ({ state }) => ({
+        inc: () => state.value.count + 1
+    })
+})
+
+registerStore('counter', counterStore);
+const cStore = getStore('counter') 

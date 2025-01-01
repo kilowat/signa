@@ -1,6 +1,7 @@
 import { reactive } from 'uhtml/reactive';
 import { effect, ReadonlySignal } from '@preact/signals-core';
 import { State, createState, compute } from './state';
+import { globalStore } from './store';
 
 // Component types
 type ComputedFn<S> = (context: {
@@ -24,7 +25,7 @@ interface BaseContext<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnT
     state: State<S>;
     computed: ComputedProperties<ReturnType<C>>;
     actions: ReturnType<A>;
-    store: any;
+    store: typeof globalStore; // Глобальный store
 }
 
 interface ComponentContext<S, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>
@@ -101,7 +102,7 @@ export function defineComponent<
                 actions: this.actions,
                 element: this,
                 slots: this.slots,
-                store: null
+                store: globalStore
             };
         }
 
