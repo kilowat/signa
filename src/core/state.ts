@@ -1,5 +1,7 @@
 import { ReadonlySignal, Signal, signal as createSignal, computed as preactComputed } from '@preact/signals-core';
 
+export type ComputedResult<T> = ReadonlySignal<T>;
+
 export class State<T> extends Signal<T> {
     emit(value: Partial<T> | T): void {
         if (typeof value === 'object' && value !== null && typeof this.value === 'object') {

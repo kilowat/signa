@@ -19,7 +19,7 @@ interface StoreOptions<S, G extends GettersFn<S>, C extends ComputedFn<S>, A ext
     actions?: A;
 }
 
-export interface StoreContext<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
+interface StoreContext<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
     state: State<S>;
     getters: GettersProperties<ReturnType<G>>;
     computed: ComputedProperties<ReturnType<C>>;
@@ -57,7 +57,7 @@ export function createStore<S, G extends GettersFn<S>, C extends ComputedFn<S>, 
     return { state, getters, computed, actions };
 }
 
-export interface GlobalStore extends Record<string, StoreContext<any, any, any, any>> { }
+export type GlobalStore = Record<string, StoreContext<any, any, any, any>>;
 
 export const globalStore: GlobalStore = {};
 

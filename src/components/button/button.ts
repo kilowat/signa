@@ -1,4 +1,5 @@
-import { defineComponent, html } from "../../core";
+
+import { defineComponent, html } from "signa";
 import { createStore, registerStore } from "../../core/store";
 
 //global store
@@ -14,7 +15,8 @@ const counterStore = createStore({
         inc: () => state.emit({ count: state.value.count + 1 })
     })
 })
-type CounterStore = typeof counterStore;
+export type CounterStore = typeof counterStore;
+
 //inject then can proivder in any componenets
 registerStore('counter', counterStore);
 
@@ -23,7 +25,7 @@ defineComponent({
     state: { count: 0 },
     getters: (context) => ({
         hi: () => 'hi',
-        counterStore: () => context.store.counter as CounterStore,
+        counterStore: () => context.store.counter, // Автоматическая типизация
     }),
     computed: ({ state }) => ({
         doubleCount: () => state.value.count * 2,

@@ -136,6 +136,7 @@ export function defineComponent<
             });
 
             this.cleanup.push(disposer);
+
             return () => {
                 const index = this.cleanup.indexOf(disposer);
                 if (index > -1) {
@@ -144,6 +145,7 @@ export function defineComponent<
                 disposer();
             };
         }
+
         setupGetters(): GettersProperties<ReturnType<G>> {
             if (!gettersFn) return {} as GettersProperties<ReturnType<G>>;
 
