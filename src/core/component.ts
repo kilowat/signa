@@ -1,18 +1,18 @@
 import { reactive } from 'uhtml/reactive';
 import { effect, ReadonlySignal } from '@preact/signals-core';
 import { State, createState, compute } from './state';
-import { GlobalStore, globalStore } from './store';
+import { StoreRegistry, storeRegistry } from './store';
 
 // Component types
 type ComputedFn<S> = (context: {
     state: State<S>;
-    store: GlobalStore;
+    store: StoreRegistry;
 }) => Record<string, (...args: any[]) => any>;
 
 type ActionsFn<S, C> = (context: {
     state: State<S>;
     computed: ComputedProperties<C>;
-    store: GlobalStore;
+    store: StoreRegistry;
 }) => Record<string, (...args: any[]) => any>;
 
 
@@ -35,7 +35,7 @@ interface BaseContext<S, G extends GettersFn<S>, C extends ComputedFn<S>, A exte
     getters: GettersProperties<ReturnType<G>>;
     computed: ComputedProperties<ReturnType<C>>;
     actions: ReturnType<A>;
-    store: typeof globalStore; // Глобальный store
+    store: StoreRegistry;
 }
 
 interface ComponentContext<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>
@@ -119,7 +119,7 @@ export function defineComponent<
                 actions: this.actions,
                 element: this,
                 slots: this.slots,
-                store: globalStore
+                store: storeRegistry,
             };
         }
 
@@ -151,7 +151,7 @@ export function defineComponent<
 
             const getterObj = gettersFn({
                 state: this.state,
-                store: globalStore
+                store: storeRegistry,
             });
 
             return Object.entries(getterObj).reduce((acc, [key, fn]) => ({
@@ -166,7 +166,7 @@ export function defineComponent<
 
             const computedObj = computedFn({
                 state: this.state,
-                store: globalStore
+                store: storeRegistry,
             });
 
             return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
@@ -182,7 +182,7 @@ export function defineComponent<
                 state: this.state,
                 getters: this.getters,
                 computed: this.computed,
-                store: globalStore,
+                store: storeRegistry,
             };
 
             return actionsFn(context) as ReturnType<A>;

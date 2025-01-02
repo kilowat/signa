@@ -1,40 +1,12 @@
 "use strict";
-var Signa = (() => {
-  var __defProp = Object.defineProperty;
-  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-  var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __hasOwnProp = Object.prototype.hasOwnProperty;
+(() => {
   var __typeError = (msg) => {
     throw TypeError(msg);
   };
-  var __export = (target, all) => {
-    for (var name in all)
-      __defProp(target, name, { get: all[name], enumerable: true });
-  };
-  var __copyProps = (to, from, except, desc) => {
-    if (from && typeof from === "object" || typeof from === "function") {
-      for (let key of __getOwnPropNames(from))
-        if (!__hasOwnProp.call(to, key) && key !== except)
-          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-    }
-    return to;
-  };
-  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
   var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
   var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
-
-  // src/index.ts
-  var index_exports = {};
-  __export(index_exports, {
-    State: () => State,
-    compute: () => compute,
-    createState: () => createState,
-    defineComponent: () => defineComponent,
-    html: () => html,
-    htmlFor: () => htmlFor
-  });
 
   // node_modules/udomdiff/esm/index.js
   var esm_default = (parentNode, a2, b2, get, before) => {
@@ -944,6 +916,7 @@ var Signa = (() => {
   }
 
   // src/core/store.ts
+  var globalStore = {};
   function createStore(options) {
     const { state: initialState, getters: gettersFn, computed: computedFn, actions: actionsFn } = options;
     const state = createState(initialState);
@@ -961,13 +934,29 @@ var Signa = (() => {
     }) : {};
     return { state, getters, computed, actions };
   }
-  var globalStore = {};
   function registerStore(key, store) {
     if (globalStore[key]) {
-      throw new Error(`Store \u0441 \u043A\u043B\u044E\u0447\u043E\u043C "${key}" \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442.`);
+      throw new Error(`Store "${key}" already exists`);
     }
     globalStore[key] = store;
   }
+  function getStore(key) {
+    const store = globalStore[key];
+    if (!store) {
+      throw new Error(`Store "${key}" not found`);
+    }
+    return store;
+  }
+  function createAndRegisterStore({ state, key }) {
+    const store = createStore({ state });
+    storeRegistry.register(key, store);
+    return store;
+  }
+  var storeRegistry = {
+    list: globalStore,
+    $: getStore,
+    register: registerStore
+  };
 
   // src/core/component.ts
   function defineComponent(options) {
@@ -1001,7 +990,7 @@ var Signa = (() => {
           actions: this.actions,
           element: this,
           slots: this.slots,
-          store: globalStore
+          store: storeRegistry
         };
       }
       subscribeToState(callback) {
@@ -1027,7 +1016,7 @@ var Signa = (() => {
         if (!gettersFn) return {};
         const getterObj = gettersFn({
           state: this.state,
-          store: globalStore
+          store: storeRegistry
         });
         return Object.entries(getterObj).reduce((acc, [key, fn]) => ({
           ...acc,
@@ -1038,7 +1027,7 @@ var Signa = (() => {
         if (!computedFn) return {};
         const computedObj = computedFn({
           state: this.state,
-          store: globalStore
+          store: storeRegistry
         });
         return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
           ...acc,
@@ -1051,7 +1040,7 @@ var Signa = (() => {
           state: this.state,
           getters: this.getters,
           computed: this.computed,
-          store: globalStore
+          store: storeRegistry
         };
         return actionsFn(context);
       }
@@ -1106,25 +1095,19 @@ var Signa = (() => {
   }
 
   // src/components/button/button.ts
-  var counterStore = createStore({
-    state: { count: 0 },
-    getters: (context) => ({
-      hi: () => "hi"
-    }),
-    computed: ({ state }) => ({
-      isEven: () => state.value.count % 2 === 0
-    }),
-    actions: ({ state }) => ({
-      inc: () => state.emit({ count: state.value.count + 1 })
-    })
+  var counterStore = createAndRegisterStore({
+    key: "counter",
+    state: { count: 0 }
   });
-  registerStore("counter", counterStore);
   defineComponent({
     tagName: "my-counter",
     state: { count: 0 },
     getters: (context) => ({
-      hi: () => "hi",
-      counterStore: () => context.store.counter
+      counterStore: () => {
+        const s2 = context.store.$("counter");
+        return context.store.$("counter");
+      },
+      hi: () => "hi"
     }),
     computed: ({ state }) => ({
       doubleCount: () => state.value.count * 2,
@@ -1144,7 +1127,6 @@ var Signa = (() => {
     render: ({ state, computed, actions, getters: { counterStore: counterStore2 } }) => {
       return html`
         <div>
-             <button @click="${() => counterStore2.actions.inc()}">Count store: ${counterStore2.state.value.count}</button> 
             <p >Count: ${state.value.count}</p>
             <p>Double: ${computed.doubleCount.value}</p>
             <p>Is Even: ${computed.isEven.value}</p>
@@ -1154,7 +1136,41 @@ var Signa = (() => {
     `;
     }
   });
-  return __toCommonJS(index_exports);
+  defineComponent({
+    tagName: "my-counter-2",
+    state: { count: 0 },
+    getters: (context) => ({
+      hi: () => "hi",
+      counterStore: () => ""
+      //context.store.counter, // Автоматическая типизация
+    }),
+    computed: ({ state }) => ({
+      doubleCount: () => state.value.count * 2,
+      isEven: () => state.value.count % 2 === 0
+    }),
+    actions: ({ state }) => ({
+      increment: (amount) => {
+        state.emit({ count: state.value.count + amount });
+      },
+      reset: () => {
+        state.emit({ count: 0 });
+      }
+    }),
+    listen(params) {
+      console.log(params.getters.hi);
+    },
+    render: ({ state, computed, actions, getters: { counterStore: counterStore2 } }) => {
+      return html`
+        <div>
+            <p >Count: ${state.value.count}</p>
+            <p>Double: ${computed.doubleCount.value}</p>
+            <p>Is Even: ${computed.isEven.value}</p>
+            <button onclick=${() => actions.increment(1)}>+1</button>
+            <button onclick=${actions.reset}>Reset</button>
+        </div>
+    `;
+    }
+  });
 })();
 /*! Bundled license information:
 

@@ -1,6 +1,11 @@
 import { State, createState, compute } from './state';
 import { ComputedProperties, GettersProperties } from './component';
 
+type StoreConfig<T> = {
+    state: T;
+    key: keyof GlobalStore;
+};
+
 type ComputedFn<S> = (context: {
     state: State<S>;
 }) => Record<string, (...args: any[]) => any>;
@@ -10,7 +15,7 @@ type ActionsFn<S, C> = (context: {
     computed: ComputedProperties<C>;
 }) => Record<string, (...args: any[]) => any>;
 
-type GettersFn<S> = ComputedFn<S>
+type GettersFn<S> = ComputedFn<S>;
 
 interface StoreOptions<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
     state: S;
@@ -25,6 +30,19 @@ export interface StoreContext<S, G extends GettersFn<S>, C extends ComputedFn<S>
     computed: ComputedProperties<ReturnType<C>>;
     actions: ReturnType<A>;
 }
+
+export interface GlobalStore extends Record<string, StoreContext<any, any, any, any>> { }
+
+export interface StoreRegistry {
+    list: Partial<GlobalStore>;
+    $: <K extends keyof GlobalStore, >(key: K) => GlobalStore[K];
+    register: <K extends keyof GlobalStore>(
+        key: K,
+        store: GlobalStore[K]
+    ) => void;
+}
+
+const globalStore: Partial<GlobalStore> = {};
 
 export function createStore<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>(
     options: StoreOptions<S, G, C, A>
@@ -57,24 +75,33 @@ export function createStore<S, G extends GettersFn<S>, C extends ComputedFn<S>, 
     return { state, getters, computed, actions };
 }
 
-export interface GlobalStore extends Record<string, StoreContext<any, any, any, any>> { }
-
-export const globalStore: GlobalStore = {};
-
-export function registerStore<K extends string, S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>(
+function registerStore<K extends keyof GlobalStore>(
     key: K,
-    store: StoreContext<S, G, C, A>
+    store: GlobalStore[K]
 ): void {
     if (globalStore[key]) {
-        throw new Error(`Store с ключом "${key}" уже существует.`);
+        throw new Error(`Store "${key}" already exists`);
     }
     globalStore[key] = store;
+
 }
 
-export function getStore<K extends keyof typeof globalStore>(key: K): typeof globalStore[K] {
+function getStore<K extends keyof GlobalStore>(key: K): GlobalStore[K] {
     const store = globalStore[key];
     if (!store) {
-        throw new Error(`Store с ключом "${key}" не найден.`);
+        throw new Error(`Store "${key}" not found`);
     }
     return store;
 }
+
+export function createAndRegisterStore<T extends object>({ state, key }: StoreConfig<T>) {
+    const store = createStore({ state });
+    storeRegistry.register(key, store);
+    return store;
+}
+
+export const storeRegistry: StoreRegistry = {
+    list: globalStore,
+    $: getStore,
+    register: registerStore,
+};
