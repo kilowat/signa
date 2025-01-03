@@ -1,12 +1,44 @@
 "use strict";
-(() => {
+var Signa = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __typeError = (msg) => {
     throw TypeError(msg);
   };
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
   var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
   var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
+
+  // src/index.ts
+  var index_exports = {};
+  __export(index_exports, {
+    State: () => State,
+    compute: () => compute,
+    createState: () => createState,
+    createStore: () => createStore,
+    defineComponent: () => defineComponent,
+    defineStore: () => defineStore,
+    html: () => html,
+    htmlFor: () => htmlFor,
+    prop: () => prop,
+    storeRegistry: () => storeRegistry
+  });
 
   // node_modules/udomdiff/esm/index.js
   var esm_default = (parentNode, a2, b2, get, before) => {
@@ -84,10 +116,10 @@
     map.set(key, value);
     return value;
   };
-  var gPD = (ref2, prop) => {
+  var gPD = (ref2, prop2) => {
     let desc;
     do {
-      desc = getOwnPropertyDescriptor(ref2, prop);
+      desc = getOwnPropertyDescriptor(ref2, prop2);
     } while (!desc && (ref2 = getPrototypeOf(ref2)));
     return desc;
   };
@@ -947,7 +979,7 @@
     }
     return store;
   }
-  function createAndRegisterStore({ state, key }) {
+  function defineStore({ state, key }) {
     const store = createStore({ state });
     storeRegistry.register(key, store);
     return store;
@@ -959,13 +991,20 @@
   };
 
   // src/core/component.ts
+  function prop(config) {
+    return {
+      ...config,
+      model: { __type: {} }
+    };
+  }
   function defineComponent(options) {
     const {
       tagName,
+      props: propsDefinition = {},
       state: initialState,
-      getters: gettersFn,
-      computed: computedFn,
-      actions: actionsFn,
+      getters: gettersFn = () => ({}),
+      computed: computedFn = () => ({}),
+      actions: actionsFn = () => ({}),
       connected,
       disconnected,
       render,
@@ -977,13 +1016,79 @@
         super();
         this.slots = {};
         this.cleanup = [];
+        this.props = d({});
         this.state = createState(initialState);
         this.getters = this.setupGetters();
         this.computed = this.setupComputed();
         this.actions = this.setupActions();
+        requestAnimationFrame(() => {
+          this.props.value = this.initializeProps();
+        });
+      }
+      static get observedAttributes() {
+        console.log(Object.keys(propsDefinition));
+        return Object.keys(propsDefinition).map((name) => `data-${name}`);
+      }
+      initializeProps() {
+        var _a;
+        const props = {};
+        for (const [key, definition] of Object.entries(propsDefinition)) {
+          const attrName = `data-${key}`;
+          const attrValue = this.getAttribute(attrName);
+          const defaultValue = (_a = definition.default) != null ? _a : this.getDefaultForType(definition.type);
+          props[key] = attrValue !== null ? this.parseAttributeValue(attrValue, definition.type) : defaultValue;
+        }
+        return props;
+      }
+      getDefaultForType(type) {
+        switch (type) {
+          case String:
+            return "";
+          case Number:
+            return 0;
+          case Boolean:
+            return false;
+          case Object:
+            return {};
+          case Array:
+            return [];
+          default:
+            return null;
+        }
+      }
+      parseAttributeValue(value, type) {
+        switch (type) {
+          case Number:
+            return Number(value);
+          case Boolean:
+            return value !== null && value !== "false";
+          case Object:
+          case Array:
+            try {
+              return JSON.parse(value);
+            } catch {
+              return type === Object ? {} : [];
+            }
+          default:
+            return value;
+        }
+      }
+      attributeChangedCallback(name, oldValue, newValue) {
+        const propName = name.replace(/^data-/, "");
+        const propDef = propsDefinition[propName];
+        if (!propDef) return;
+        const value = this.parseAttributeValue(newValue, propDef.type);
+        this.updateProp(propName, value);
+      }
+      updateProp(name, value) {
+        this.props.value = {
+          ...this.props.value,
+          [name]: value
+        };
       }
       get context() {
         return {
+          props: this.getPropValue(),
           state: this.state,
           getters: this.getters,
           computed: this.computed,
@@ -992,6 +1097,39 @@
           slots: this.slots,
           store: storeRegistry
         };
+      }
+      getPropValue() {
+        return this.props.value;
+      }
+      setupGetters() {
+        const getterObj = gettersFn({
+          props: this.props,
+          state: this.state,
+          store: storeRegistry
+        });
+        return Object.entries(getterObj).reduce((acc, [key, fn]) => ({
+          ...acc,
+          [key]: fn()
+        }), {});
+      }
+      setupComputed() {
+        const computedObj = computedFn({
+          props: this.props,
+          state: this.state,
+          store: storeRegistry
+        });
+        return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
+          ...acc,
+          [key]: compute(this.state, () => fn())
+        }), {});
+      }
+      setupActions() {
+        return actionsFn({
+          props: this.props,
+          state: this.state,
+          computed: this.computed,
+          store: storeRegistry
+        });
       }
       subscribeToState(callback) {
         let previousValue = this.state.peek();
@@ -1011,38 +1149,6 @@
           }
           disposer();
         };
-      }
-      setupGetters() {
-        if (!gettersFn) return {};
-        const getterObj = gettersFn({
-          state: this.state,
-          store: storeRegistry
-        });
-        return Object.entries(getterObj).reduce((acc, [key, fn]) => ({
-          ...acc,
-          [key]: fn()
-        }), {});
-      }
-      setupComputed() {
-        if (!computedFn) return {};
-        const computedObj = computedFn({
-          state: this.state,
-          store: storeRegistry
-        });
-        return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
-          ...acc,
-          [key]: compute(this.state, () => fn())
-        }), {});
-      }
-      setupActions() {
-        if (!actionsFn) return {};
-        const context = {
-          state: this.state,
-          getters: this.getters,
-          computed: this.computed,
-          store: storeRegistry
-        };
-        return actionsFn(context);
       }
       setupListener() {
         if (!listen) return;
@@ -1089,13 +1195,12 @@
         disconnected == null ? void 0 : disconnected(this.context);
       }
     }
-    if (!customElements.get(tagName)) {
-      customElements.define(tagName, CustomElement);
-    }
+    customElements.define(tagName, CustomElement);
+    return CustomElement;
   }
 
   // src/components/button/button.ts
-  var counterStore = createAndRegisterStore({
+  var counterStore = defineStore({
     key: "counter",
     state: { count: 0 }
   });
@@ -1167,10 +1272,46 @@
             <p>Is Even: ${computed.isEven.value}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
+            <my-component data-count="${state.value.count}"></my-component>
         </div>
     `;
     }
   });
+  var componentProps = {
+    // Примитивные типы определяются автоматически
+    title: {
+      type: String,
+      default: ""
+    },
+    count: {
+      type: Number,
+      default: 0
+    },
+    isActive: {
+      type: Boolean,
+      default: false
+    },
+    // Для сложных типов используем prop<T>
+    users: prop({
+      type: Array,
+      default: []
+    }),
+    selectedUser: prop({
+      type: Object,
+      default: void 0
+    })
+  };
+  defineComponent({
+    tagName: "my-component",
+    props: componentProps,
+    state: {
+      loading: false
+    },
+    render: ({ props }) => {
+      return html`<div>${props.count}<div>`;
+    }
+  });
+  return __toCommonJS(index_exports);
 })();
 /*! Bundled license information:
 

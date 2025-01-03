@@ -1,7 +1,7 @@
 
-import { createAndRegisterStore, defineComponent, html } from "signa/core";
+import { defineStore, defineComponent, html, prop } from "signa/core";
 
-const counterStore = createAndRegisterStore({
+const counterStore = defineStore({
     key: 'counter',
     state: { count: 0 }
 })
@@ -80,7 +80,55 @@ defineComponent({
             <p>Is Even: ${computed.isEven.value}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
+            <my-component data-count="${state.value.count}"></my-component>
         </div>
     `;
     },
+});
+
+interface User {
+    id: number;
+    name: string;
+    email: string;
+}
+
+// Теперь props можно определять так:
+const componentProps = {
+    // Примитивные типы определяются автоматически
+    title: {
+        type: String,
+        default: ''
+    },
+
+    count: {
+        type: Number,
+        default: 0
+    },
+
+    isActive: {
+        type: Boolean,
+        default: false
+    },
+
+    // Для сложных типов используем prop<T>
+    users: prop<User[]>({
+        type: Array,
+        default: []
+    }),
+
+    selectedUser: prop<User>({
+        type: Object,
+        default: undefined
+    })
+} as const;
+
+defineComponent({
+    tagName: 'my-component',
+    props: componentProps,
+    state: {
+        loading: false
+    },
+    render: ({ props }) => {
+        return html`<div>${props.count}<div>`
+    }
 });

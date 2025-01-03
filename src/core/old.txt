@@ -169,37 +169,27 @@ export function defineComponent<P extends PropsDefinition, S>(
         cleanup: (() => void)[] = [];
 
         static get observedAttributes() {
-            console.log(Object.keys(propsDefinition))
-            return Object.keys(propsDefinition).map((name) => `data-${name}`);
+            return Object.keys(propsDefinition);
         }
 
         constructor() {
             super();
-
-            this.props = signal({} as InferProps<P>);
+            this.props = signal(this.initializeProps());
             this.state = createState(initialState as S);
             this.getters = this.setupGetters();
             this.computed = this.setupComputed();
             this.actions = this.setupActions();
-            requestAnimationFrame(() => {
-                this.props.value = this.initializeProps();
-            });
         }
 
         initializeProps(): InferProps<P> {
             const props = {} as InferProps<P>;
-
             for (const [key, definition] of Object.entries(propsDefinition)) {
-                const attrName = `data-${key}`;
-                const attrValue = this.getAttribute(attrName);
-
                 const defaultValue = definition.default ?? this.getDefaultForType(definition.type);
-                props[key as keyof P] = attrValue !== null
-                    ? this.parseAttributeValue(attrValue, definition.type)
-                    : defaultValue;
+                (props as any)[key] = defaultValue;
             }
             return props;
         }
+
         getDefaultForType(type: PropDefinition['type']): PropType {
             switch (type) {
                 case String:
@@ -217,39 +207,44 @@ export function defineComponent<P extends PropsDefinition, S>(
             }
         }
 
-        parseAttributeValue(value: string, type: PropDefinition['type']): PropType {
-            switch (type) {
-                case Number:
-                    return Number(value);
-                case Boolean:
-                    return value !== null && value !== 'false';
-                case Object:
-                case Array:
-                    try {
-                        return JSON.parse(value);
-                    } catch {
-                        return type === Object ? {} : [];
-                    }
-                default:
-                    return value;
-            }
-        }
-
         attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-            const propName = name.replace(/^data-/, '');
-            const propDef = (propsDefinition as any)[propName];
+            const propDef = (propsDefinition as any)[name];
             if (!propDef) return;
 
-            const value = this.parseAttributeValue(newValue, propDef.type);
+            let value: PropType = newValue;
+            switch (propDef.type) {
+                case Number:
+                    value = Number(newValue);
+                    break;
+                case Boolean:
+                    value = newValue !== null;
+                    break;
+                case Object:
+                    try {
+                        value = JSON.parse(newValue);
+                    } catch {
+                        value = {};
+                    }
+                    break;
+                case Array:
+                    try {
+                        value = JSON.parse(newValue);
+                        if (!Array.isArray(value)) {
+                            value = [];
+                        }
+                    } catch {
+                        value = [];
+                    }
+                    break;
+            }
 
-            this.updateProp(propName as keyof P, value);
-
+            this.updateProp(name as keyof P, value);
         }
 
         updateProp(name: keyof P, value: PropType) {
             this.props.value = {
                 ...this.props.value,
-                [name]: value,
+                [name]: value
             };
         }
 

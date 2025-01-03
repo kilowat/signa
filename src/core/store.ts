@@ -94,7 +94,7 @@ function getStore<K extends keyof GlobalStore>(key: K): GlobalStore[K] {
     return store;
 }
 
-export function createAndRegisterStore<T extends object>({ state, key }: StoreConfig<T>) {
+export function defineStore<T extends object>({ state, key }: StoreConfig<T>) {
     const store = createStore({ state });
     storeRegistry.register(key, store);
     return store;
