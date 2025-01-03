@@ -1,5 +1,5 @@
 
-import { defineStore, defineComponent, html, prop } from "signa/core";
+import { defineStore, defineComponent, html } from "signa/core";
 
 const counterStore = defineStore({
     key: 'counter',
@@ -53,7 +53,7 @@ defineComponent({
 defineComponent({
     tagName: 'my-counter-2',
     state: { count: 0 },
-    getters: (context) => ({
+    getters: () => ({
         hi: () => 'hi',
         counterStore: () => ''//context.store.counter, // Автоматическая типизация
     }),
@@ -84,52 +84,4 @@ defineComponent({
         </div>
     `;
     },
-});
-
-interface User {
-    id: number;
-    name: string;
-    email: string;
-}
-
-const componentProps = {
-    title: {
-        type: String,
-        default: ''
-    },
-
-    count: {
-        type: Number,
-        default: 0
-    },
-
-    isActive: {
-        type: Boolean,
-        default: false
-    },
-    // Для сложных типов используем prop<T>
-    users: prop<User[]>({
-        type: Array,
-        default: []
-    }),
-
-    selectedUser: prop<User>({
-        type: Object,
-        default: undefined
-    })
-} as const;
-
-defineComponent({
-    tagName: 'my-component',
-    props: componentProps,
-    connected(context) {
-        const count = context.element.$<number>('count') // Проброс через uthml
-        console.log(`count from uhtml prop ${count}`)
-    },
-    state: {
-        loading: false
-    },
-    render: ({ props }) => {
-        return html`<div>${props.count}<div>`
-    }
 });

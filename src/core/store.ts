@@ -61,7 +61,7 @@ export function createStore<S, G extends GettersFn<S>, C extends ComputedFn<S>, 
     const computed = computedFn
         ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => ({
             ...acc,
-            [key]: compute(state, () => fn())
+            [key]: compute(() => fn())
         }), {}) as ComputedProperties<ReturnType<C>>
         : ({} as ComputedProperties<ReturnType<C>>);
 

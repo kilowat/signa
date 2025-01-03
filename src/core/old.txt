@@ -89,7 +89,7 @@ export interface ComponentContext<P, S, G extends GettersFn<P, S>, C extends Com
     getters: GettersProperties<ReturnType<G>>;
     computed: ComputedProperties<ReturnType<C>>;
     actions: ReturnType<A>;
-    element: HTMLElement;
+    element: CustomHtmlElement;
     slots: Record<string, Node[]>;
     store: StoreRegistry;
 }
@@ -97,6 +97,10 @@ export interface ComponentContext<P, S, G extends GettersFn<P, S>, C extends Com
 interface ListenerParams<P, S, G extends GettersFn<P, S>, C extends ComputedFn<P, S>, A extends ActionsFn<P, S, ReturnType<C>>> extends ComponentContext<P, S, G, C, A> {
     newValue: S;
     oldValue: S;
+}
+
+export interface CustomHtmlElement extends HTMLElement {
+    $<T = any>(key: string): T | undefined;
 }
 
 interface ComponentOptions<P extends PropsDefinition, S> {
@@ -159,7 +163,7 @@ export function defineComponent<P extends PropsDefinition, S>(
 
     const uRender = reactive(effect);
 
-    class CustomElement extends HTMLElement {
+    class CustomElement extends HTMLElement implements CustomHtmlElement {
         props: Signal<InferProps<P>>;
         state: State<S>;
         getters: GettersProperties<ReturnType<typeof gettersFn>>;
@@ -169,23 +173,37 @@ export function defineComponent<P extends PropsDefinition, S>(
         cleanup: (() => void)[] = [];
 
         static get observedAttributes() {
-            return Object.keys(propsDefinition);
+            return Object.keys(propsDefinition).map((name) => `data-${name}`);
         }
 
         constructor() {
             super();
-            this.props = signal(this.initializeProps());
+
+            this.props = signal({} as InferProps<P>);
             this.state = createState(initialState as S);
             this.getters = this.setupGetters();
             this.computed = this.setupComputed();
             this.actions = this.setupActions();
+            requestAnimationFrame(() => {
+                this.props.value = this.initializeProps();
+            });
+        }
+
+        public $<T = any>(key: string) {
+            return (this as any)[key] as T | undefined;
         }
 
         initializeProps(): InferProps<P> {
             const props = {} as InferProps<P>;
+
             for (const [key, definition] of Object.entries(propsDefinition)) {
+                const attrName = `data-${key}`;
+                const attrValue = this.getAttribute(attrName);
+
                 const defaultValue = definition.default ?? this.getDefaultForType(definition.type);
-                (props as any)[key] = defaultValue;
+                props[key as keyof P] = attrValue !== null
+                    ? this.parseAttributeValue(attrValue, definition.type)
+                    : defaultValue;
             }
             return props;
         }
@@ -207,44 +225,39 @@ export function defineComponent<P extends PropsDefinition, S>(
             }
         }
 
-        attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-            const propDef = (propsDefinition as any)[name];
-            if (!propDef) return;
-
-            let value: PropType = newValue;
-            switch (propDef.type) {
+        parseAttributeValue(value: string, type: PropDefinition['type']): PropType {
+            switch (type) {
                 case Number:
-                    value = Number(newValue);
-                    break;
+                    return Number(value);
                 case Boolean:
-                    value = newValue !== null;
-                    break;
+                    return value !== null && value !== 'false';
                 case Object:
-                    try {
-                        value = JSON.parse(newValue);
-                    } catch {
-                        value = {};
-                    }
-                    break;
                 case Array:
                     try {
-                        value = JSON.parse(newValue);
-                        if (!Array.isArray(value)) {
-                            value = [];
-                        }
+                        return JSON.parse(value);
                     } catch {
-                        value = [];
+                        return type === Object ? {} : [];
                     }
-                    break;
+                default:
+                    return value;
             }
+        }
 
-            this.updateProp(name as keyof P, value);
+        attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+            const propName = name.replace(/^data-/, '');
+            const propDef = (propsDefinition as any)[propName];
+            if (!propDef) return;
+
+            const value = this.parseAttributeValue(newValue, propDef.type);
+
+            this.updateProp(propName as keyof P, value);
+
         }
 
         updateProp(name: keyof P, value: PropType) {
             this.props.value = {
                 ...this.props.value,
-                [name]: value
+                [name]: value,
             };
         }
 
