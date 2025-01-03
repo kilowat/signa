@@ -89,7 +89,7 @@ export interface ComponentContext<P, S, G extends GettersFn<P, S>, C extends Com
     getters: GettersProperties<ReturnType<G>>;
     computed: ComputedProperties<ReturnType<C>>;
     actions: ReturnType<A>;
-    element: HTMLElement;
+    element: CustomHtmlElement;
     slots: Record<string, Node[]>;
     store: StoreRegistry;
 }
@@ -97,6 +97,10 @@ export interface ComponentContext<P, S, G extends GettersFn<P, S>, C extends Com
 interface ListenerParams<P, S, G extends GettersFn<P, S>, C extends ComputedFn<P, S>, A extends ActionsFn<P, S, ReturnType<C>>> extends ComponentContext<P, S, G, C, A> {
     newValue: S;
     oldValue: S;
+}
+
+export interface CustomHtmlElement extends HTMLElement {
+    $<T = any>(key: string): T | undefined;
 }
 
 interface ComponentOptions<P extends PropsDefinition, S> {
@@ -159,7 +163,7 @@ export function defineComponent<P extends PropsDefinition, S>(
 
     const uRender = reactive(effect);
 
-    class CustomElement extends HTMLElement {
+    class CustomElement extends HTMLElement implements CustomHtmlElement {
         props: Signal<InferProps<P>>;
         state: State<S>;
         getters: GettersProperties<ReturnType<typeof gettersFn>>;
@@ -169,7 +173,6 @@ export function defineComponent<P extends PropsDefinition, S>(
         cleanup: (() => void)[] = [];
 
         static get observedAttributes() {
-            console.log(Object.keys(propsDefinition))
             return Object.keys(propsDefinition).map((name) => `data-${name}`);
         }
 
@@ -186,6 +189,10 @@ export function defineComponent<P extends PropsDefinition, S>(
             });
         }
 
+        public $<T = any>(key: string) {
+            return (this as any)[key] as T | undefined;
+        }
+
         initializeProps(): InferProps<P> {
             const props = {} as InferProps<P>;
 
@@ -200,6 +207,7 @@ export function defineComponent<P extends PropsDefinition, S>(
             }
             return props;
         }
+
         getDefaultForType(type: PropDefinition['type']): PropType {
             switch (type) {
                 case String:

@@ -35,7 +35,7 @@ defineComponent({
         }
     }),
     listen(params) {
-        console.log(params.getters.hi)
+
     },
     render: ({ state, computed, actions, getters: { counterStore } }) => {
         return html`
@@ -80,7 +80,7 @@ defineComponent({
             <p>Is Even: ${computed.isEven.value}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
-            <my-component data-count="${state.value.count}"></my-component>
+            <my-component .count=${1} data-count="${state.value.count}"></my-component>
         </div>
     `;
     },
@@ -92,9 +92,7 @@ interface User {
     email: string;
 }
 
-// Теперь props можно определять так:
 const componentProps = {
-    // Примитивные типы определяются автоматически
     title: {
         type: String,
         default: ''
@@ -109,7 +107,6 @@ const componentProps = {
         type: Boolean,
         default: false
     },
-
     // Для сложных типов используем prop<T>
     users: prop<User[]>({
         type: Array,
@@ -125,6 +122,10 @@ const componentProps = {
 defineComponent({
     tagName: 'my-component',
     props: componentProps,
+    connected(context) {
+        const count = context.element.$<number>('count') // Проброс через uthml
+        console.log(`count from uhtml prop ${count}`)
+    },
     state: {
         loading: false
     },
