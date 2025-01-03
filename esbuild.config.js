@@ -7,7 +7,6 @@ const isDev = process.argv.includes('--dev');
 const buildPath = 'dist';
 const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'));
 const version = packageJson.version;
-
 const sharedConfig = {
     entryPoints: ['src/index.ts'],
     bundle: true,
