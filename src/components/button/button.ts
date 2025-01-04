@@ -1,5 +1,5 @@
 
-import { defineStore, defineComponent, html } from "signa/core";
+import { defineStore, defineComponent, html, State, createState, createStore } from "signa/core";
 
 const counterStore = defineStore({
     key: 'counter',

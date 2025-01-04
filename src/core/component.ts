@@ -88,6 +88,7 @@ export interface ComponentContext<
 
 export interface CustomHtmlElement extends HTMLElement {
     $<T = any>(key: string): T | undefined;
+    emitEvent<T = any>(name: string, detail: T): void;
 }
 
 export interface ComponentOptions<
@@ -161,6 +162,10 @@ export function defineComponent<
 
         public $<T = any>(key: string) {
             return (this as any)[key] as T | undefined;
+        }
+
+        public emitEvent<T = any>(name: string, detail: T): void {
+            this.dispatchEvent(new CustomEvent(name, { detail }));
         }
 
         setupGetters(): GettersProperties<ReturnType<G>> {
@@ -324,9 +329,7 @@ export function defineComponent<
         }
     }
 
-    if (!customElements.get(tagName)) {
-        customElements.define(tagName, CustomElement);
-    }
+    customElements.define(tagName, CustomElement);
 
     return CustomElement;
 }

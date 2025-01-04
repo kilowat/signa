@@ -993,6 +993,9 @@
       $(key) {
         return this[key];
       }
+      emitEvent(name, detail2) {
+        this.dispatchEvent(new CustomEvent(name, { detail: detail2 }));
+      }
       setupGetters() {
         const getterObj = gettersFn({
           props: this.props,
@@ -1140,9 +1143,7 @@
         disconnected == null ? void 0 : disconnected(this.context);
       }
     }
-    if (!customElements.get(tagName)) {
-      customElements.define(tagName, CustomElement);
-    }
+    customElements.define(tagName, CustomElement);
     return CustomElement;
   }
 
@@ -1156,7 +1157,6 @@
     state: { count: 0 },
     getters: (context) => ({
       counterStore: () => {
-        const s2 = context.store.$("counter");
         return context.store.$("counter");
       },
       hi: () => "hi"
@@ -1175,7 +1175,8 @@
     }),
     listen(params) {
     },
-    render: ({ state, computed, actions, getters: { counterStore: counterStore2 } }) => {
+    render: (context) => {
+      const { state, computed, actions, getters: { counterStore: counterStore2 } } = context;
       return html`
         <div>
             <p >Count: ${state.value.count}</p>
@@ -1196,10 +1197,9 @@
         default: 0
       }
     },
-    getters: () => ({
+    getters: (context) => ({
       hi: () => "hi",
-      counterStore: () => ""
-      //context.store.counter, // Автоматическая типизация
+      counterStore: () => context.store.$("counter")
     }),
     computed: ({ state }) => ({
       doubleCount: () => state.value.count * 2,
@@ -1240,10 +1240,9 @@
         default: 0
       }
     },
-    getters: () => ({
+    getters: (context) => ({
       hi: () => "hi",
-      counterStore: () => ""
-      //context.store.counter, // Автоматическая типизация
+      counterStore: () => context.store.$("counter")
     }),
     computed: ({ state }) => ({
       doubleCount: () => state.value.count * 2,
