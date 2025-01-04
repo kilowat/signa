@@ -45,7 +45,7 @@ defineComponent({
             default: false
         }
     },
-    stateValue: {
+    state: {
         values: [0],
         isDragging: false,
         activeDot: null
@@ -143,7 +143,7 @@ defineComponent({
 // Example parent component usage
 export default defineComponent({
     tagName: 'price-filter',
-    stateValue: {
+    state: {
         minPrice: 0,
         maxPrice: 1000
     },
@@ -162,7 +162,7 @@ export default defineComponent({
     render: ({ state, computed, actions }) => html`
         <div>
             <h3>Price Range</h3>
-            <p>${computed.formattedRange.value}</p>
+            <p>${computed.formattedRange()}</p>
             <range-slider
                 data-min="0"
                 data-max="1000"

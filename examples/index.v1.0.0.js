@@ -1,43 +1,12 @@
 "use strict";
-var Signa = (() => {
-  var __defProp = Object.defineProperty;
-  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-  var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __hasOwnProp = Object.prototype.hasOwnProperty;
+(() => {
   var __typeError = (msg) => {
     throw TypeError(msg);
   };
-  var __export = (target, all) => {
-    for (var name in all)
-      __defProp(target, name, { get: all[name], enumerable: true });
-  };
-  var __copyProps = (to, from, except, desc) => {
-    if (from && typeof from === "object" || typeof from === "function") {
-      for (let key of __getOwnPropNames(from))
-        if (!__hasOwnProp.call(to, key) && key !== except)
-          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-    }
-    return to;
-  };
-  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
   var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
   var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
-
-  // src/index.ts
-  var index_exports = {};
-  __export(index_exports, {
-    State: () => State,
-    compute: () => compute,
-    createState: () => createState,
-    createStore: () => createStore,
-    defineComponent: () => defineComponent,
-    defineStore: () => defineStore,
-    html: () => html,
-    htmlFor: () => htmlFor,
-    storeRegistry: () => storeRegistry
-  });
 
   // node_modules/udomdiff/esm/index.js
   var esm_default = (parentNode, a2, b2, get, before) => {
@@ -943,7 +912,42 @@ var Signa = (() => {
     return clonedObj;
   }
   function compute(computeFn) {
-    return w(() => computeFn());
+    return (...args) => {
+      const signal = w(() => computeFn(...args));
+      return signal.value;
+    };
+  }
+  function createComputed(computedFn) {
+    const computedSignals = /* @__PURE__ */ new Map();
+    const computedCache = /* @__PURE__ */ new Map();
+    const computed = Object.entries(computedFn()).reduce((acc, [key, fn]) => {
+      if (fn.length === 0) {
+        if (!computedSignals.has(key)) {
+          computedSignals.set(key, w(() => fn()));
+        }
+        return {
+          ...acc,
+          [key]: () => computedSignals.get(key).value
+        };
+      }
+      return {
+        ...acc,
+        [key]: (...args) => {
+          const cacheKey = JSON.stringify(args);
+          let argCache = computedCache.get(key);
+          if (!argCache) {
+            argCache = /* @__PURE__ */ new Map();
+            computedCache.set(key, argCache);
+          }
+          if (!argCache.has(cacheKey)) {
+            const signal = w(() => fn(...args));
+            argCache.set(cacheKey, signal);
+          }
+          return argCache.get(cacheKey).value;
+        }
+      };
+    }, {});
+    return computed;
   }
 
   // src/core/store.ts
@@ -955,15 +959,33 @@ var Signa = (() => {
       ...acc,
       [key]: fn()
     }), {}) : {};
-    const computed = computedFn ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => ({
-      ...acc,
-      [key]: compute(() => fn())
-    }), {}) : {};
+    const computedSignals = /* @__PURE__ */ new Map();
+    const computed = computedFn ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => {
+      if (fn.length === 0) {
+        if (!computedSignals.has(key)) {
+          computedSignals.set(key, w(() => fn()));
+        }
+        return {
+          ...acc,
+          [key]: () => computedSignals.get(key).value
+        };
+      }
+      return {
+        ...acc,
+        [key]: (...args) => fn(...args)
+      };
+    }, {}) : {};
     const actions = actionsFn ? actionsFn({
       state,
       computed
     }) : {};
     return { state, getters, computed, actions };
+  }
+  function defineStore(options) {
+    const { key, state, ...rest } = options;
+    const store = createStore({ stateValue: state, ...rest });
+    storeRegistry.register(key, store);
+    return store;
   }
   function registerStore(key, store) {
     if (globalStore[key]) {
@@ -978,11 +1000,6 @@ var Signa = (() => {
     }
     return store;
   }
-  function defineStore({ state, key }) {
-    const store = createStore({ stateValue: state });
-    storeRegistry.register(key, store);
-    return store;
-  }
   var storeRegistry = {
     list: globalStore,
     $: getStore,
@@ -994,7 +1011,7 @@ var Signa = (() => {
     const {
       tagName,
       props: propsDefinition = {},
-      stateValue: initialState,
+      state: initialState,
       getters: gettersFn = () => ({}),
       computed: computedFn = () => ({}),
       actions: actionsFn = () => ({}),
@@ -1041,6 +1058,7 @@ var Signa = (() => {
         }), {});
       }
       setupComputed() {
+        const computedSignals = /* @__PURE__ */ new Map();
         const computedObj = computedFn({
           props: this.getPropValue(),
           state: this.state,
@@ -1048,10 +1066,18 @@ var Signa = (() => {
           el: this,
           slots: this.slots
         });
-        return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
-          ...acc,
-          [key]: compute(() => fn())
-        }), {});
+        const result = Object.fromEntries(
+          Object.entries(computedObj).map(([key, fn]) => {
+            if (fn.length === 0) {
+              if (!computedSignals.has(key)) {
+                computedSignals.set(key, w(() => fn()));
+              }
+              return [key, () => computedSignals.get(key).value];
+            }
+            return [key, (...args) => fn(...args)];
+          })
+        );
+        return result;
       }
       setupActions() {
         return actionsFn({
@@ -1188,11 +1214,14 @@ var Signa = (() => {
   // src/components/button/button.ts
   var counterStore = defineStore({
     key: "counter",
-    state: { count: 0 }
+    state: { count: 0 },
+    computed: () => ({
+      double: () => true
+    })
   });
   defineComponent({
     tagName: "my-counter",
-    stateValue: { count: 0 },
+    state: { count: 0 },
     getters: (context) => ({
       counterStore: () => {
         return context.store.$("counter");
@@ -1218,8 +1247,8 @@ var Signa = (() => {
       return html`
         <div>
             <p >Count: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount.value}</p>
-            <p>Is Even: ${computed.isEven.value}</p>
+            <p>Double: ${computed.doubleCount()}</p>
+            <p>Is Even: ${computed.isEven()}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
         </div>
@@ -1228,7 +1257,7 @@ var Signa = (() => {
   });
   defineComponent({
     tagName: "my-counter-2",
-    stateValue: { count: 0 },
+    state: { count: 0 },
     props: {
       count: {
         type: Number,
@@ -1257,10 +1286,9 @@ var Signa = (() => {
       return html`
         <div>
             counter 2 component props value ${props.count}
-     
-            <p >Count: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount.value}</p>
-            <p>Is Even: ${computed.isEven.value}</p>
+            <p>Count: ${state.value.count}</p>
+            <p>Double: ${computed.doubleCount()}</p>
+            <p>Is Even: ${computed.isEven()}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
             <my-component  data-count="${state.value.count}"></my-component>
@@ -1270,7 +1298,7 @@ var Signa = (() => {
   });
   defineComponent({
     tagName: "my-component",
-    stateValue: { count: 0 },
+    state: { count: 0 },
     props: {
       count: {
         type: Number,
@@ -1300,8 +1328,8 @@ var Signa = (() => {
         <div>
             <div>props: ${props.count}</div>
             <p >Count: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount.value}</p>
-            <p>Is Even: ${computed.isEven.value}</p>
+            <p>Double: ${computed.doubleCount()}</p>
+            <p>Is Even: ${computed.isEven()}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
          
@@ -1315,7 +1343,7 @@ var Signa = (() => {
   });
   defineComponent({
     tagName: "parent-example-cmp-2",
-    stateValue: { example: 0, ...counterStateValue },
+    state: { example: 0, ...counterStateValue },
     // owner local state + external
     actions: ({ state }) => ({
       ...useActions(state),
@@ -1326,12 +1354,6 @@ var Signa = (() => {
     render(context) {
       return html`${context.state.value.example}<example-cmp @button-click="${() => console.log("button-click event")}"></example-cmp>`;
     }
-  });
-  var compositionStore = createStore({
-    stateValue: counterStateValue,
-    actions: ({ state }) => ({
-      ...useActions(state)
-    })
   });
   defineComponent({
     tagName: "example-cmp",
@@ -1369,7 +1391,7 @@ var Signa = (() => {
         default: false
       }
     },
-    stateValue: {
+    state: {
       values: [0],
       isDragging: false,
       activeDot: null
@@ -1456,7 +1478,7 @@ var Signa = (() => {
   });
   var slide_default = defineComponent({
     tagName: "price-filter",
-    stateValue: {
+    state: {
       minPrice: 0,
       maxPrice: 1e3
     },
@@ -1475,7 +1497,7 @@ var Signa = (() => {
     render: ({ state, computed, actions }) => html`
         <div>
             <h3>Price Range</h3>
-            <p>${computed.formattedRange.value}</p>
+            <p>${computed.formattedRange()}</p>
             <range-slider
                 data-min="0"
                 data-max="1000"
@@ -1487,7 +1509,6 @@ var Signa = (() => {
         </div>
     `
   });
-  return __toCommonJS(index_exports);
 })();
 /*! Bundled license information:
 

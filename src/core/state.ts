@@ -1,6 +1,6 @@
 import { ReadonlySignal, Signal, signal as createSignal, computed as preactComputed } from '@preact/signals-core';
+import { ComputedProperties } from './component';
 
-export type ComputedResult<T> = ReadonlySignal<T>;
 
 export class State<T> extends Signal<T> {
     emit(value: Partial<T> | T): void {
@@ -37,8 +37,57 @@ function cloneDeep<T>(obj: T): T {
     return clonedObj as T;
 }
 
-export function compute<R>(
-    computeFn: () => R
-): ReadonlySignal<R> {
-    return preactComputed(() => computeFn());
+export type ComputedResult<T, Args extends any[]> = (...args: Args) => T;
+
+export function compute<R, Args extends any[]>(
+    computeFn: (...args: Args) => R
+): ComputedResult<R, Args> {
+    return (...args: Args) => {
+        const signal = preactComputed(() => computeFn(...args));
+        return signal.value;
+    };
+}
+
+
+export function createComputed<C extends Record<string, (...args: any[]) => any>>(
+    computedFn: () => C
+): ComputedProperties<C> {
+    const computedSignals = new Map<string, any>();
+    const computedCache = new Map<string, Map<string, any>>(); // Кэш для функций с аргументами
+
+    const computed = Object.entries(computedFn()).reduce((acc, [key, fn]) => {
+        if (fn.length === 0) {
+            // Кэшируем вычисления без аргументов
+            if (!computedSignals.has(key)) {
+                computedSignals.set(key, preactComputed(() => fn()));
+            }
+            return {
+                ...acc,
+                [key]: () => computedSignals.get(key).value,
+            };
+        }
+
+        // Для функций с аргументами создаём кэш
+        return {
+            ...acc,
+            [key]: (...args: any[]) => {
+                const cacheKey = JSON.stringify(args); // Генерация ключа для аргументов
+                let argCache = computedCache.get(key);
+
+                if (!argCache) {
+                    argCache = new Map<string, any>();
+                    computedCache.set(key, argCache);
+                }
+
+                if (!argCache.has(cacheKey)) {
+                    const signal = preactComputed(() => fn(...args));
+                    argCache.set(cacheKey, signal);
+                }
+
+                return argCache.get(cacheKey).value;
+            },
+        };
+    }, {} as ComputedProperties<C>);
+
+    return computed;
 }

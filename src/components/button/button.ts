@@ -1,10 +1,14 @@
 
-import { defineStore, defineComponent, html, State, createState, createStore, StoreOptions, ComponentOptions } from "signa/core";
+import { defineStore, defineComponent, html, State } from "signa/core";
 
 const counterStore = defineStore({
     key: 'counter',
-    state: { count: 0 }
+    state: { count: 0 },
+    computed: () => ({
+        double: () => true,
+    })
 })
+
 // example def types
 declare module "signa/core" {
     interface GlobalStore {
@@ -14,7 +18,7 @@ declare module "signa/core" {
 
 defineComponent({
     tagName: 'my-counter',
-    stateValue: { count: 0 },
+    state: { count: 0 },
     getters: (context) => ({
         counterStore: () => {
             return context.store.$('counter')
@@ -41,8 +45,8 @@ defineComponent({
         return html`
         <div>
             <p >Count: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount.value}</p>
-            <p>Is Even: ${computed.isEven.value}</p>
+            <p>Double: ${computed.doubleCount()}</p>
+            <p>Is Even: ${computed.isEven()}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
         </div>
@@ -52,7 +56,7 @@ defineComponent({
 
 defineComponent({
     tagName: 'my-counter-2',
-    stateValue: { count: 0 },
+    state: { count: 0 },
     props: {
         count: {
             type: Number,
@@ -78,14 +82,13 @@ defineComponent({
     listen(params) {
 
     },
-    render: ({ props, state, computed, actions, getters: { counterStore } },) => {
+    render: ({ props, state, computed, actions, getters: { counterStore } }) => {
         return html`
         <div>
             counter 2 component props value ${props.count}
-     
-            <p >Count: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount.value}</p>
-            <p>Is Even: ${computed.isEven.value}</p>
+            <p>Count: ${state.value.count}</p>
+            <p>Double: ${computed.doubleCount()}</p>
+            <p>Is Even: ${computed.isEven()}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
             <my-component  data-count="${state.value.count}"></my-component>
@@ -96,7 +99,7 @@ defineComponent({
 
 defineComponent({
     tagName: 'my-component',
-    stateValue: { count: 0 },
+    state: { count: 0 },
     props: {
         count: {
             type: Number,
@@ -127,8 +130,8 @@ defineComponent({
         <div>
             <div>props: ${props.count}</div>
             <p >Count: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount.value}</p>
-            <p>Is Even: ${computed.isEven.value}</p>
+            <p>Double: ${computed.doubleCount()}</p>
+            <p>Is Even: ${computed.isEven()}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
          
@@ -146,7 +149,7 @@ const useActions = (state: State<typeof counterStateValue>) => ({
 // owner + external composition state actions ...
 defineComponent({
     tagName: 'parent-example-cmp-2',
-    stateValue: { example: 0, ...counterStateValue }, // owner local state + external
+    state: { example: 0, ...counterStateValue }, // owner local state + external
     actions: ({ state }) => ({
         ...useActions(state),
         myinc: () => { state.emit({ example: state.value.example + 1 }) }
@@ -154,13 +157,6 @@ defineComponent({
     render(context) {
         return html`${context.state.value.example}<example-cmp @button-click="${() => console.log('button-click event')}"></example-cmp>`
     },
-})
-// composition store
-const compositionStore = createStore({
-    stateValue: counterStateValue,
-    actions: ({ state }) => ({
-        ...useActions(state)
-    }),
 })
 
 defineComponent({
