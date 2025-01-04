@@ -1,12 +1,46 @@
 "use strict";
-(() => {
+var Signa = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __typeError = (msg) => {
     throw TypeError(msg);
   };
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
   var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
   var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
+
+  // src/index.ts
+  var index_exports = {};
+  __export(index_exports, {
+    State: () => State,
+    compute: () => compute,
+    createComputed: () => createComputed,
+    createState: () => createState,
+    createStore: () => createStore,
+    defineComponent: () => defineComponent,
+    defineStore: () => defineStore,
+    effect: () => E,
+    html: () => html,
+    htmlFor: () => htmlFor,
+    preactComputed: () => w,
+    storeRegistry: () => storeRegistry
+  });
 
   // node_modules/udomdiff/esm/index.js
   var esm_default = (parentNode, a2, b2, get, before) => {
@@ -961,7 +995,7 @@
     }), {}) : {};
     const computed = computedFn ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => ({
       ...acc,
-      [key]: compute(() => fn())
+      [key]: w(() => fn())
     }), {}) : {};
     const actions = actionsFn ? actionsFn({
       state,
@@ -1053,7 +1087,7 @@
         });
         return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
           ...acc,
-          [key]: compute(() => fn())
+          [key]: w(() => fn())
         }), {});
       }
       setupActions() {
@@ -1483,7 +1517,7 @@
     render: ({ state, computed, actions }) => html`
         <div>
             <h3>Price Range</h3>
-            <p>${computed.formattedRange()}</p>
+            <p>${computed.formattedRange}</p>
             <range-slider
                 data-min="0"
                 data-max="1000"
@@ -1495,6 +1529,7 @@
         </div>
     `
   });
+  return __toCommonJS(index_exports);
 })();
 /*! Bundled license information:
 

@@ -162,7 +162,7 @@ export default defineComponent({
     render: ({ state, computed, actions }) => html`
         <div>
             <h3>Price Range</h3>
-            <p>${computed.formattedRange()}</p>
+            <p>${computed.formattedRange}</p>
             <range-slider
                 data-min="0"
                 data-max="1000"

@@ -1,6 +1,6 @@
-import { State, createState, compute } from './state';
+import { State, createState } from './state';
 import { ComputedProperties, GettersProperties } from './component';
-
+import { computed as preactComputed } from '@preact/signals-core';
 type ComputedFn<S> = (context: {
     state: State<S>;
 }) => Record<string, (...args: any[]) => any>;
@@ -56,7 +56,7 @@ export function createStore<S, G extends GettersFn<S>, C extends ComputedFn<S>, 
     const computed = computedFn
         ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => ({
             ...acc,
-            [key]: compute(() => fn())
+            [key]: preactComputed(() => fn())
         }), {}) as ComputedProperties<ReturnType<C>>
         : ({} as ComputedProperties<ReturnType<C>>);
 

@@ -1,6 +1,6 @@
 import { reactive } from 'uhtml/reactive';
-import { effect, ReadonlySignal, Signal, signal } from '@preact/signals-core';
-import { State, createState, compute } from './state';
+import { effect, ReadonlySignal, Signal, signal, computed as preactComputed } from '@preact/signals-core';
+import { State, createState } from './state';
 import { StoreRegistry, storeRegistry, GlobalStore } from './store';
 
 type ConstructorToType<T> =
@@ -196,7 +196,7 @@ export function defineComponent<
 
             return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
                 ...acc,
-                [key]: compute(() => fn())
+                [key]: preactComputed(() => fn())
             }), {}) as ComputedProperties<ReturnType<C>>;
         }
 
