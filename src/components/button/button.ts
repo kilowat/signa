@@ -17,7 +17,6 @@ defineComponent({
     state: { count: 0 },
     getters: (context) => ({
         counterStore: () => {
-            const s = context.store.$('counter');
             return context.store.$('counter')
         },
         hi: () => 'hi',
@@ -37,7 +36,8 @@ defineComponent({
     listen(params) {
 
     },
-    render: ({ state, computed, actions, getters: { counterStore } }) => {
+    render: (context) => {
+        const { state, computed, actions, getters: { counterStore } } = context;
         return html`
         <div>
             <p >Count: ${state.value.count}</p>
@@ -59,9 +59,9 @@ defineComponent({
             default: 0
         }
     },
-    getters: () => ({
+    getters: (context) => ({
         hi: () => 'hi',
-        counterStore: () => ''//context.store.counter, // Автоматическая типизация
+        counterStore: () => context.store.$('counter'),
     }),
     computed: ({ state }) => ({
         doubleCount: () => state.value.count * 2,
@@ -79,8 +79,6 @@ defineComponent({
 
     },
     render: ({ props, state, computed, actions, getters: { counterStore } },) => {
-
-
         console.log('rerender')
         return html`
         <div>
@@ -106,9 +104,9 @@ defineComponent({
             default: 0
         }
     },
-    getters: () => ({
+    getters: (context) => ({
         hi: () => 'hi',
-        counterStore: () => ''//context.store.counter, // Автоматическая типизация
+        counterStore: () => context.store.$('counter'),
     }),
     computed: ({ state }) => ({
         doubleCount: () => state.value.count * 2,
