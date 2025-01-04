@@ -1,43 +1,12 @@
 "use strict";
-var Signa = (() => {
-  var __defProp = Object.defineProperty;
-  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-  var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __hasOwnProp = Object.prototype.hasOwnProperty;
+(() => {
   var __typeError = (msg) => {
     throw TypeError(msg);
   };
-  var __export = (target, all) => {
-    for (var name in all)
-      __defProp(target, name, { get: all[name], enumerable: true });
-  };
-  var __copyProps = (to, from, except, desc) => {
-    if (from && typeof from === "object" || typeof from === "function") {
-      for (let key of __getOwnPropNames(from))
-        if (!__hasOwnProp.call(to, key) && key !== except)
-          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-    }
-    return to;
-  };
-  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
   var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
   var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
-
-  // src/index.ts
-  var index_exports = {};
-  __export(index_exports, {
-    State: () => State,
-    compute: () => compute,
-    createState: () => createState,
-    createStore: () => createStore,
-    defineComponent: () => defineComponent,
-    defineStore: () => defineStore,
-    html: () => html,
-    htmlFor: () => htmlFor,
-    storeRegistry: () => storeRegistry
-  });
 
   // node_modules/udomdiff/esm/index.js
   var esm_default = (parentNode, a2, b2, get, before) => {
@@ -993,10 +962,11 @@ var Signa = (() => {
   function defineComponent(options) {
     const {
       tagName,
+      props: propsDefinition = {},
       state: initialState,
-      getters: gettersFn,
-      computed: computedFn,
-      actions: actionsFn,
+      getters: gettersFn = () => ({}),
+      computed: computedFn = () => ({}),
+      actions: actionsFn = () => ({}),
       connected,
       disconnected,
       render,
@@ -1008,44 +978,24 @@ var Signa = (() => {
         super();
         this.slots = {};
         this.cleanup = [];
+        this.props = d({});
         this.state = createState(initialState);
         this.getters = this.setupGetters();
         this.computed = this.setupComputed();
         this.actions = this.setupActions();
-      }
-      get context() {
-        return {
-          state: this.state,
-          getters: this.getters,
-          computed: this.computed,
-          actions: this.actions,
-          element: this,
-          slots: this.slots,
-          store: storeRegistry
-        };
-      }
-      subscribeToState(callback) {
-        let previousValue = this.state.peek();
-        const disposer = E(() => {
-          const currentValue = this.state.value;
-          callback({
-            newValue: currentValue,
-            oldValue: previousValue
-          });
-          previousValue = currentValue;
+        requestAnimationFrame(() => {
+          this.props.value = this.initializeProps();
         });
-        this.cleanup.push(disposer);
-        return () => {
-          const index = this.cleanup.indexOf(disposer);
-          if (index > -1) {
-            this.cleanup.splice(index, 1);
-          }
-          disposer();
-        };
+      }
+      static get observedAttributes() {
+        return Object.keys(propsDefinition).map((name) => `data-${name}`);
+      }
+      $(key) {
+        return this[key];
       }
       setupGetters() {
-        if (!gettersFn) return {};
         const getterObj = gettersFn({
+          props: this.props,
           state: this.state,
           store: storeRegistry
         });
@@ -1055,8 +1005,8 @@ var Signa = (() => {
         }), {});
       }
       setupComputed() {
-        if (!computedFn) return {};
         const computedObj = computedFn({
+          props: this.props,
           state: this.state,
           store: storeRegistry
         });
@@ -1066,14 +1016,84 @@ var Signa = (() => {
         }), {});
       }
       setupActions() {
-        if (!actionsFn) return {};
-        const context = {
+        return actionsFn({
+          props: this.props,
+          state: this.state,
+          computed: this.computed,
+          store: storeRegistry
+        });
+      }
+      get context() {
+        return {
+          props: this.getPropValue(),
           state: this.state,
           getters: this.getters,
           computed: this.computed,
+          actions: this.actions,
+          element: this,
+          slots: this.slots,
           store: storeRegistry
         };
-        return actionsFn(context);
+      }
+      initializeProps() {
+        var _a;
+        const props = {};
+        for (const [key, definition] of Object.entries(propsDefinition)) {
+          const attrName = `data-${key}`;
+          const attrValue = this.getAttribute(attrName);
+          const defaultValue = (_a = definition.default) != null ? _a : this.getDefaultForType(definition.type);
+          props[key] = attrValue !== null ? this.parseAttributeValue(attrValue, definition.type) : defaultValue;
+        }
+        return props;
+      }
+      getDefaultForType(type) {
+        switch (type) {
+          case String:
+            return "";
+          case Number:
+            return 0;
+          case Boolean:
+            return false;
+          case Object:
+            return {};
+          case Array:
+            return [];
+          default:
+            return null;
+        }
+      }
+      parseAttributeValue(value, type) {
+        switch (type) {
+          case Number:
+            return Number(value);
+          case Boolean:
+            return value !== null && value !== "false";
+          case Object:
+          case Array:
+            try {
+              return JSON.parse(value);
+            } catch {
+              return type === Object ? {} : [];
+            }
+          default:
+            return value;
+        }
+      }
+      attributeChangedCallback(name, oldValue, newValue) {
+        const propName = name.replace(/^data-/, "");
+        const propDef = propsDefinition[propName];
+        if (!propDef) return;
+        const value = this.parseAttributeValue(newValue, propDef.type);
+        this.updateProp(propName, value);
+      }
+      updateProp(name, value) {
+        this.props.value = {
+          ...this.props.peek(),
+          [name]: value
+        };
+      }
+      getPropValue() {
+        return this.props.value;
       }
       setupListener() {
         if (!listen) return;
@@ -1123,6 +1143,7 @@ var Signa = (() => {
     if (!customElements.get(tagName)) {
       customElements.define(tagName, CustomElement);
     }
+    return CustomElement;
   }
 
   // src/components/button/button.ts
@@ -1169,6 +1190,12 @@ var Signa = (() => {
   defineComponent({
     tagName: "my-counter-2",
     state: { count: 0 },
+    props: {
+      count: {
+        type: Number,
+        default: 0
+      }
+    },
     getters: () => ({
       hi: () => "hi",
       counterStore: () => ""
@@ -1187,22 +1214,65 @@ var Signa = (() => {
       }
     }),
     listen(params) {
-      console.log(params.getters.hi);
     },
-    render: ({ state, computed, actions, getters: { counterStore: counterStore2 } }) => {
+    render: ({ props, state, computed, actions, getters: { counterStore: counterStore2 } }) => {
+      console.log("rerender");
       return html`
         <div>
+            counter 2 component
+     
             <p >Count: ${state.value.count}</p>
             <p>Double: ${computed.doubleCount.value}</p>
             <p>Is Even: ${computed.isEven.value}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
-            <my-component .count=${1} data-count="${state.value.count}"></my-component>
+            <my-component  data-count="${state.value.count}"></my-component>
         </div>
     `;
     }
   });
-  return __toCommonJS(index_exports);
+  defineComponent({
+    tagName: "my-component",
+    state: { count: 0 },
+    props: {
+      count: {
+        type: Number,
+        default: 0
+      }
+    },
+    getters: () => ({
+      hi: () => "hi",
+      counterStore: () => ""
+      //context.store.counter, // Автоматическая типизация
+    }),
+    computed: ({ state }) => ({
+      doubleCount: () => state.value.count * 2,
+      isEven: () => state.value.count % 2 === 0
+    }),
+    actions: ({ state }) => ({
+      increment: (amount) => {
+        state.emit({ count: state.value.count + amount });
+      },
+      reset: () => {
+        state.emit({ count: 0 });
+      }
+    }),
+    listen(params) {
+    },
+    render: ({ props, state, computed, actions, getters: { counterStore: counterStore2 } }) => {
+      return html`
+        <div>
+            <div>props: ${props.count}</div>
+            <p >Count: ${state.value.count}</p>
+            <p>Double: ${computed.doubleCount.value}</p>
+            <p>Is Even: ${computed.isEven.value}</p>
+            <button onclick=${() => actions.increment(1)}>+1</button>
+            <button onclick=${actions.reset}>Reset</button>
+         
+        </div>
+    `;
+    }
+  });
 })();
 /*! Bundled license information:
 

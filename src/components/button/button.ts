@@ -53,6 +53,12 @@ defineComponent({
 defineComponent({
     tagName: 'my-counter-2',
     state: { count: 0 },
+    props: {
+        count: {
+            type: Number,
+            default: 0
+        }
+    },
     getters: () => ({
         hi: () => 'hi',
         counterStore: () => ''//context.store.counter, // Автоматическая типизация
@@ -70,17 +76,65 @@ defineComponent({
         }
     }),
     listen(params) {
-        console.log(params.getters.hi)
+
     },
-    render: ({ state, computed, actions, getters: { counterStore } }) => {
+    render: ({ props, state, computed, actions, getters: { counterStore } },) => {
+
+
+        console.log('rerender')
         return html`
         <div>
+            counter 2 component
+     
             <p >Count: ${state.value.count}</p>
             <p>Double: ${computed.doubleCount.value}</p>
             <p>Is Even: ${computed.isEven.value}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
-            <my-component .count=${1} data-count="${state.value.count}"></my-component>
+            <my-component  data-count="${state.value.count}"></my-component>
+        </div>
+    `;
+    },
+});
+
+defineComponent({
+    tagName: 'my-component',
+    state: { count: 0 },
+    props: {
+        count: {
+            type: Number,
+            default: 0
+        }
+    },
+    getters: () => ({
+        hi: () => 'hi',
+        counterStore: () => ''//context.store.counter, // Автоматическая типизация
+    }),
+    computed: ({ state }) => ({
+        doubleCount: () => state.value.count * 2,
+        isEven: () => state.value.count % 2 === 0,
+    }),
+    actions: ({ state }) => ({
+        increment: (amount: number) => {
+            state.emit({ count: state.value.count + amount });
+        },
+        reset: () => {
+            state.emit({ count: 0 });
+        }
+    }),
+    listen(params) {
+
+    },
+    render: ({ props, state, computed, actions, getters: { counterStore } },) => {
+        return html`
+        <div>
+            <div>props: ${props.count}</div>
+            <p >Count: ${state.value.count}</p>
+            <p>Double: ${computed.doubleCount.value}</p>
+            <p>Is Even: ${computed.isEven.value}</p>
+            <button onclick=${() => actions.increment(1)}>+1</button>
+            <button onclick=${actions.reset}>Reset</button>
+         
         </div>
     `;
     },

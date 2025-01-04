@@ -263,7 +263,7 @@ export function defineComponent<
 
         updateProp(name: keyof P, value: any) {
             this.props.value = {
-                ...this.props.peek(),
+                ...this.props.value,
                 [name]: value,
             };
         }
