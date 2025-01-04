@@ -953,39 +953,21 @@
   // src/core/store.ts
   var globalStore = {};
   function createStore(options) {
-    const { stateValue: initialState, getters: gettersFn, computed: computedFn, actions: actionsFn } = options;
+    const { state: initialState, getters: gettersFn, computed: computedFn, actions: actionsFn } = options;
     const state = createState(initialState);
     const getters = gettersFn ? Object.entries(gettersFn({ state })).reduce((acc, [key, fn]) => ({
       ...acc,
       [key]: fn()
     }), {}) : {};
-    const computedSignals = /* @__PURE__ */ new Map();
-    const computed = computedFn ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => {
-      if (fn.length === 0) {
-        if (!computedSignals.has(key)) {
-          computedSignals.set(key, w(() => fn()));
-        }
-        return {
-          ...acc,
-          [key]: () => computedSignals.get(key).value
-        };
-      }
-      return {
-        ...acc,
-        [key]: (...args) => fn(...args)
-      };
-    }, {}) : {};
+    const computed = computedFn ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => ({
+      ...acc,
+      [key]: compute(() => fn())
+    }), {}) : {};
     const actions = actionsFn ? actionsFn({
       state,
       computed
     }) : {};
     return { state, getters, computed, actions };
-  }
-  function defineStore(options) {
-    const { key, state, ...rest } = options;
-    const store = createStore({ stateValue: state, ...rest });
-    storeRegistry.register(key, store);
-    return store;
   }
   function registerStore(key, store) {
     if (globalStore[key]) {
@@ -998,6 +980,12 @@
     if (!store) {
       throw new Error(`Store "${key}" not found`);
     }
+    return store;
+  }
+  function defineStore(options) {
+    const { key, state, ...rest } = options;
+    const store = createStore({ state, ...rest });
+    storeRegistry.register(key, store);
     return store;
   }
   var storeRegistry = {
@@ -1027,13 +1015,11 @@
         this.slots = {};
         this.cleanup = [];
         this.props = d({});
+        this.props.value = this.initializeProps();
         this.state = createState(initialState);
         this.getters = this.setupGetters();
         this.computed = this.setupComputed();
         this.actions = this.setupActions();
-        requestAnimationFrame(() => {
-          this.props.value = this.initializeProps();
-        });
       }
       static get observedAttributes() {
         return Object.keys(propsDefinition).map((name) => `data-${name}`);
@@ -1058,7 +1044,6 @@
         }), {});
       }
       setupComputed() {
-        const computedSignals = /* @__PURE__ */ new Map();
         const computedObj = computedFn({
           props: this.getPropValue(),
           state: this.state,
@@ -1066,18 +1051,10 @@
           el: this,
           slots: this.slots
         });
-        const result = Object.fromEntries(
-          Object.entries(computedObj).map(([key, fn]) => {
-            if (fn.length === 0) {
-              if (!computedSignals.has(key)) {
-                computedSignals.set(key, w(() => fn()));
-              }
-              return [key, () => computedSignals.get(key).value];
-            }
-            return [key, (...args) => fn(...args)];
-          })
-        );
-        return result;
+        return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
+          ...acc,
+          [key]: compute(() => fn())
+        }), {});
       }
       setupActions() {
         return actionsFn({
@@ -1222,16 +1199,25 @@
   defineComponent({
     tagName: "my-counter",
     state: { count: 0 },
+    props: {
+      val: {
+        type: Number,
+        default: 20
+      }
+    },
     getters: (context) => ({
       counterStore: () => {
         return context.store.$("counter");
       },
       hi: () => "hi"
     }),
-    computed: ({ state }) => ({
-      doubleCount: () => state.value.count * 2,
-      isEven: () => state.value.count % 2 === 0
-    }),
+    computed: ({ state, props }) => {
+      console.log(props);
+      return {
+        doubleCount: () => state.value.count + props.val,
+        isEven: () => state.value.count % 2 === 0
+      };
+    },
     actions: ({ state }) => ({
       increment: (amount) => {
         state.emit({ count: state.value.count + amount });
@@ -1246,9 +1232,9 @@
       const { state, computed, actions, getters: { counterStore: counterStore2 } } = context;
       return html`
         <div>
-            <p >Count: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount()}</p>
-            <p>Is Even: ${computed.isEven()}</p>
+            <p>Count test: ${state.value.count}</p>
+            <p>Double: ${computed.doubleCount.value}</p>
+            <p>Is Even: ${computed.isEven.value}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
         </div>
@@ -1287,8 +1273,8 @@
         <div>
             counter 2 component props value ${props.count}
             <p>Count: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount()}</p>
-            <p>Is Even: ${computed.isEven()}</p>
+            <p>Double: ${computed.doubleCount.value}</p>
+            <p>Is Even: ${computed.isEven.value}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
             <my-component  data-count="${state.value.count}"></my-component>
@@ -1328,8 +1314,8 @@
         <div>
             <div>props: ${props.count}</div>
             <p >Count: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount()}</p>
-            <p>Is Even: ${computed.isEven()}</p>
+            <p>Double: ${computed.doubleCount.value}</p>
+            <p>Is Even: ${computed.isEven.value}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
          

@@ -1,6 +1,6 @@
 import { reactive } from 'uhtml/reactive';
-import { effect, ReadonlySignal, Signal, signal, computed as preactComputed } from '@preact/signals-core';
-import { State, createState, compute, ComputedResult } from './state';
+import { effect, ReadonlySignal, Signal, signal } from '@preact/signals-core';
+import { State, createState, compute } from './state';
 import { StoreRegistry, storeRegistry, GlobalStore } from './store';
 
 type ConstructorToType<T> =
@@ -39,8 +39,8 @@ type InferProps<T extends Record<string, PropDefinition>> = {
 };
 
 export type ComputedProperties<C> = {
-    [K in keyof C]: C[K] extends (...args: infer Args) => any
-    ? ComputedResult<ReturnType<C[K]>, Args>
+    [K in keyof C]: C[K] extends (...args: any[]) => any
+    ? ReadonlySignal<ReturnType<C[K]>>
     : never;
 };
 
@@ -66,7 +66,7 @@ type BaseContext<P, S> = {
 };
 
 type GettersFn<P, S> = (context: BaseContext<P, S>) => Record<string, () => any>;
-type ComputedFn<P, S> = (context: BaseContext<P, S>) => Record<string, (...args: any[]) => any>;
+type ComputedFn<P, S> = (context: BaseContext<P, S>) => Record<string, () => any>;
 type ActionsFn<P, S, C> = (context: BaseContext<P, S> & {
     computed: ComputedProperties<C>;
 }) => Record<string, (...args: any[]) => any>;
@@ -155,13 +155,11 @@ export function defineComponent<
         constructor() {
             super();
             this.props = signal({} as InferProps<P>);
+            this.props.value = this.initializeProps();
             this.state = createState(initialState as S);
             this.getters = this.setupGetters();
             this.computed = this.setupComputed();
             this.actions = this.setupActions();
-            requestAnimationFrame(() => {
-                this.props.value = this.initializeProps();
-            });
         }
 
         public $<T = any>(key: string) {
@@ -188,7 +186,6 @@ export function defineComponent<
         }
 
         setupComputed(): ComputedProperties<ReturnType<C>> {
-            const computedSignals = new Map<string, any>();
             const computedObj = computedFn({
                 props: this.getPropValue(),
                 state: this.state,
@@ -197,19 +194,10 @@ export function defineComponent<
                 slots: this.slots,
             });
 
-            const result = Object.fromEntries(
-                Object.entries(computedObj).map(([key, fn]) => {
-                    if (fn.length === 0) {
-                        if (!computedSignals.has(key)) {
-                            computedSignals.set(key, preactComputed(() => fn()));
-                        }
-                        return [key, () => computedSignals.get(key).value];
-                    }
-                    return [key, (...args: any[]) => fn(...args)];
-                })
-            ) as ComputedProperties<ReturnType<C>>;
-
-            return result;
+            return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
+                ...acc,
+                [key]: compute(() => fn())
+            }), {}) as ComputedProperties<ReturnType<C>>;
         }
 
         setupActions(): ReturnType<A> {

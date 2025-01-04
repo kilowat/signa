@@ -1,8 +1,7 @@
-import { State, createState } from './state';
+import { State, createState, compute } from './state';
 import { ComputedProperties, GettersProperties } from './component';
-import { computed as preactComputed } from '@preact/signals-core';
 
-type GettersFn<S> = (context: {
+type ComputedFn<S> = (context: {
     state: State<S>;
 }) => Record<string, (...args: any[]) => any>;
 
@@ -11,10 +10,19 @@ type ActionsFn<S, C> = (context: {
     computed: ComputedProperties<C>;
 }) => Record<string, (...args: any[]) => any>;
 
-export interface StoreContext<S, G extends GettersFn<S>, C, A extends ActionsFn<S, C>> {
+type GettersFn<S> = ComputedFn<S>;
+
+export interface StoreOptions<S = any, G extends GettersFn<S> = any, C extends ComputedFn<S> = any, A extends ActionsFn<S, ReturnType<C>> = any> {
+    state: S;
+    getters?: G;
+    computed?: C;
+    actions?: A;
+}
+
+export interface StoreContext<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
     state: State<S>;
     getters: GettersProperties<ReturnType<G>>;
-    computed: ComputedProperties<C>;
+    computed: ComputedProperties<ReturnType<C>>;
     actions: ReturnType<A>;
 }
 
@@ -22,7 +30,7 @@ export interface GlobalStore extends Record<string, StoreContext<any, any, any, 
 
 export interface StoreRegistry {
     list: Partial<GlobalStore>;
-    $: <K extends keyof GlobalStore>(key: K) => GlobalStore[K];
+    $: <K extends keyof GlobalStore, >(key: K) => GlobalStore[K];
     register: <K extends keyof GlobalStore>(
         key: K,
         store: GlobalStore[K]
@@ -31,18 +39,10 @@ export interface StoreRegistry {
 
 const globalStore: Partial<GlobalStore> = {};
 
-export function createStore<
-    S,
-    G extends GettersFn<S>,
-    C extends Record<string, (...args: any[]) => any>,
-    A extends ActionsFn<S, C>
->(options: {
-    stateValue: S;
-    getters?: G;
-    computed?: (context: { state: State<S> }) => C;
-    actions?: A;
-}): StoreContext<S, G, C, A> {
-    const { stateValue: initialState, getters: gettersFn, computed: computedFn, actions: actionsFn } = options;
+export function createStore<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>(
+    options: StoreOptions<S, G, C, A>
+): StoreContext<S, G, C, A> {
+    const { state: initialState, getters: gettersFn, computed: computedFn, actions: actionsFn } = options;
 
     const state = createState(initialState);
 
@@ -53,25 +53,12 @@ export function createStore<
         }), {}) as GettersProperties<ReturnType<G>>
         : ({} as GettersProperties<ReturnType<G>>);
 
-    const computedSignals = new Map<string, any>();
-
     const computed = computedFn
-        ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => {
-            if (fn.length === 0) {
-                if (!computedSignals.has(key)) {
-                    computedSignals.set(key, preactComputed(() => fn()));
-                }
-                return {
-                    ...acc,
-                    [key]: () => computedSignals.get(key).value
-                };
-            }
-            return {
-                ...acc,
-                [key]: (...args: any[]) => fn(...args)
-            };
-        }, {}) as ComputedProperties<C>
-        : ({} as ComputedProperties<C>);
+        ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => ({
+            ...acc,
+            [key]: compute(() => fn())
+        }), {}) as ComputedProperties<ReturnType<C>>
+        : ({} as ComputedProperties<ReturnType<C>>);
 
     const actions = actionsFn
         ? (actionsFn({
@@ -81,6 +68,25 @@ export function createStore<
         : ({} as ReturnType<A>);
 
     return { state, getters, computed, actions };
+}
+
+function registerStore<K extends keyof GlobalStore>(
+    key: K,
+    store: GlobalStore[K]
+): void {
+    if (globalStore[key]) {
+        throw new Error(`Store "${key}" already exists`);
+    }
+    globalStore[key] = store;
+
+}
+
+function getStore<K extends keyof GlobalStore>(key: K): GlobalStore[K] {
+    const store = globalStore[key];
+    if (!store) {
+        throw new Error(`Store "${key}" not found`);
+    }
+    return store;
 }
 
 export function defineStore<
@@ -96,26 +102,8 @@ export function defineStore<
     actions?: A;
 }) {
     const { key, state, ...rest } = options;
-    const store = createStore({ stateValue: state, ...rest });
+    const store = createStore({ state: state, ...rest });
     storeRegistry.register(key, store);
-    return store;
-}
-
-function registerStore<K extends keyof GlobalStore>(
-    key: K,
-    store: GlobalStore[K]
-): void {
-    if (globalStore[key]) {
-        throw new Error(`Store "${key}" already exists`);
-    }
-    globalStore[key] = store;
-}
-
-function getStore<K extends keyof GlobalStore>(key: K): GlobalStore[K] {
-    const store = globalStore[key];
-    if (!store) {
-        throw new Error(`Store "${key}" not found`);
-    }
     return store;
 }
 
