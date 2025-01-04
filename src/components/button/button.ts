@@ -1,5 +1,5 @@
 
-import { defineStore, defineComponent, html, State, createState, createStore } from "signa/core";
+import { defineStore, defineComponent, html, State, createState, createStore, StoreOptions, ComponentOptions } from "signa/core";
 
 const counterStore = defineStore({
     key: 'counter',
@@ -14,7 +14,7 @@ declare module "signa/core" {
 
 defineComponent({
     tagName: 'my-counter',
-    state: { count: 0 },
+    stateValue: { count: 0 },
     getters: (context) => ({
         counterStore: () => {
             return context.store.$('counter')
@@ -52,7 +52,7 @@ defineComponent({
 
 defineComponent({
     tagName: 'my-counter-2',
-    state: { count: 0 },
+    stateValue: { count: 0 },
     props: {
         count: {
             type: Number,
@@ -79,10 +79,9 @@ defineComponent({
 
     },
     render: ({ props, state, computed, actions, getters: { counterStore } },) => {
-        console.log('rerender')
         return html`
         <div>
-            counter 2 component
+            counter 2 component props value ${props.count}
      
             <p >Count: ${state.value.count}</p>
             <p>Double: ${computed.doubleCount.value}</p>
@@ -97,7 +96,7 @@ defineComponent({
 
 defineComponent({
     tagName: 'my-component',
-    state: { count: 0 },
+    stateValue: { count: 0 },
     props: {
         count: {
             type: Number,
@@ -123,7 +122,7 @@ defineComponent({
     listen(params) {
 
     },
-    render: ({ props, state, computed, actions, getters: { counterStore } },) => {
+    render: ({ props, state, computed, actions, getters: { counterStore } }) => {
         return html`
         <div>
             <div>props: ${props.count}</div>
@@ -137,3 +136,36 @@ defineComponent({
     `;
     },
 });
+
+const counterStateValue = { count: 0 };
+const useActions = (state: State<typeof counterStateValue>) => ({
+    inc: () => state.emit({ count: state.value.count + 1 })
+})
+
+
+// owner + external composition state actions ...
+defineComponent({
+    tagName: 'parent-example-cmp-2',
+    stateValue: { example: 0, ...counterStateValue }, // owner local state + external
+    actions: ({ state }) => ({
+        ...useActions(state),
+        myinc: () => { state.emit({ example: state.value.example + 1 }) }
+    }),
+    render(context) {
+        return html`${context.state.value.example}<example-cmp @button-click="${() => console.log('button-click event')}"></example-cmp>`
+    },
+})
+// composition store
+const compositionStore = createStore({
+    stateValue: counterStateValue,
+    actions: ({ state }) => ({
+        ...useActions(state)
+    }),
+})
+
+defineComponent({
+    tagName: 'example-cmp',
+    render(context) {
+        return html`<button @click="${() => context.el.emitEvent('button-click')}">Click</button>`
+    },
+})

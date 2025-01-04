@@ -58,7 +58,9 @@ type TypeConstructor =
     | ArrayConstructor;
 
 type BaseContext<P, S> = {
-    props: Signal<P>;
+    props: P;
+    el: CustomHtmlElement;
+    slots: Record<string, Node[]>,
     state: State<S>;
     store: StoreRegistry;
 };
@@ -81,26 +83,26 @@ export interface ComponentContext<
     getters: GettersProperties<ReturnType<G>>;
     computed: ComputedProperties<ReturnType<C>>;
     actions: ReturnType<A>;
-    element: CustomHtmlElement;
+    el: CustomHtmlElement;
     slots: Record<string, Node[]>;
     store: StoreRegistry;
 }
 
 export interface CustomHtmlElement extends HTMLElement {
     $<T = any>(key: string): T | undefined;
-    emitEvent<T = any>(name: string, detail: T): void;
+    emitEvent<T = any>(name: string, detail?: T): void;
 }
 
 export interface ComponentOptions<
-    P extends Record<string, PropDefinition>,
-    S,
-    G extends GettersFn<InferProps<P>, S>,
-    C extends ComputedFn<InferProps<P>, S>,
-    A extends ActionsFn<InferProps<P>, S, ReturnType<C>>
+    P extends Record<string, PropDefinition> = any,
+    S = any,
+    G extends GettersFn<InferProps<P>, S> = any,
+    C extends ComputedFn<InferProps<P>, S> = any,
+    A extends ActionsFn<InferProps<P>, S, ReturnType<C>> = any
 > {
     tagName: string;
     props?: P;
-    state?: S;
+    stateValue?: S;
     getters?: G;
     computed?: C;
     actions?: A;
@@ -113,6 +115,8 @@ export interface ComponentOptions<
     disconnected?: (context: ComponentContext<InferProps<P>, S, G, C, A>) => void;
 }
 
+
+
 export function defineComponent<
     P extends Record<string, PropDefinition>,
     S,
@@ -123,7 +127,7 @@ export function defineComponent<
     const {
         tagName,
         props: propsDefinition = {} as P,
-        state: initialState,
+        stateValue: initialState,
         getters: gettersFn = (() => ({})) as GettersFn<InferProps<P>, S>,
         computed: computedFn = (() => ({})) as ComputedFn<InferProps<P>, S>,
         actions: actionsFn = (() => ({})) as ActionsFn<InferProps<P>, S, ReturnType<ComputedFn<InferProps<P>, S>>>,
@@ -164,15 +168,17 @@ export function defineComponent<
             return (this as any)[key] as T | undefined;
         }
 
-        public emitEvent<T = any>(name: string, detail: T): void {
+        public emitEvent<T = any>(name: string, detail: T = {} as T): void {
             this.dispatchEvent(new CustomEvent(name, { detail }));
         }
 
         setupGetters(): GettersProperties<ReturnType<G>> {
             const getterObj = gettersFn({
-                props: this.props,
+                props: this.getPropValue(),
                 state: this.state,
                 store: storeRegistry,
+                el: this,
+                slots: this.slots,
             });
 
             return Object.entries(getterObj).reduce((acc, [key, fn]) => ({
@@ -183,9 +189,11 @@ export function defineComponent<
 
         setupComputed(): ComputedProperties<ReturnType<C>> {
             const computedObj = computedFn({
-                props: this.props,
+                props: this.getPropValue(),
                 state: this.state,
                 store: storeRegistry,
+                el: this,
+                slots: this.slots,
             });
 
             return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
@@ -196,10 +204,12 @@ export function defineComponent<
 
         setupActions(): ReturnType<A> {
             return actionsFn({
-                props: this.props,
+                props: this.getPropValue(),
                 state: this.state,
                 computed: this.computed,
                 store: storeRegistry,
+                el: this,
+                slots: this.slots,
             }) as ReturnType<A>;
         }
 
@@ -210,7 +220,7 @@ export function defineComponent<
                 getters: this.getters,
                 computed: this.computed,
                 actions: this.actions,
-                element: this,
+                el: this,
                 slots: this.slots,
                 store: storeRegistry,
             };
@@ -328,8 +338,7 @@ export function defineComponent<
             disconnected?.(this.context);
         }
     }
-
-    customElements.define(tagName, CustomElement);
-
-    return CustomElement;
+    if (tagName) {
+        customElements.define(tagName, CustomElement);
+    }
 }

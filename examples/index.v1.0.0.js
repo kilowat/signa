@@ -1,12 +1,43 @@
 "use strict";
-(() => {
+var Signa = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __typeError = (msg) => {
     throw TypeError(msg);
   };
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
   var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
   var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
+
+  // src/index.ts
+  var index_exports = {};
+  __export(index_exports, {
+    State: () => State,
+    compute: () => compute,
+    createState: () => createState,
+    createStore: () => createStore,
+    defineComponent: () => defineComponent,
+    defineStore: () => defineStore,
+    html: () => html,
+    htmlFor: () => htmlFor,
+    storeRegistry: () => storeRegistry
+  });
 
   // node_modules/udomdiff/esm/index.js
   var esm_default = (parentNode, a2, b2, get, before) => {
@@ -918,7 +949,7 @@
   // src/core/store.ts
   var globalStore = {};
   function createStore(options) {
-    const { state: initialState, getters: gettersFn, computed: computedFn, actions: actionsFn } = options;
+    const { stateValue: initialState, getters: gettersFn, computed: computedFn, actions: actionsFn } = options;
     const state = createState(initialState);
     const getters = gettersFn ? Object.entries(gettersFn({ state })).reduce((acc, [key, fn]) => ({
       ...acc,
@@ -948,7 +979,7 @@
     return store;
   }
   function defineStore({ state, key }) {
-    const store = createStore({ state });
+    const store = createStore({ stateValue: state });
     storeRegistry.register(key, store);
     return store;
   }
@@ -963,7 +994,7 @@
     const {
       tagName,
       props: propsDefinition = {},
-      state: initialState,
+      stateValue: initialState,
       getters: gettersFn = () => ({}),
       computed: computedFn = () => ({}),
       actions: actionsFn = () => ({}),
@@ -993,14 +1024,16 @@
       $(key) {
         return this[key];
       }
-      emitEvent(name, detail2) {
+      emitEvent(name, detail2 = {}) {
         this.dispatchEvent(new CustomEvent(name, { detail: detail2 }));
       }
       setupGetters() {
         const getterObj = gettersFn({
-          props: this.props,
+          props: this.getPropValue(),
           state: this.state,
-          store: storeRegistry
+          store: storeRegistry,
+          el: this,
+          slots: this.slots
         });
         return Object.entries(getterObj).reduce((acc, [key, fn]) => ({
           ...acc,
@@ -1009,9 +1042,11 @@
       }
       setupComputed() {
         const computedObj = computedFn({
-          props: this.props,
+          props: this.getPropValue(),
           state: this.state,
-          store: storeRegistry
+          store: storeRegistry,
+          el: this,
+          slots: this.slots
         });
         return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
           ...acc,
@@ -1020,10 +1055,12 @@
       }
       setupActions() {
         return actionsFn({
-          props: this.props,
+          props: this.getPropValue(),
           state: this.state,
           computed: this.computed,
-          store: storeRegistry
+          store: storeRegistry,
+          el: this,
+          slots: this.slots
         });
       }
       get context() {
@@ -1033,7 +1070,7 @@
           getters: this.getters,
           computed: this.computed,
           actions: this.actions,
-          element: this,
+          el: this,
           slots: this.slots,
           store: storeRegistry
         };
@@ -1143,8 +1180,9 @@
         disconnected == null ? void 0 : disconnected(this.context);
       }
     }
-    customElements.define(tagName, CustomElement);
-    return CustomElement;
+    if (tagName) {
+      customElements.define(tagName, CustomElement);
+    }
   }
 
   // src/components/button/button.ts
@@ -1154,7 +1192,7 @@
   });
   defineComponent({
     tagName: "my-counter",
-    state: { count: 0 },
+    stateValue: { count: 0 },
     getters: (context) => ({
       counterStore: () => {
         return context.store.$("counter");
@@ -1190,7 +1228,7 @@
   });
   defineComponent({
     tagName: "my-counter-2",
-    state: { count: 0 },
+    stateValue: { count: 0 },
     props: {
       count: {
         type: Number,
@@ -1216,10 +1254,9 @@
     listen(params) {
     },
     render: ({ props, state, computed, actions, getters: { counterStore: counterStore2 } }) => {
-      console.log("rerender");
       return html`
         <div>
-            counter 2 component
+            counter 2 component props value ${props.count}
      
             <p >Count: ${state.value.count}</p>
             <p>Double: ${computed.doubleCount.value}</p>
@@ -1233,7 +1270,7 @@
   });
   defineComponent({
     tagName: "my-component",
-    state: { count: 0 },
+    stateValue: { count: 0 },
     props: {
       count: {
         type: Number,
@@ -1272,6 +1309,185 @@
     `;
     }
   });
+  var counterStateValue = { count: 0 };
+  var useActions = (state) => ({
+    inc: () => state.emit({ count: state.value.count + 1 })
+  });
+  defineComponent({
+    tagName: "parent-example-cmp-2",
+    stateValue: { example: 0, ...counterStateValue },
+    // owner local state + external
+    actions: ({ state }) => ({
+      ...useActions(state),
+      myinc: () => {
+        state.emit({ example: state.value.example + 1 });
+      }
+    }),
+    render(context) {
+      return html`${context.state.value.example}<example-cmp @button-click="${() => console.log("button-click event")}"></example-cmp>`;
+    }
+  });
+  var compositionStore = createStore({
+    stateValue: counterStateValue,
+    actions: ({ state }) => ({
+      ...useActions(state)
+    })
+  });
+  defineComponent({
+    tagName: "example-cmp",
+    render(context) {
+      return html`<button @click="${() => context.el.emitEvent("button-click")}">Click</button>`;
+    }
+  });
+
+  // src/components/slide.ts
+  defineComponent({
+    tagName: "range-slider",
+    props: {
+      min: {
+        type: Number,
+        default: 0
+      },
+      max: {
+        type: Number,
+        default: 100
+      },
+      step: {
+        type: Number,
+        default: 1
+      },
+      values: {
+        type: Array,
+        default: [0]
+      },
+      disabled: {
+        type: Boolean,
+        default: false
+      },
+      range: {
+        type: Boolean,
+        default: false
+      }
+    },
+    stateValue: {
+      values: [0],
+      isDragging: false,
+      activeDot: null
+    },
+    computed: ({ state, props }) => ({
+      positions: () => {
+        return state.value.values.map((value) => {
+          const percent = (value - props.min) / (props.max - props.min) * 100;
+          return Math.min(Math.max(0, percent), 100);
+        });
+      },
+      trackStyle: () => {
+        const positions = state.value.values.sort((a2, b2) => a2 - b2);
+        const leftPos = (positions[0] - props.min) / (props.max - props.min) * 100;
+        const rightPos = positions[1] ? (positions[1] - props.min) / (props.max - props.min) * 100 : 100;
+        return `left: ${leftPos}%; right: ${100 - rightPos}%;`;
+      }
+    }),
+    actions: ({ state, props, el }) => ({
+      updateValue(clientX) {
+        const rect = el.getBoundingClientRect();
+        const percent = (clientX - rect.left) / rect.width;
+        const rawValue = props.min + (props.max - props.min) * percent;
+        const steppedValue = Math.round(rawValue / props.step) * props.step;
+        const clampedValue = Math.min(Math.max(props.min, steppedValue), props.max);
+        if (state.value.activeDot !== null) {
+          const newValues = [...state.value.values];
+          newValues[state.value.activeDot] = clampedValue;
+          state.emit({ values: newValues });
+          el.emitEvent("change", { values: newValues });
+        }
+      },
+      onDotMouseDown(index, event) {
+        if (props.disabled) return;
+        event.preventDefault();
+        state.emit({ isDragging: true, activeDot: index });
+        const onMouseMove = (e2) => {
+          this.updateValue(e2.clientX);
+        };
+        const onMouseUp = () => {
+          state.emit({ isDragging: false, activeDot: null });
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
+        };
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+      },
+      onTrackClick(event) {
+        if (props.disabled) return;
+        const rect = el.getBoundingClientRect();
+        const clickPosition = (event.clientX - rect.left) / rect.width;
+        const clickValue = props.min + (props.max - props.min) * clickPosition;
+        if (props.range && state.value.values.length > 1) {
+          const distances = state.value.values.map((value) => Math.abs(value - clickValue));
+          const closestIndex = distances.indexOf(Math.min(...distances));
+          state.emit({ activeDot: closestIndex });
+          this.updateValue(event.clientX);
+        } else {
+          state.emit({ activeDot: 0 });
+          this.updateValue(event.clientX);
+        }
+      }
+    }),
+    connected({ props, state }) {
+      state.emit({
+        values: props.range ? [props.min, props.max] : [props.min]
+      });
+    },
+    render: ({ props, state, computed, actions }) => html`
+        <div class="slider-container" style="position: relative; width: 100%; height: 40px;">
+            <div class="slider-track" 
+                @click=${actions.onTrackClick}
+            >
+                <div class="slider-track-fill"
+                ></div>
+            </div>
+            ${state.value.values.map((value, index) => html`
+                <div class="slider-dot"
+                    @mousedown=${(e2) => actions.onDotMouseDown(index, e2)}
+                ></div>
+            `)}
+        </div>
+    `
+  });
+  var slide_default = defineComponent({
+    tagName: "price-filter",
+    stateValue: {
+      minPrice: 0,
+      maxPrice: 1e3
+    },
+    computed: ({ state }) => ({
+      formattedRange: () => `$${state.value.minPrice} - $${state.value.maxPrice}`
+    }),
+    actions: ({ state }) => ({
+      updatePriceRange: (event) => {
+        const [min, max] = event.detail.values;
+        state.emit({
+          minPrice: min,
+          maxPrice: max
+        });
+      }
+    }),
+    render: ({ state, computed, actions }) => html`
+        <div>
+            <h3>Price Range</h3>
+            <p>${computed.formattedRange.value}</p>
+            <range-slider
+                data-min="0"
+                data-max="1000"
+                data-step="10"
+                data-range="true"
+                data-values="${JSON.stringify([state.value.minPrice, state.value.maxPrice])}"
+                @change=${actions.updatePriceRange}
+            ></range-slider>
+        </div>
+    `
+  });
+  return __toCommonJS(index_exports);
 })();
 /*! Bundled license information:
 

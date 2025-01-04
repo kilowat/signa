@@ -17,8 +17,8 @@ type ActionsFn<S, C> = (context: {
 
 type GettersFn<S> = ComputedFn<S>;
 
-interface StoreOptions<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>> {
-    state: S;
+export interface StoreOptions<S = any, G extends GettersFn<S> = any, C extends ComputedFn<S> = any, A extends ActionsFn<S, ReturnType<C>> = any> {
+    stateValue: S;
     getters?: G;
     computed?: C;
     actions?: A;
@@ -47,7 +47,7 @@ const globalStore: Partial<GlobalStore> = {};
 export function createStore<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>(
     options: StoreOptions<S, G, C, A>
 ): StoreContext<S, G, C, A> {
-    const { state: initialState, getters: gettersFn, computed: computedFn, actions: actionsFn } = options;
+    const { stateValue: initialState, getters: gettersFn, computed: computedFn, actions: actionsFn } = options;
 
     const state = createState(initialState);
 
@@ -95,7 +95,7 @@ function getStore<K extends keyof GlobalStore>(key: K): GlobalStore[K] {
 }
 
 export function defineStore<T extends object>({ state, key }: StoreConfig<T>) {
-    const store = createStore({ state });
+    const store = createStore({ stateValue: state });
     storeRegistry.register(key, store);
     return store;
 }
