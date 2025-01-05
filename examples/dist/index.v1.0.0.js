@@ -8,3 +8,4 @@ uhtml/esm/index.js:
 uhtml/esm/keyed.js:
   (*! (c) Andrea Giammarchi - MIT *)
 */
+//# sourceMappingURL=index.v1.0.0.js.map

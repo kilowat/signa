@@ -3,12 +3,24 @@
     "version": "1.0.0",
     "type": "module",
     "files": [
+        "dist/core",
+        "dist/components",
         "dist"
     ],
     "main": "./dist/index.js",
     "module": "./dist/index.esm.js",
     "types": "./dist/index.d.ts",
     "exports": {
+        "./core": {
+            "types": "./dist/core/index.d.ts",
+            "import": "./dist/core/index.esm.js",
+            "default": "./dist/core/index.js"
+        },
+        "./components": {
+            "types": "./dist/components/index.d.ts",
+            "import": "./dist/components/index.esm.js",
+            "default": "./dist/components/index.js"
+        },
         ".": {
             "types": "./dist/index.d.ts",
             "import": "./dist/index.esm.js",
