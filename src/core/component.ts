@@ -94,7 +94,7 @@ export interface CustomHtmlElement extends HTMLElement {
     emitEvent<T = any>(name: string, detail?: T): void;
 }
 
-export interface ComponentOptions<
+export interface ComponentOptions2<
     P extends Record<string, PropDefinition> = any,
     S = any,
     G extends GettersFn<InferProps<P>, S> = any,
@@ -116,6 +116,29 @@ export interface ComponentOptions<
     disconnected?: (context: ComponentContext<InferProps<P>, S, G, C, A>) => void;
 }
 
+
+
+type ComponentOptions<
+    P extends Record<string, PropDefinition>,
+    S,
+    G extends GettersFn<InferProps<P>, S>,
+    C extends ComputedFn<InferProps<P>, S>,
+    A extends ActionsFn<InferProps<P>, S, ReturnType<C>>
+> = {
+    tagName: string;
+    props?: P;
+    state?: S;
+    getters?: G;
+    computed?: C;
+    actions?: A;
+    connected?: (context: ComponentContext<InferProps<P>, S, G, C, A>) => void;
+    render?: (context: ComponentContext<InferProps<P>, S, G, C, A>) => unknown;
+    listen?: (params: ComponentContext<InferProps<P>, S, G, C, A> & {
+        newValue: S;
+        oldValue: S;
+    }) => void;
+    disconnected?: (context: ComponentContext<InferProps<P>, S, G, C, A>) => void;
+};
 
 
 export function defineComponent<
@@ -341,10 +364,12 @@ export function defineComponent<
         }
 
         connectedCallback() {
-            this.collectSlots();
-            this.setupListener();
-            this.setupRender();
-            connected?.(this.context);
+            requestAnimationFrame(() => {
+                this.collectSlots();
+                this.setupListener();
+                this.setupRender();
+                connected?.(this.context);
+            })
         }
 
         disconnectedCallback() {

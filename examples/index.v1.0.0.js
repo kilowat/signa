@@ -1,46 +1,12 @@
 "use strict";
-var Signa = (() => {
-  var __defProp = Object.defineProperty;
-  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-  var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __hasOwnProp = Object.prototype.hasOwnProperty;
+(() => {
   var __typeError = (msg) => {
     throw TypeError(msg);
   };
-  var __export = (target, all) => {
-    for (var name in all)
-      __defProp(target, name, { get: all[name], enumerable: true });
-  };
-  var __copyProps = (to, from, except, desc) => {
-    if (from && typeof from === "object" || typeof from === "function") {
-      for (let key of __getOwnPropNames(from))
-        if (!__hasOwnProp.call(to, key) && key !== except)
-          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-    }
-    return to;
-  };
-  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
   var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
   var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
   var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
   var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
-
-  // src/index.ts
-  var index_exports = {};
-  __export(index_exports, {
-    State: () => State,
-    compute: () => compute,
-    createComputed: () => createComputed,
-    createState: () => createState,
-    createStore: () => createStore,
-    defineComponent: () => defineComponent,
-    defineStore: () => defineStore,
-    effect: () => E,
-    html: () => html,
-    htmlFor: () => htmlFor,
-    preactComputed: () => w,
-    storeRegistry: () => storeRegistry
-  });
 
   // node_modules/udomdiff/esm/index.js
   var esm_default = (parentNode, a2, b2, get, before) => {
@@ -1327,10 +1293,12 @@ var Signa = (() => {
         this.slots = slots;
       }
       connectedCallback() {
-        this.collectSlots();
-        this.setupListener();
-        this.setupRender();
-        connected == null ? void 0 : connected(this.context);
+        requestAnimationFrame(() => {
+          this.collectSlots();
+          this.setupListener();
+          this.setupRender();
+          connected == null ? void 0 : connected(this.context);
+        });
       }
       disconnectedCallback() {
         this.cleanup.forEach((cleanup) => cleanup());
@@ -1342,6 +1310,130 @@ var Signa = (() => {
       customElements.define(tagName, CustomElement);
     }
   }
+
+  // src/core/styles-registry.ts
+  var StyleRegistry = class _StyleRegistry {
+    constructor() {
+      this.styles = /* @__PURE__ */ new Map();
+      this.componentInstances = /* @__PURE__ */ new Map();
+      this.styleElements = /* @__PURE__ */ new Map();
+    }
+    static getInstance() {
+      if (!_StyleRegistry.instance) {
+        _StyleRegistry.instance = new _StyleRegistry();
+      }
+      return _StyleRegistry.instance;
+    }
+    register(componentName, css) {
+      if (!this.styles.has(componentName)) {
+        this.styles.set(componentName, css);
+      }
+    }
+    connectComponent(componentName, element) {
+      if (!this.componentInstances.has(componentName)) {
+        this.componentInstances.set(componentName, /* @__PURE__ */ new Set());
+      }
+      const instances = this.componentInstances.get(componentName);
+      instances.add(element);
+      if (instances.size === 1) {
+        this.injectStyles(componentName);
+      }
+    }
+    disconnectComponent(componentName, element) {
+      const instances = this.componentInstances.get(componentName);
+      if (!instances) return;
+      instances.delete(element);
+      if (instances.size === 0) {
+        this.removeStyles(componentName);
+      }
+    }
+    injectStyles(componentName) {
+      const css = this.styles.get(componentName);
+      if (!css) return;
+      const styleElement = document.createElement("style");
+      styleElement.setAttribute("data-component", componentName);
+      styleElement.textContent = css;
+      document.head.appendChild(styleElement);
+      this.styleElements.set(componentName, styleElement);
+    }
+    removeStyles(componentName) {
+      const styleElement = this.styleElements.get(componentName);
+      if (styleElement && document.head.contains(styleElement)) {
+        document.head.removeChild(styleElement);
+        this.styleElements.delete(componentName);
+      }
+    }
+  };
+
+  // src/core/component-styles.ts
+  function createComponentStyles(componentName, cssTemplate, defaultConfig = {}) {
+    const prefix2 = `--${componentName}`;
+    function configToCssVars(config, parentKey = "") {
+      return Object.entries(config).map(([key, value]) => {
+        const fullKey = parentKey ? `${parentKey}-${key}` : `${prefix2}-${key}`;
+        if (typeof value === "object") {
+          return configToCssVars(value, fullKey);
+        }
+        return `${fullKey}: ${value};`;
+      }).join("\n");
+    }
+    const defaultVars = configToCssVars(defaultConfig);
+    const componentStyles = `
+        :root {
+            ${defaultVars}
+        }
+        ${cssTemplate}
+    `;
+    StyleRegistry.getInstance().register(componentName, componentStyles);
+    return {
+      connectComponent(element) {
+        StyleRegistry.getInstance().connectComponent(componentName, element);
+      },
+      disconnectComponent(element) {
+        StyleRegistry.getInstance().disconnectComponent(componentName, element);
+      },
+      updateConfig(config) {
+        const style2 = document.createElement("style");
+        style2.textContent = `
+                :root {
+                    ${configToCssVars(config)}
+                }
+            `;
+        document.head.appendChild(style2);
+      }
+    };
+  }
+
+  // src/components/button/styles.ts
+  var styles_default = createComponentStyles("signa-button", `
+    :host {
+        display: inline-block;
+    }
+    
+    .signa-button {
+        background: var(--signa-button-background, #007bff);
+        color: var(--signa-button-color, #ffffff);
+        padding: var(--signa-button-padding, 8px 16px);
+        border-radius: var(--signa-button-radius, 4px);
+        border: var(--signa-button-border, none);
+        cursor: pointer;
+    }
+
+    .signa-button:hover {
+        background: var(--signa-button-hover-background, #0056b3);
+    }
+
+    /* Variants */
+    :host([variant="secondary"]) .signa-button {
+        background: var(--signa-button-secondary-background, #6c757d);
+    }
+
+    :host([variant="outline"]) .signa-button {
+        background: transparent;
+        border: 1px solid var(--signa-button-background, #007bff);
+        color: var(--signa-button-background, #007bff);
+    }
+`);
 
   // src/components/button/button.ts
   var counterStore = defineStore({
@@ -1359,6 +1451,14 @@ var Signa = (() => {
         type: Number,
         default: 20
       }
+    },
+    listen(params) {
+    },
+    connected(ctx) {
+      styles_default.connectComponent(ctx.el);
+    },
+    disconnected(ctx) {
+      styles_default.disconnectComponent(ctx.el);
     },
     getters: (context) => ({
       counterStore: () => {
@@ -1381,8 +1481,6 @@ var Signa = (() => {
         state.emit({ count: 0 });
       }
     }),
-    listen(params) {
-    },
     render: (context) => {
       const { state, computed, actions, getters: { counterStore: counterStore2 } } = context;
       return html`
@@ -1423,7 +1521,7 @@ var Signa = (() => {
     }),
     listen(params) {
     },
-    render: ({ props, state, computed, actions, getters: { counterStore: counterStore2 } }) => {
+    render: ({ props, state, computed, actions, getters: { counterStore: counterStore2, hi } }) => {
       return html`
         <div>
             counter 2 component props value ${props.count}
@@ -1510,7 +1608,20 @@ var Signa = (() => {
       return html`<button @click="${() => context.el.emitEvent("button-click")}">Click</button>`;
     }
   });
-  return __toCommonJS(index_exports);
+  var Button = defineComponent({
+    tagName: "signa-button",
+    props: {
+      variant: { type: String, default: "primary" }
+    },
+    render: ({ slots }) => {
+      console.log(slots.default);
+      return html`
+        <button class="signa-button">
+            ${slots.default}
+        </button>
+    `;
+    }
+  });
 })();
 /*! Bundled license information:
 

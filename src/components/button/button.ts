@@ -1,5 +1,6 @@
 
 import { defineStore, defineComponent, html, State, createState } from "signa/core";
+import styles from './styles';
 
 const counterStore = defineStore({
     key: 'counter',
@@ -25,6 +26,15 @@ defineComponent({
             default: 20,
         }
     },
+    listen(params) {
+
+    },
+    connected(ctx) {
+        styles.connectComponent(ctx.el);
+    },
+    disconnected(ctx) {
+        styles.disconnectComponent(ctx.el);
+    },
     getters: (context) => ({
         counterStore: () => {
             return context.store.$('counter')
@@ -46,9 +56,7 @@ defineComponent({
             state.emit({ count: 0 });
         }
     }),
-    listen(params) {
 
-    },
     render: (context) => {
         const { state, computed, actions, getters: { counterStore } } = context;
 
@@ -92,7 +100,7 @@ defineComponent({
     listen(params) {
 
     },
-    render: ({ props, state, computed, actions, getters: { counterStore } }) => {
+    render: ({ props, state, computed, actions, getters: { counterStore, hi } }) => {
         return html`
         <div>
             counter 2 component props value ${props.count}
@@ -187,3 +195,22 @@ defineComponent({
         return html`<button @click="${() => context.el.emitEvent('button-click')}">Click</button>`
     },
 })
+
+export interface ButtonProps {
+    variant: 'primary' | 'secondary' | 'outline';
+}
+
+export const Button = defineComponent({
+    tagName: 'signa-button',
+    props: {
+        variant: { type: String, default: 'primary' }
+    } as const,
+    render: ({ slots }) => {
+        console.log(slots.default)
+        return html`
+        <button class="signa-button">
+            ${slots.default}
+        </button>
+    `;
+    }
+});
