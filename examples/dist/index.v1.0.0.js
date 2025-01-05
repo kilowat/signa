@@ -1344,6 +1344,11 @@ var Signa = (() => {
     }
   }
 
+  // src/components/button/button.module.scss
+  var button_module_default = {
+    "button": "signa_button_d5bc2"
+  };
+
   // src/components/button/button.ts
   var counterStore = defineStore({
     key: "counter",
@@ -1494,7 +1499,7 @@ var Signa = (() => {
     },
     render: ({ slots }) => {
       console.log(slots.default);
-      return html`<button class="signa-button"> ${slots.default} </button>`;
+      return html`<button class="${button_module_default.button}"> ${slots.default} </button>`;
     }
   });
   return __toCommonJS(index_exports);

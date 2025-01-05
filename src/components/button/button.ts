@@ -1,5 +1,6 @@
 
 import { defineStore, defineComponent, html, State, createState } from "signa/core";
+import styles from './button.module.scss';
 
 const counterStore = defineStore({
     key: 'counter',
@@ -205,7 +206,7 @@ export const Button = defineComponent({
     render: ({ slots }) => {
         console.log(slots.default)
         return html`
-        <button class="signa-button">
+        <button class="${styles.button}">
             ${slots.default}
         </button>
     `;
