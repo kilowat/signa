@@ -1,1 +1,158 @@
-import{defineStore as l,defineComponent as u,html as r,createState as s}from"signa/core";import{createComponentStyles as i}from"signa/core/component-styles";var c=i("signa-button",':host { display: inline-block; } .signa-button { background: var(--signa-button-background, #007bff); color: var(--signa-button-color, #ffffff); padding: var(--signa-button-padding, 8px 16px); border-radius: var(--signa-button-radius, 4px); border: var(--signa-button-border, none); cursor: pointer; } .signa-button:hover { background: var(--signa-button-hover-background, #0056b3); } :host([variant="secondary"]) .signa-button { background: var(--signa-button-secondary-background, #6c757d); } :host([variant="outline"]) .signa-button { background: transparent; border: 1px solid var(--signa-button-background, #007bff); color: var(--signa-button-background, #007bff); }');var y=l({key:"counter",state:{count:0},computed:()=>({double:()=>!0})});u({tagName:"my-counter",state:{count:0},props:{val:{type:Number,default:20}},listen(t){},connected(t){c.connectComponent(t.el)},disconnected(t){c.disconnectComponent(t.el)},getters:t=>({counterStore:()=>t.store.$("counter"),hi:()=>"hi"}),computed:({state:t,props:e})=>(console.log(e),{doubleCount:()=>t.value.count+e.val,isEven:()=>t.value.count%2===0}),actions:({state:t})=>({increment:e=>{t.emit({count:t.value.count+e})},reset:()=>{t.emit({count:0})}}),render:t=>{let{state:e,computed:n,actions:o,getters:{counterStore:a}}=t;return r`<div> <p>Count test: ${e.value.count}</p> <p>Double: ${n.doubleCount}</p> <p>Is Even: ${n.isEven}</p> <button onclick=${()=>o.increment(1)}>+1</button> <button onclick=${o.reset}>Reset</button> </div>`}});u({tagName:"my-counter-2",state:{count:0},props:{count:{type:Number,default:0}},getters:t=>({hi:()=>"hi",counterStore:()=>t.store.$("counter")}),computed:({state:t})=>({doubleCount:()=>t.value.count*2,isEven:()=>t.value.count%2===0}),actions:({state:t})=>({increment:e=>{t.emit({count:t.value.count+e})},reset:()=>{t.emit({count:0})}}),listen(t){},render:({props:t,state:e,computed:n,actions:o,getters:{counterStore:a,hi:d}})=>r`<div> counter 2 component props value ${t.count} <p>Count: ${e.value.count}</p> <p>Double: ${n.doubleCount}</p> <p>Is Even: ${n.isEven}</p> <button onclick=${()=>o.increment(1)}>+1</button> <button onclick=${o.reset}>Reset</button> <my-component data-count="${e.value.count}"></my-component> </div>`});u({tagName:"my-component",state:{count:0},props:{count:{type:Number,default:0}},getters:t=>({hi:()=>"hi",counterStore:()=>t.store.$("counter")}),computed:({state:t})=>({doubleCount:()=>t.value.count*2,isEven:()=>t.value.count%2===0}),actions:({state:t})=>({increment:e=>{t.emit({count:t.value.count+e})},reset:()=>{t.emit({count:0})}}),listen(t){},render:({props:t,state:e,computed:n,actions:o,getters:{counterStore:a}})=>r`<div> <div>props: ${t.count}</div> <p >Count: ${e.value.count}</p> <p>Double: ${n.doubleCount}</p> <p>Is Even: ${n.isEven}</p> <button onclick=${()=>o.increment(1)}>+1</button> <button onclick=${o.reset}>Reset</button> </div>`});var p={count:0},m=t=>({inc:()=>t.emit({count:t.value.count+1})});u({tagName:"parent-example-cmp-2",state:{example:0,...p},actions:({state:t})=>({...m(t),myinc:()=>{t.emit({example:t.value.example+1})}}),render(t){return r`${t.state.value.example}<example-cmp @button-click="${()=>console.log("button-click event")}"></example-cmp>`}});u({tagName:"example-cmp",render(t){return r`<button @click="${()=>t.el.emitEvent("button-click")}">Click</button>`}});var b=s(0),x=b.value+1;u({tagName:"example-cmp-2",render(t){return r`<button @click="${()=>t.el.emitEvent("button-click")}">Click</button>`}});var S=u({tagName:"signa-button",props:{variant:{type:String,default:"primary"}},render:({slots:t})=>(console.log(t.default),r`<button class="signa-button"> ${t.default} </button>`)});export{S as Button};
+// src/components/button/button.ts
+import { defineStore, defineComponent, html, createState } from "signa/core";
+var counterStore = defineStore({
+  key: "counter",
+  state: { count: 0 },
+  computed: () => ({
+    double: () => true
+  })
+});
+defineComponent({
+  tagName: "my-counter",
+  state: { count: 0 },
+  props: {
+    val: {
+      type: Number,
+      default: 20
+    }
+  },
+  listen(params) {
+  },
+  connected(ctx) {
+  },
+  disconnected(ctx) {
+  },
+  getters: (context) => ({
+    counterStore: () => {
+      return context.store.$("counter");
+    },
+    hi: () => "hi"
+  }),
+  computed: ({ state, props }) => {
+    console.log(props);
+    return {
+      doubleCount: () => state.value.count + props.val,
+      isEven: () => state.value.count % 2 === 0
+    };
+  },
+  actions: ({ state }) => ({
+    increment: (amount) => {
+      state.emit({ count: state.value.count + amount });
+    },
+    reset: () => {
+      state.emit({ count: 0 });
+    }
+  }),
+  render: (context) => {
+    const { state, computed, actions, getters: { counterStore: counterStore2 } } = context;
+    return html`<div> <p>Count test: ${state.value.count}</p> <p>Double: ${computed.doubleCount}</p> <p>Is Even: ${computed.isEven}</p> <button onclick=${() => actions.increment(1)}>+1</button> <button onclick=${actions.reset}>Reset</button> </div>`;
+  }
+});
+defineComponent({
+  tagName: "my-counter-2",
+  state: { count: 0 },
+  props: {
+    count: {
+      type: Number,
+      default: 0
+    }
+  },
+  getters: (context) => ({
+    hi: () => "hi",
+    counterStore: () => context.store.$("counter")
+  }),
+  computed: ({ state }) => ({
+    doubleCount: () => state.value.count * 2,
+    isEven: () => state.value.count % 2 === 0
+  }),
+  actions: ({ state }) => ({
+    increment: (amount) => {
+      state.emit({ count: state.value.count + amount });
+    },
+    reset: () => {
+      state.emit({ count: 0 });
+    }
+  }),
+  listen(params) {
+  },
+  render: ({ props, state, computed, actions, getters: { counterStore: counterStore2, hi } }) => {
+    return html`<div> counter 2 component props value ${props.count} <p>Count: ${state.value.count}</p> <p>Double: ${computed.doubleCount}</p> <p>Is Even: ${computed.isEven}</p> <button onclick=${() => actions.increment(1)}>+1</button> <button onclick=${actions.reset}>Reset</button> <my-component data-count="${state.value.count}"></my-component> </div>`;
+  }
+});
+defineComponent({
+  tagName: "my-component",
+  state: { count: 0 },
+  props: {
+    count: {
+      type: Number,
+      default: 0
+    }
+  },
+  getters: (context) => ({
+    hi: () => "hi",
+    counterStore: () => context.store.$("counter")
+  }),
+  computed: ({ state }) => ({
+    doubleCount: () => state.value.count * 2,
+    isEven: () => state.value.count % 2 === 0
+  }),
+  actions: ({ state }) => ({
+    increment: (amount) => {
+      state.emit({ count: state.value.count + amount });
+    },
+    reset: () => {
+      state.emit({ count: 0 });
+    }
+  }),
+  listen(params) {
+  },
+  render: ({ props, state, computed, actions, getters: { counterStore: counterStore2 } }) => {
+    return html`<div> <div>props: ${props.count}</div> <p >Count: ${state.value.count}</p> <button onclick=${() => actions.increment(1)}>+1</button> <button onclick=${actions.reset}>Reset</button> </div>`;
+  }
+});
+var counterStateValue = { count: 0 };
+var useActions = (state) => ({
+  inc: () => state.emit({ count: state.value.count + 1 })
+});
+defineComponent({
+  tagName: "parent-example-cmp-2",
+  state: { example: 0, ...counterStateValue },
+  // owner local state + external
+  actions: ({ state }) => ({
+    ...useActions(state),
+    myinc: () => {
+      state.emit({ example: state.value.example + 1 });
+    }
+  }),
+  render(context) {
+    return html`${context.state.value.example}<example-cmp @button-click="${() => console.log("button-click event")}"></example-cmp>`;
+  }
+});
+defineComponent({
+  tagName: "example-cmp",
+  render(context) {
+    return html`<button @click="${() => context.el.emitEvent("button-click")}">Click</button>`;
+  }
+});
+var exState = createState(0);
+var inc = exState.value + 1;
+defineComponent({
+  tagName: "example-cmp-2",
+  render(context) {
+    return html`<button @click="${() => context.el.emitEvent("button-click")}">Click</button>`;
+  }
+});
+var Button = defineComponent({
+  tagName: "signa-button",
+  props: {
+    variant: { type: String, default: "primary" }
+  },
+  render: ({ slots }) => {
+    console.log(slots.default);
+    return html`<button class="signa-button"> ${slots.default} </button>`;
+  }
+});
+export {
+  Button
+};
+//# sourceMappingURL=components.esm.v1.0.0.js.map

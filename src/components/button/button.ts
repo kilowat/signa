@@ -1,6 +1,5 @@
 
 import { defineStore, defineComponent, html, State, createState } from "signa/core";
-import styles from './styles';
 
 const counterStore = defineStore({
     key: 'counter',
@@ -30,10 +29,10 @@ defineComponent({
 
     },
     connected(ctx) {
-        styles.connectComponent(ctx.el);
+
     },
     disconnected(ctx) {
-        styles.disconnectComponent(ctx.el);
+
     },
     getters: (context) => ({
         counterStore: () => {
@@ -148,8 +147,6 @@ defineComponent({
         <div>
             <div>props: ${props.count}</div>
             <p >Count: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount}</p>
-            <p>Is Even: ${computed.isEven}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
          

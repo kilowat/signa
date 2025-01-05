@@ -26,12 +26,12 @@ const sharedConfig = {
     tsconfig: 'tsconfig.json',
 };
 
-const createConfig = (entryPoint, outputName, globalName = null, external = []) => [
+const createConfig = (entryPoint, outputPath, globalName = null, external = []) => [
     {
         ...sharedConfig,
         entryPoints: [entryPoint],
         format: 'esm',
-        outfile: `${examplesPath}/${outputName}.esm.v${version}.js`,
+        outfile: `${outputPath}.esm.v${version}.js`,
         alias: {
             'VERSION': JSON.stringify(version),
         },
@@ -41,7 +41,7 @@ const createConfig = (entryPoint, outputName, globalName = null, external = []) 
         ...sharedConfig,
         entryPoints: [entryPoint],
         format: 'iife',
-        outfile: `${examplesPath}/${outputName}.v${version}.js`,
+        outfile: `${outputPath}.v${version}.js`,
         globalName,
         alias: {
             'VERSION': JSON.stringify(version),
@@ -50,19 +50,21 @@ const createConfig = (entryPoint, outputName, globalName = null, external = []) 
     },
 ];
 
-const configs = [
-    ...createConfig('src/core/index.ts', 'core', 'Signa'),
-    ...createConfig('src/components/index.ts', 'components', 'SignaCmp', ['signa/core']),
-    ...createConfig('src/index.ts', 'index', 'Signa'),
+const useConfigs = (path) => [
+    ...createConfig('src/core/index.ts', `${path}/core`, 'Signa'),
+    ...createConfig('src/components/index.ts', `${path}/components`, 'SignaCmp', ['signa/core']),
+    ...createConfig('src/index.ts', `${path}/index`, 'Signa'),
 ];
 
+
 if (isDev) {
+    const configs = useConfigs(examplesPath)
     const ctx = await Promise.all(
         configs.map(config =>
             esbuild.context({
                 ...config,
                 sourcemap: true,
-                minify: true,
+                minify: false,
             })
         )
     );
@@ -87,6 +89,7 @@ if (isDev) {
         )
     );
 } else {
+    const configs = useConfigs(buildPath)
     await Promise.all(
         configs.map(config =>
             esbuild.build({

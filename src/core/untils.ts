@@ -8,19 +8,18 @@ interface ComputedCache<T> {
 
 export class ComputedManager {
     private static maxCacheSize = 1000;
-    private static cleanupThreshold = 0.8; // 80% of maxCacheSize
-    private static cacheTimeout = 5 * 60 * 1000; // 5 minutes
+    private static cleanupThreshold = 0.8;
+    private static cacheTimeout = 5 * 60 * 1000;
 
     private static createCacheKey(args: unknown[]): string {
         return args.map(arg => {
             if (arg === null) return 'null';
             if (arg === undefined) return 'undefined';
             if (typeof arg === 'object') {
-                // Try to use id or similar unique identifier first
                 const obj = arg as Record<string, unknown>;
                 if ('id' in obj) return String(obj.id);
                 if ('key' in obj) return String(obj.key);
-                // Fall back to stable stringification for objects
+
                 return JSON.stringify(this.sortObjectKeys(obj));
             }
             return String(arg);
@@ -68,7 +67,7 @@ export class ComputedManager {
         const maxSize = options.cacheSize ?? this.maxCacheSize;
 
         return (...args: Args): T => {
-            // For computed without arguments, we can just create a single signal
+
             if (args.length === 0) {
                 if (!cache.has('_')) {
                     const signal = preactComputed(() => fn(...args));
@@ -86,7 +85,6 @@ export class ComputedManager {
             const cacheKey = this.createCacheKey(args);
             const cached = cache.get(cacheKey);
 
-            // Check cache and args equality
             if (cached && this.argsEqual(cached.args, args)) {
                 const now = Date.now();
                 if (now - cached.lastAccessed <= maxAge) {
@@ -95,12 +93,10 @@ export class ComputedManager {
                 }
             }
 
-            // Clean up cache if needed
             if (cache.size >= maxSize * this.cleanupThreshold) {
                 this.cleanup(cache, maxAge);
             }
 
-            // Create new computed
             const signal = preactComputed(() => fn(...args));
             cache.set(cacheKey, {
                 signal,

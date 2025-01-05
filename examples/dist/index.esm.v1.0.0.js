@@ -1,5 +1,1480 @@
-var Rt=e=>{throw TypeError(e)};var kt=(e,t,n)=>t.has(e)||Rt("Cannot "+n);var A=(e,t,n)=>(kt(e,t,"read from private field"),n?n.call(e):t.get(e)),q=(e,t,n)=>t.has(e)?Rt("Cannot add the same private member more than once"):t instanceof WeakSet?t.add(e):t.set(e,n),ut=(e,t,n,r)=>(kt(e,t,"write to private field"),r?r.call(e,n):t.set(e,n),n);var Ot=(e,t,n,r,o)=>{let i=n.length,a=t.length,s=i,c=0,u=0,p=null;for(;c<a||u<s;)if(a===c){let l=s<i?u?r(n[u-1],-0).nextSibling:r(n[s],0):o;for(;u<s;)e.insertBefore(r(n[u++],1),l)}else if(s===u)for(;c<a;)(!p||!p.has(t[c]))&&e.removeChild(r(t[c],-1)),c++;else if(t[c]===n[u])c++,u++;else if(t[a-1]===n[s-1])a--,s--;else if(t[c]===n[s-1]&&n[u]===t[a-1]){let l=r(t[--a],-0).nextSibling;e.insertBefore(r(n[u++],1),r(t[c++],-0).nextSibling),e.insertBefore(r(n[--s],1),l),t[a]=n[s]}else{if(!p){p=new Map;let l=u;for(;l<s;)p.set(n[l],l++)}if(p.has(t[c])){let l=p.get(t[c]);if(u<l&&l<s){let d=c,g=1;for(;++d<a&&d<s&&p.get(t[d])===l+g;)g++;if(g>l-u){let G=r(t[c],0);for(;u<l;)e.insertBefore(r(n[u++],1),G)}else e.replaceChild(r(n[u++],1),r(t[c++],-1))}else c++}else e.removeChild(r(t[c++],-1))}return n};var{isArray:X}=Array,{getPrototypeOf:me,getOwnPropertyDescriptor:he}=Object;var Gt="http://www.w3.org/2000/svg",S=[],Z=()=>document.createRange(),P=(e,t,n)=>(e.set(t,n),n),Nt=(e,t)=>{let n;do n=he(e,t);while(!n&&(e=me(e)));return n},$t=(e,t)=>t.reduceRight(ye,e),ye=(e,t)=>e.childNodes[t];var{setPrototypeOf:ge}=Object,Mt=e=>{function t(n){return ge(n,new.target.prototype)}return t.prototype=e.prototype,t};var F,Y=(e,t,n)=>(F||(F=Z()),n?F.setStartAfter(e):F.setStartBefore(e),F.setEndAfter(t),F.deleteContents(),e);var lt=({firstChild:e,lastChild:t},n)=>Y(e,t,n),Dt=!1,tt=(e,t)=>Dt&&e.nodeType===11?1/t<0?t?lt(e,!0):e.lastChild:t?e.valueOf():e.firstChild:e,Ft=e=>document.createComment(e),D,H,w,Q=class extends Mt(DocumentFragment){constructor(n){super(n);q(this,D,Ft("<>"));q(this,H,Ft("</>"));q(this,w,S);this.replaceChildren(A(this,D),...n.childNodes,A(this,H)),Dt=!0}get firstChild(){return A(this,D)}get lastChild(){return A(this,H)}get parentNode(){return A(this,D).parentNode}remove(){lt(this,!1)}replaceWith(n){lt(this,!0).replaceWith(n)}valueOf(){let{parentNode:n}=this;if(n===this)A(this,w)===S&&ut(this,w,[...this.childNodes]);else{if(n){let{firstChild:r,lastChild:o}=this;for(ut(this,w,[r]);r!==o;)A(this,w).push(r=r.nextSibling)}this.replaceChildren(...A(this,w))}return this}};D=new WeakMap,H=new WeakMap,w=new WeakMap;var It=(e,t,n)=>e.setAttribute(t,n),z=(e,t)=>e.removeAttribute(t),Ce=(e,t)=>{for(let n in t){let r=t[n],o=n==="role"?n:`aria-${n}`;r==null?z(e,o):It(e,o,r)}return t},et,Se=(e,t,n)=>{n=n.slice(1),et||(et=new WeakMap);let r=et.get(e)||P(et,e,{}),o=r[n];return o&&o[0]&&e.removeEventListener(n,...o),o=X(t)?t:[t,!1],r[n]=o,o[0]&&e.addEventListener(n,...o),t};var R=(e,t)=>{let{t:n,n:r}=e,o=!1;switch(typeof t){case"object":if(t!==null){(r||n).replaceWith(e.n=t.valueOf());break}case"undefined":o=!0;default:n.data=o?"":t,r&&(e.n=null,r.replaceWith(n));break}return t},ve=(e,t)=>dt(e,t,t==null?"class":"className"),be=(e,t)=>{let{dataset:n}=e;for(let r in t)t[r]==null?delete n[r]:n[r]=t[r];return t},nt=(e,t,n)=>e[n]=t,Te=(e,t,n)=>nt(e,t,n.slice(1)),dt=(e,t,n)=>t==null?(z(e,n),t):nt(e,t,n),jt=(e,t)=>(typeof t=="function"?t(e):t.current=e,t),ft=(e,t,n)=>(t==null?z(e,n):It(e,n,t),t),Pe=(e,t)=>t==null?dt(e,t,"style"):nt(e.style,t,"cssText"),Ae=(e,t,n)=>(e.toggleAttribute(n.slice(1),t),t),N=(e,t,n)=>{let{length:r}=t;if(e.data=`[${r}]`,r)return Ot(e.parentNode,n,t,tt,e);switch(n.length){case 1:n[0].remove();case 0:break;default:Y(tt(n[0],0),tt(n.at(-1),-0),!1);break}return S},rt=new Map([["aria",Ce],["class",ve],["data",be],["ref",jt],["style",Pe]]),Kt=(e,t,n)=>{var r;switch(t[0]){case".":return Te;case"?":return Ae;case"@":return Se;default:return n||"ownerSVGElement"in e?t==="ref"?jt:ft:rt.get(t)||(t in e?t.startsWith("on")?nt:(r=Nt(e,t))!=null&&r.set?dt:ft:ft)}},Vt=(e,t)=>(e.textContent=t==null?"":t,t);var I=(e,t,n)=>({a:e,b:t,c:n}),_t=(e,t)=>({b:e,c:t}),Lt=(e,t,n,r)=>({v:S,u:e,t,n,c:r}),v=()=>I(null,null,S);var mt=e=>(t,n)=>{let{a:r,b:o,c:i}=e(t,n),a=document.importNode(r,!0),s=S;if(o!==S){s=[];for(let c,u,p=0;p<o.length;p++){let{a:l,b:d,c:g}=o[p],G=l===u?c:c=$t(a,u=l);s[p]=Lt(d,G,g,d===N?[]:d===R?v():null)}}return _t(i?a.firstChild:new Q(a),s)};var Ht=/^(?:plaintext|script|style|textarea|title|xmp)$/i,zt=/^(?:area|base|br|col|embed|hr|img|input|keygen|link|menuitem|meta|param|source|track|wbr)$/i;var Ee=/<([a-zA-Z0-9]+[a-zA-Z0-9:._-]*)([^>]*?)(\/?)>/g,we=/([^\s\\>"'=]+)\s*=\s*(['"]?)\x01/g,Re=/[\x01\x02]/g,Bt=(e,t,n)=>{let r=0;return e.join("").trim().replace(Ee,(o,i,a,s)=>`<${i}${a.replace(we,"=$2$1").trimEnd()}${s?n||zt.test(i)?" /":`></${i}`:""}>`).replace(Re,o=>o===""?`<!--${t+r++}-->`:t+r++)};var ot=document.createElement("template"),ht,yt,Wt=(e,t)=>{if(t)return ht||(ht=document.createElementNS(Gt,"svg"),yt=Z(),yt.selectNodeContents(ht)),yt.createContextualFragment(e);ot.innerHTML=e;let{content:n}=ot;return ot=ot.cloneNode(!1),n};var gt=e=>{let t=[],n;for(;n=e.parentNode;)t.push(t.indexOf.call(n.childNodes,e)),e=n;return t},Ut=()=>document.createTextNode(""),Ge=(e,t,n)=>{let r=Wt(Bt(e,B,n),n),{length:o}=e,i=S;if(o>1){let c=[],u=document.createTreeWalker(r,129),p=0,l=`${B}${p++}`;for(i=[];p<o;){let d=u.nextNode();if(d.nodeType===8){if(d.data===l){let g=X(t[p-1])?N:R;g===R&&c.push(d),i.push(I(gt(d),g,null)),l=`${B}${p++}`}}else{let g;for(;d.hasAttribute(l);){g||(g=gt(d));let G=d.getAttribute(l);i.push(I(g,Kt(d,G,n),G)),z(d,l),l=`${B}${p++}`}!n&&Ht.test(d.localName)&&d.textContent.trim()===`<!--${l}-->`&&(i.push(I(g||gt(d),Vt,null)),l=`${B}${p++}`)}}for(p=0;p<c.length;p++)c[p].replaceWith(Ut())}let{childNodes:a}=r,{length:s}=a;return s<1?(s=1,r.appendChild(Ut())):s===1&&o!==1&&a[0].nodeType!==1&&(s=0),P(Jt,e,I(r,i,s===1))},Jt=new WeakMap,B="is\xB5",xt=e=>(t,n)=>Jt.get(t)||Ge(t,n,e);var Ne=mt(xt(!1)),$e=mt(xt(!0)),Ct=(e,{s:t,t:n,v:r})=>{if(e.a!==n){let{b:o,c:i}=(t?$e:Ne)(n,r);e.a=n,e.b=o,e.c=i}for(let{c:o}=e,i=0;i<o.length;i++){let a=r[i],s=o[i];switch(s.u){case N:s.v=N(s.t,Me(s.c,a),s.v);break;case R:let c=a instanceof b?Ct(s.c||(s.c=v()),a):(s.c=null,a);c!==s.v&&(s.v=R(s,c));break;default:a!==s.v&&(s.v=s.u(s.t,a,s.n,s.v));break}}return e.b},Me=(e,t)=>{let n=0,{length:r}=t;for(r<e.length&&e.splice(r);n<r;n++){let o=t[n];o instanceof b?t[n]=Ct(e[n]||(e[n]=v()),o):e[n]=null}return t},b=class{constructor(t,n,r){this.s=t,this.t=n,this.v=r}toDOM(t=v()){return Ct(t,this)}};var qt=e=>(t,...n)=>new b(e,t,n),T=qt(!1),Xt=qt(!0);var Zt=new WeakMap,st=(e,t,n)=>{let r=Zt.get(e)||P(Zt,e,v()),{b:o}=r,i=n&&typeof t=="function"?t():t,a=i instanceof b?i.toDOM(r):i;return o!==a&&e.replaceChildren((r.b=a).valueOf()),e};var Yt=new WeakMap,Qt=e=>(t,n)=>{function r(i,...a){return new b(e,i,a).toDOM(this)}let o=Yt.get(t)||P(Yt,t,new Map);return o.get(n)||P(o,n,r.bind(v()))},te=Qt(!1),Fe=Qt(!0);var ne=new FinalizationRegistry(([e,t,n])=>{n&&console.debug(`%c${String(t)}`,"font-weight:bold","collected"),e(t)}),ee=Object.create(null),re=(e,t,{debug:n,handler:r,return:o,token:i=e}=ee)=>{let a=o||new Proxy(e,r||ee),s=[a,[t,e,!!n]];return i!==!1&&s.push(i),ne.register(...s),a},oe=e=>ne.unregister(e);var St=new WeakMap,De=e=>e(),it=!0,vt=e=>(t,n)=>{if(it=typeof n!="function",se(t),it)return st(t,n,!1);it=!0;let r=new WeakRef(t),o=e(()=>{st(r.deref(),n(),!1)});return St.set(t,o),re(o,De,{return:t})},se=e=>{let t=St.get(e);t&&(it&&St.delete(e),oe(t),t())};var Ie=Symbol.for("preact-signals");function Tt(){if(j>1)j--;else{for(var e,t=!1;W!==void 0;){var n=W;for(W=void 0,bt++;n!==void 0;){var r=n.o;if(n.o=void 0,n.f&=-3,!(8&n.f)&&ce(n))try{n.c()}catch(o){t||(e=o,t=!0)}n=r}}if(bt=0,j--,t)throw e}}var m=void 0;var W=void 0,j=0,bt=0,ct=0;function ie(e){if(m!==void 0){var t=e.n;if(t===void 0||t.t!==m)return t={i:0,S:e,p:m.s,n:void 0,t:m,e:void 0,x:void 0,r:t},m.s!==void 0&&(m.s.n=t),m.s=t,e.n=t,32&m.f&&e.S(t),t;if(t.i===-1)return t.i=0,t.n!==void 0&&(t.n.p=t.p,t.p!==void 0&&(t.p.n=t.n),t.p=m.s,t.n=void 0,m.s.n=t,m.s=t),t}}function y(e){this.v=e,this.i=0,this.n=void 0,this.t=void 0}y.prototype.brand=Ie;y.prototype.h=function(){return!0};y.prototype.S=function(e){this.t!==e&&e.e===void 0&&(e.x=this.t,this.t!==void 0&&(this.t.e=e),this.t=e)};y.prototype.U=function(e){if(this.t!==void 0){var t=e.e,n=e.x;t!==void 0&&(t.x=n,e.e=void 0),n!==void 0&&(n.e=t,e.x=void 0),e===this.t&&(this.t=n)}};y.prototype.subscribe=function(e){var t=this;return J(function(){var n=t.value,r=m;m=void 0;try{e(n)}finally{m=r}})};y.prototype.valueOf=function(){return this.value};y.prototype.toString=function(){return this.value+""};y.prototype.toJSON=function(){return this.value};y.prototype.peek=function(){var e=m;m=void 0;try{return this.value}finally{m=e}};Object.defineProperty(y.prototype,"value",{get:function(){var e=ie(this);return e!==void 0&&(e.i=this.i),this.v},set:function(e){if(e!==this.v){if(bt>100)throw new Error("Cycle detected");this.v=e,this.i++,ct++,j++;try{for(var t=this.t;t!==void 0;t=t.x)t.t.N()}finally{Tt()}}}});function at(e){return new y(e)}function ce(e){for(var t=e.s;t!==void 0;t=t.n)if(t.S.i!==t.i||!t.S.h()||t.S.i!==t.i)return!0;return!1}function ae(e){for(var t=e.s;t!==void 0;t=t.n){var n=t.S.n;if(n!==void 0&&(t.r=n),t.S.n=t,t.i=-1,t.n===void 0){e.s=t;break}}}function pe(e){for(var t=e.s,n=void 0;t!==void 0;){var r=t.p;t.i===-1?(t.S.U(t),r!==void 0&&(r.n=t.n),t.n!==void 0&&(t.n.p=r)):n=t,t.S.n=t.r,t.r!==void 0&&(t.r=void 0),t=r}e.s=n}function K(e){y.call(this,void 0),this.x=e,this.s=void 0,this.g=ct-1,this.f=4}(K.prototype=new y).h=function(){if(this.f&=-3,1&this.f)return!1;if((36&this.f)==32||(this.f&=-5,this.g===ct))return!0;if(this.g=ct,this.f|=1,this.i>0&&!ce(this))return this.f&=-2,!0;var e=m;try{ae(this),m=this;var t=this.x();(16&this.f||this.v!==t||this.i===0)&&(this.v=t,this.f&=-17,this.i++)}catch(n){this.v=n,this.f|=16,this.i++}return m=e,pe(this),this.f&=-2,!0};K.prototype.S=function(e){if(this.t===void 0){this.f|=36;for(var t=this.s;t!==void 0;t=t.n)t.S.S(t)}y.prototype.S.call(this,e)};K.prototype.U=function(e){if(this.t!==void 0&&(y.prototype.U.call(this,e),this.t===void 0)){this.f&=-33;for(var t=this.s;t!==void 0;t=t.n)t.S.U(t)}};K.prototype.N=function(){if(!(2&this.f)){this.f|=6;for(var e=this.t;e!==void 0;e=e.x)e.t.N()}};Object.defineProperty(K.prototype,"value",{get:function(){if(1&this.f)throw new Error("Cycle detected");var e=ie(this);if(this.h(),e!==void 0&&(e.i=this.i),16&this.f)throw this.v;return this.v}});function k(e){return new K(e)}function ue(e){var t=e.u;if(e.u=void 0,typeof t=="function"){j++;var n=m;m=void 0;try{t()}catch(r){throw e.f&=-2,e.f|=8,Pt(e),r}finally{m=n,Tt()}}}function Pt(e){for(var t=e.s;t!==void 0;t=t.n)t.S.U(t);e.x=void 0,e.s=void 0,ue(e)}function je(e){if(m!==this)throw new Error("Out-of-order effect");pe(this),m=e,this.f&=-2,8&this.f&&Pt(this),Tt()}function U(e){this.x=e,this.u=void 0,this.s=void 0,this.o=void 0,this.f=32}U.prototype.c=function(){var e=this.S();try{if(8&this.f||this.x===void 0)return;var t=this.x();typeof t=="function"&&(this.u=t)}finally{e()}};U.prototype.S=function(){if(1&this.f)throw new Error("Cycle detected");this.f|=1,this.f&=-9,ue(this),ae(this),j++;var e=m;return m=this,je.bind(this,e)};U.prototype.N=function(){2&this.f||(this.f|=2,this.o=W,W=this)};U.prototype.d=function(){this.f|=8,1&this.f||Pt(this)};function J(e){var t=new U(e);try{t.c()}catch(n){throw t.d(),n}return t.d.bind(t)}var At=class extends y{emit(t){if(typeof t=="object"&&t!==null&&typeof this.value=="object"){let n=Et(this.value);this.value={...n,...t}}else this.value=t}};function V(e){let t=at(e);return Object.setPrototypeOf(t,At.prototype),t}function Et(e){if(e===null||typeof e!="object")return e;if(Array.isArray(e))return e.map(Et);let t={};for(let n of Reflect.ownKeys(e))t[n]=Et(e[n]);return t}function mr(e){return(...t)=>k(()=>e(...t)).value}function hr(e){let t=new Map,n=new Map;return Object.entries(e()).reduce((o,[i,a])=>a.length===0?(t.has(i)||t.set(i,k(()=>a())),{...o,[i]:()=>t.get(i).value}):{...o,[i]:(...s)=>{let c=JSON.stringify(s),u=n.get(i);if(u||(u=new Map,n.set(i,u)),!u.has(c)){let p=k(()=>a(...s));u.set(c,p)}return u.get(c).value}},{})}var E=class{static createCacheKey(t){return t.map(n=>{if(n===null)return"null";if(n===void 0)return"undefined";if(typeof n=="object"){let r=n;return"id"in r?String(r.id):"key"in r?String(r.key):JSON.stringify(this.sortObjectKeys(r))}return String(n)}).join("|")}static sortObjectKeys(t){return Array.isArray(t)?t.map(n=>typeof n=="object"&&n!==null?this.sortObjectKeys(n):n):Object.keys(t).sort().reduce((n,r)=>{let o=t[r];return n[r]=typeof o=="object"&&o!==null?this.sortObjectKeys(o):o,n},{})}static argsEqual(t,n){return t.length!==n.length?!1:t.every((r,o)=>Object.is(r,n[o])?!0:typeof r=="object"&&r&&typeof n[o]=="object"&&n[o]?JSON.stringify(this.sortObjectKeys(r))===JSON.stringify(this.sortObjectKeys(n[o])):!1)}static createComputed(t,n={}){var a,s;let r=new Map,o=(a=n.maxAge)!=null?a:this.cacheTimeout,i=(s=n.cacheSize)!=null?s:this.maxCacheSize;return(...c)=>{if(c.length===0){if(!r.has("_")){let g=k(()=>t(...c));r.set("_",{signal:g,args:[],lastAccessed:Date.now()})}let d=r.get("_");return d.lastAccessed=Date.now(),d.signal.value}let u=this.createCacheKey(c),p=r.get(u);if(p&&this.argsEqual(p.args,c)){let d=Date.now();if(d-p.lastAccessed<=o)return p.lastAccessed=d,p.signal.value}r.size>=i*this.cleanupThreshold&&this.cleanup(r,o);let l=k(()=>t(...c));return r.set(u,{signal:l,args:[...c],lastAccessed:Date.now()}),l.value}}static cleanup(t,n){let r=Date.now();for(let[o,i]of t.entries())r-i.lastAccessed>n&&t.delete(o)}};E.maxCacheSize=1e3,E.cleanupThreshold=.8,E.cacheTimeout=5*60*1e3;var pt={};function Ke(e){let{state:t,getters:n,computed:r,actions:o}=e,i=V(t),a=n?Object.entries(n({state:i})).reduce((u,[p,l])=>({...u,[p]:l()}),{}):{},s=r?Object.entries(r({state:i})).reduce((u,[p,l])=>{let d=E.createComputed(()=>l(),{maxAge:9e5,cacheSize:500});return{...u,[p]:{get value(){return d()}}}},{}):{},c=o?o({state:i,computed:s}):{};return{state:i,getters:a,computed:s,actions:c}}function Ve(e,t){if(pt[e])throw new Error(`Store "${e}" already exists`);pt[e]=t}function _e(e){let t=pt[e];if(!t)throw new Error(`Store "${e}" not found`);return t}function le(e){let{key:t,state:n,...r}=e,o=Ke({state:n,...r});return _.register(t,o),o}var _={list:pt,$:_e,register:Ve};function O(e){let{tagName:t,props:n={},state:r,getters:o=()=>({}),computed:i=()=>({}),actions:a=()=>({}),connected:s,disconnected:c,render:u,listen:p}=e,l=vt(J);class d extends HTMLElement{constructor(){super();this.slots={};this.cleanup=[];this.props=at({}),this.props.value=this.initializeProps(),this.state=V(r),this.getters=this.setupGetters(),this.computed=this.setupComputed(),this.actions=this.setupActions()}static get observedAttributes(){return Object.keys(n).map(f=>`data-${f}`)}$(f){return this[f]}emitEvent(f,h={}){this.dispatchEvent(new CustomEvent(f,{detail:h}))}setupGetters(){let f=o({props:this.getPropValue(),state:this.state,store:_,el:this,slots:this.slots});return Object.entries(f).reduce((h,[x,C])=>({...h,[x]:C()}),{})}setupComputed(){let f={props:this.getPropValue(),state:this.state,store:_,el:this,slots:this.slots},h=i(f),x={};for(let[C,$]of Object.entries(h)){let M=E.createComputed(()=>$(),{maxAge:3e5,cacheSize:100});Object.defineProperty(x,C,{get:()=>M(),enumerable:!0})}return x}setupActions(){return a({props:this.getPropValue(),state:this.state,computed:this.computed,store:_,el:this,slots:this.slots})}get context(){return{props:this.getPropValue(),state:this.state,getters:this.getters,computed:this.computed,actions:this.actions,el:this,slots:this.slots,store:_}}initializeProps(){var h;let f={};for(let[x,C]of Object.entries(n)){let $=`data-${x}`,M=this.getAttribute($),de=(h=C.default)!=null?h:this.getDefaultForType(C.type);f[x]=M!==null?this.parseAttributeValue(M,C.type):de}return f}getDefaultForType(f){switch(f){case String:return"";case Number:return 0;case Boolean:return!1;case Object:return{};case Array:return[];default:return null}}parseAttributeValue(f,h){switch(h){case Number:return Number(f);case Boolean:return f!==null&&f!=="false";case Object:case Array:try{return JSON.parse(f)}catch{return h===Object?{}:[]}default:return f}}attributeChangedCallback(f,h,x){let C=f.replace(/^data-/,""),$=n[C];if(!$)return;let M=this.parseAttributeValue(x,$.type);this.updateProp(C,M)}updateProp(f,h){this.props.value={...this.props.peek(),[f]:h}}getPropValue(){return this.props.value}setupListener(){if(!p)return;let f=this.state.peek(),h=J(()=>{let x=this.state.value;p({...this.context,newValue:x,oldValue:f}),f=x});this.cleanup.push(h)}setupRender(){if(!u)return;let f=l(this,()=>u(this.context));this.cleanup.push(f)}collectSlots(){let f={default:[]};Array.from(this.childNodes).forEach(h=>{var x;if(h instanceof Element){let C=h.getAttribute("data-slot")||"default";f[C]=f[C]||[],f[C].push(h)}else(x=h.textContent)!=null&&x.trim()&&f.default.push(h)}),this.slots=f}connectedCallback(){requestAnimationFrame(()=>{this.collectSlots(),this.setupListener(),this.setupRender(),s==null||s(this.context)})}disconnectedCallback(){this.cleanup.forEach(f=>f()),this.cleanup=[],c==null||c(this.context)}}t&&customElements.define(t,d)}var L=class e{constructor(){this.styles=new Map;this.componentInstances=new Map;this.styleElements=new Map}static getInstance(){return e.instance||(e.instance=new e),e.instance}register(t,n){this.styles.has(t)||this.styles.set(t,n)}connectComponent(t,n){this.componentInstances.has(t)||this.componentInstances.set(t,new Set);let r=this.componentInstances.get(t);r.add(n),r.size===1&&this.injectStyles(t)}disconnectComponent(t,n){let r=this.componentInstances.get(t);r&&(r.delete(n),r.size===0&&this.removeStyles(t))}injectStyles(t){let n=this.styles.get(t);if(!n)return;let r=document.createElement("style");r.setAttribute("data-component",t),r.textContent=n,document.head.appendChild(r),this.styleElements.set(t,r)}removeStyles(t){let n=this.styleElements.get(t);n&&document.head.contains(n)&&(document.head.removeChild(n),this.styleElements.delete(t))}};function fe(e,t,n={}){let r=`--${e}`;function o(s,c=""){return Object.entries(s).map(([u,p])=>{let l=c?`${c}-${u}`:`${r}-${u}`;return typeof p=="object"?o(p,l):`${l}: ${p};`}).join(`
-`)}let a=`:root { ${o(n)} } ${t}`;return L.getInstance().register(e,a),{connectComponent(s){L.getInstance().connectComponent(e,s)},disconnectComponent(s){L.getInstance().disconnectComponent(e,s)},updateConfig(s){let c=document.createElement("style");c.textContent=`:root { ${o(s)} }`,document.head.appendChild(c)}}}var wt=fe("signa-button",':host { display: inline-block; } .signa-button { background: var(--signa-button-background, #007bff); color: var(--signa-button-color, #ffffff); padding: var(--signa-button-padding, 8px 16px); border-radius: var(--signa-button-radius, 4px); border: var(--signa-button-border, none); cursor: pointer; } .signa-button:hover { background: var(--signa-button-hover-background, #0056b3); } :host([variant="secondary"]) .signa-button { background: var(--signa-button-secondary-background, #6c757d); } :host([variant="outline"]) .signa-button { background: transparent; border: 1px solid var(--signa-button-background, #007bff); color: var(--signa-button-background, #007bff); }');var Xr=le({key:"counter",state:{count:0},computed:()=>({double:()=>!0})});O({tagName:"my-counter",state:{count:0},props:{val:{type:Number,default:20}},listen(e){},connected(e){wt.connectComponent(e.el)},disconnected(e){wt.disconnectComponent(e.el)},getters:e=>({counterStore:()=>e.store.$("counter"),hi:()=>"hi"}),computed:({state:e,props:t})=>(console.log(t),{doubleCount:()=>e.value.count+t.val,isEven:()=>e.value.count%2===0}),actions:({state:e})=>({increment:t=>{e.emit({count:e.value.count+t})},reset:()=>{e.emit({count:0})}}),render:e=>{let{state:t,computed:n,actions:r,getters:{counterStore:o}}=e;return T`<div> <p>Count test: ${t.value.count}</p> <p>Double: ${n.doubleCount}</p> <p>Is Even: ${n.isEven}</p> <button onclick=${()=>r.increment(1)}>+1</button> <button onclick=${r.reset}>Reset</button> </div>`}});O({tagName:"my-counter-2",state:{count:0},props:{count:{type:Number,default:0}},getters:e=>({hi:()=>"hi",counterStore:()=>e.store.$("counter")}),computed:({state:e})=>({doubleCount:()=>e.value.count*2,isEven:()=>e.value.count%2===0}),actions:({state:e})=>({increment:t=>{e.emit({count:e.value.count+t})},reset:()=>{e.emit({count:0})}}),listen(e){},render:({props:e,state:t,computed:n,actions:r,getters:{counterStore:o,hi:i}})=>T`<div> counter 2 component props value ${e.count} <p>Count: ${t.value.count}</p> <p>Double: ${n.doubleCount}</p> <p>Is Even: ${n.isEven}</p> <button onclick=${()=>r.increment(1)}>+1</button> <button onclick=${r.reset}>Reset</button> <my-component data-count="${t.value.count}"></my-component> </div>`});O({tagName:"my-component",state:{count:0},props:{count:{type:Number,default:0}},getters:e=>({hi:()=>"hi",counterStore:()=>e.store.$("counter")}),computed:({state:e})=>({doubleCount:()=>e.value.count*2,isEven:()=>e.value.count%2===0}),actions:({state:e})=>({increment:t=>{e.emit({count:e.value.count+t})},reset:()=>{e.emit({count:0})}}),listen(e){},render:({props:e,state:t,computed:n,actions:r,getters:{counterStore:o}})=>T`<div> <div>props: ${e.count}</div> <p >Count: ${t.value.count}</p> <p>Double: ${n.doubleCount}</p> <p>Is Even: ${n.isEven}</p> <button onclick=${()=>r.increment(1)}>+1</button> <button onclick=${r.reset}>Reset</button> </div>`});var Le={count:0},He=e=>({inc:()=>e.emit({count:e.value.count+1})});O({tagName:"parent-example-cmp-2",state:{example:0,...Le},actions:({state:e})=>({...He(e),myinc:()=>{e.emit({example:e.value.example+1})}}),render(e){return T`${e.state.value.example}<example-cmp @button-click="${()=>console.log("button-click event")}"></example-cmp>`}});O({tagName:"example-cmp",render(e){return T`<button @click="${()=>e.el.emitEvent("button-click")}">Click</button>`}});var ze=V(0),Zr=ze.value+1;O({tagName:"example-cmp-2",render(e){return T`<button @click="${()=>e.el.emitEvent("button-click")}">Click</button>`}});var Yr=O({tagName:"signa-button",props:{variant:{type:String,default:"primary"}},render:({slots:e})=>(console.log(e.default),T`<button class="signa-button"> ${e.default} </button>`)});export{Yr as Button,At as State,mr as compute,hr as createComputed,V as createState,Ke as createStore,O as defineComponent,le as defineStore,J as effect,T as html,te as htmlFor,k as preactComputed,_ as storeRegistry};
+var __typeError = (msg) => {
+  throw TypeError(msg);
+};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
+
+// node_modules/udomdiff/esm/index.js
+var esm_default = (parentNode, a2, b2, get, before) => {
+  const bLength = b2.length;
+  let aEnd = a2.length;
+  let bEnd = bLength;
+  let aStart = 0;
+  let bStart = 0;
+  let map = null;
+  while (aStart < aEnd || bStart < bEnd) {
+    if (aEnd === aStart) {
+      const node = bEnd < bLength ? bStart ? get(b2[bStart - 1], -0).nextSibling : get(b2[bEnd], 0) : before;
+      while (bStart < bEnd)
+        parentNode.insertBefore(get(b2[bStart++], 1), node);
+    } else if (bEnd === bStart) {
+      while (aStart < aEnd) {
+        if (!map || !map.has(a2[aStart]))
+          parentNode.removeChild(get(a2[aStart], -1));
+        aStart++;
+      }
+    } else if (a2[aStart] === b2[bStart]) {
+      aStart++;
+      bStart++;
+    } else if (a2[aEnd - 1] === b2[bEnd - 1]) {
+      aEnd--;
+      bEnd--;
+    } else if (a2[aStart] === b2[bEnd - 1] && b2[bStart] === a2[aEnd - 1]) {
+      const node = get(a2[--aEnd], -0).nextSibling;
+      parentNode.insertBefore(
+        get(b2[bStart++], 1),
+        get(a2[aStart++], -0).nextSibling
+      );
+      parentNode.insertBefore(get(b2[--bEnd], 1), node);
+      a2[aEnd] = b2[bEnd];
+    } else {
+      if (!map) {
+        map = /* @__PURE__ */ new Map();
+        let i2 = bStart;
+        while (i2 < bEnd)
+          map.set(b2[i2], i2++);
+      }
+      if (map.has(a2[aStart])) {
+        const index = map.get(a2[aStart]);
+        if (bStart < index && index < bEnd) {
+          let i2 = aStart;
+          let sequence = 1;
+          while (++i2 < aEnd && i2 < bEnd && map.get(a2[i2]) === index + sequence)
+            sequence++;
+          if (sequence > index - bStart) {
+            const node = get(a2[aStart], 0);
+            while (bStart < index)
+              parentNode.insertBefore(get(b2[bStart++], 1), node);
+          } else {
+            parentNode.replaceChild(
+              get(b2[bStart++], 1),
+              get(a2[aStart++], -1)
+            );
+          }
+        } else
+          aStart++;
+      } else
+        parentNode.removeChild(get(a2[aStart++], -1));
+    }
+  }
+  return b2;
+};
+
+// node_modules/uhtml/esm/utils.js
+var { isArray } = Array;
+var { getPrototypeOf, getOwnPropertyDescriptor } = Object;
+var SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+var empty = [];
+var newRange = () => document.createRange();
+var set = (map, key, value) => {
+  map.set(key, value);
+  return value;
+};
+var gPD = (ref2, prop) => {
+  let desc;
+  do {
+    desc = getOwnPropertyDescriptor(ref2, prop);
+  } while (!desc && (ref2 = getPrototypeOf(ref2)));
+  return desc;
+};
+var find = (content, path) => path.reduceRight(childNodesIndex, content);
+var childNodesIndex = (node, i2) => node.childNodes[i2];
+
+// node_modules/domconstants/esm/constants.js
+var ELEMENT_NODE = 1;
+var COMMENT_NODE = 8;
+var DOCUMENT_FRAGMENT_NODE = 11;
+
+// node_modules/custom-function/esm/factory.js
+var { setPrototypeOf } = Object;
+var factory_default = (Class) => {
+  function Custom(target) {
+    return setPrototypeOf(target, new.target.prototype);
+  }
+  Custom.prototype = Class.prototype;
+  return Custom;
+};
+
+// node_modules/uhtml/esm/range.js
+var range;
+var range_default = (firstChild, lastChild, preserve) => {
+  if (!range) range = newRange();
+  if (preserve)
+    range.setStartAfter(firstChild);
+  else
+    range.setStartBefore(firstChild);
+  range.setEndAfter(lastChild);
+  range.deleteContents();
+  return firstChild;
+};
+
+// node_modules/uhtml/esm/persistent-fragment.js
+var remove = ({ firstChild, lastChild }, preserve) => range_default(firstChild, lastChild, preserve);
+var checkType = false;
+var diffFragment = (node, operation) => checkType && node.nodeType === DOCUMENT_FRAGMENT_NODE ? 1 / operation < 0 ? operation ? remove(node, true) : node.lastChild : operation ? node.valueOf() : node.firstChild : node;
+var comment = (value) => document.createComment(value);
+var _firstChild, _lastChild, _nodes;
+var PersistentFragment = class extends factory_default(DocumentFragment) {
+  constructor(fragment) {
+    super(fragment);
+    __privateAdd(this, _firstChild, comment("<>"));
+    __privateAdd(this, _lastChild, comment("</>"));
+    __privateAdd(this, _nodes, empty);
+    this.replaceChildren(...[
+      __privateGet(this, _firstChild),
+      ...fragment.childNodes,
+      __privateGet(this, _lastChild)
+    ]);
+    checkType = true;
+  }
+  get firstChild() {
+    return __privateGet(this, _firstChild);
+  }
+  get lastChild() {
+    return __privateGet(this, _lastChild);
+  }
+  get parentNode() {
+    return __privateGet(this, _firstChild).parentNode;
+  }
+  remove() {
+    remove(this, false);
+  }
+  replaceWith(node) {
+    remove(this, true).replaceWith(node);
+  }
+  valueOf() {
+    const { parentNode } = this;
+    if (parentNode === this) {
+      if (__privateGet(this, _nodes) === empty)
+        __privateSet(this, _nodes, [...this.childNodes]);
+    } else {
+      if (parentNode) {
+        let { firstChild, lastChild } = this;
+        __privateSet(this, _nodes, [firstChild]);
+        while (firstChild !== lastChild)
+          __privateGet(this, _nodes).push(firstChild = firstChild.nextSibling);
+      }
+      this.replaceChildren(...__privateGet(this, _nodes));
+    }
+    return this;
+  }
+};
+_firstChild = new WeakMap();
+_lastChild = new WeakMap();
+_nodes = new WeakMap();
+
+// node_modules/uhtml/esm/handler.js
+var setAttribute = (element, name, value) => element.setAttribute(name, value);
+var removeAttribute = (element, name) => element.removeAttribute(name);
+var aria = (element, value) => {
+  for (const key in value) {
+    const $ = value[key];
+    const name = key === "role" ? key : `aria-${key}`;
+    if ($ == null) removeAttribute(element, name);
+    else setAttribute(element, name, $);
+  }
+  return value;
+};
+var listeners;
+var at = (element, value, name) => {
+  name = name.slice(1);
+  if (!listeners) listeners = /* @__PURE__ */ new WeakMap();
+  const known2 = listeners.get(element) || set(listeners, element, {});
+  let current = known2[name];
+  if (current && current[0]) element.removeEventListener(name, ...current);
+  current = isArray(value) ? value : [value, false];
+  known2[name] = current;
+  if (current[0]) element.addEventListener(name, ...current);
+  return value;
+};
+var hole = (detail2, value) => {
+  const { t: node, n: hole2 } = detail2;
+  let nullish = false;
+  switch (typeof value) {
+    case "object":
+      if (value !== null) {
+        (hole2 || node).replaceWith(detail2.n = value.valueOf());
+        break;
+      }
+    case "undefined":
+      nullish = true;
+    default:
+      node.data = nullish ? "" : value;
+      if (hole2) {
+        detail2.n = null;
+        hole2.replaceWith(node);
+      }
+      break;
+  }
+  return value;
+};
+var className = (element, value) => maybeDirect(
+  element,
+  value,
+  value == null ? "class" : "className"
+);
+var data = (element, value) => {
+  const { dataset } = element;
+  for (const key in value) {
+    if (value[key] == null) delete dataset[key];
+    else dataset[key] = value[key];
+  }
+  return value;
+};
+var direct = (ref2, value, name) => ref2[name] = value;
+var dot = (element, value, name) => direct(element, value, name.slice(1));
+var maybeDirect = (element, value, name) => value == null ? (removeAttribute(element, name), value) : direct(element, value, name);
+var ref = (element, value) => (typeof value === "function" ? value(element) : value.current = element, value);
+var regular = (element, value, name) => (value == null ? removeAttribute(element, name) : setAttribute(element, name, value), value);
+var style = (element, value) => value == null ? maybeDirect(element, value, "style") : direct(element.style, value, "cssText");
+var toggle = (element, value, name) => (element.toggleAttribute(name.slice(1), value), value);
+var array = (node, value, prev) => {
+  const { length } = value;
+  node.data = `[${length}]`;
+  if (length)
+    return esm_default(node.parentNode, prev, value, diffFragment, node);
+  switch (prev.length) {
+    case 1:
+      prev[0].remove();
+    case 0:
+      break;
+    default:
+      range_default(
+        diffFragment(prev[0], 0),
+        diffFragment(prev.at(-1), -0),
+        false
+      );
+      break;
+  }
+  return empty;
+};
+var attr = /* @__PURE__ */ new Map([
+  ["aria", aria],
+  ["class", className],
+  ["data", data],
+  ["ref", ref],
+  ["style", style]
+]);
+var attribute = (element, name, svg3) => {
+  var _a;
+  switch (name[0]) {
+    case ".":
+      return dot;
+    case "?":
+      return toggle;
+    case "@":
+      return at;
+    default:
+      return svg3 || "ownerSVGElement" in element ? name === "ref" ? ref : regular : attr.get(name) || (name in element ? name.startsWith("on") ? direct : ((_a = gPD(element, name)) == null ? void 0 : _a.set) ? maybeDirect : regular : regular);
+  }
+};
+var text = (element, value) => (element.textContent = value == null ? "" : value, value);
+
+// node_modules/uhtml/esm/literals.js
+var abc = (a2, b2, c2) => ({ a: a2, b: b2, c: c2 });
+var bc = (b2, c2) => ({ b: b2, c: c2 });
+var detail = (u2, t2, n, c2) => ({ v: empty, u: u2, t: t2, n, c: c2 });
+var cache = () => abc(null, null, empty);
+
+// node_modules/uhtml/esm/creator.js
+var creator_default = (parse) => (
+  /**
+   * @param {TemplateStringsArray} template
+   * @param {any[]} values
+   * @returns {import("./literals.js").Cache}
+   */
+  (template2, values) => {
+    const { a: fragment, b: entries, c: direct2 } = parse(template2, values);
+    const root = document.importNode(fragment, true);
+    let details = empty;
+    if (entries !== empty) {
+      details = [];
+      for (let current, prev, i2 = 0; i2 < entries.length; i2++) {
+        const { a: path, b: update, c: name } = entries[i2];
+        const node = path === prev ? current : current = find(root, prev = path);
+        details[i2] = detail(
+          update,
+          node,
+          name,
+          update === array ? [] : update === hole ? cache() : null
+        );
+      }
+    }
+    return bc(
+      direct2 ? root.firstChild : new PersistentFragment(root),
+      details
+    );
+  }
+);
+
+// node_modules/domconstants/esm/re.js
+var TEXT_ELEMENTS = /^(?:plaintext|script|style|textarea|title|xmp)$/i;
+var VOID_ELEMENTS = /^(?:area|base|br|col|embed|hr|img|input|keygen|link|menuitem|meta|param|source|track|wbr)$/i;
+
+// node_modules/@webreflection/uparser/esm/index.js
+var elements = /<([a-zA-Z0-9]+[a-zA-Z0-9:._-]*)([^>]*?)(\/?)>/g;
+var attributes = /([^\s\\>"'=]+)\s*=\s*(['"]?)\x01/g;
+var holes = /[\x01\x02]/g;
+var esm_default2 = (template2, prefix2, xml) => {
+  let i2 = 0;
+  return template2.join("").trim().replace(
+    elements,
+    (_2, name, attrs, selfClosing) => `<${name}${attrs.replace(attributes, "=$2$1").trimEnd()}${selfClosing ? xml || VOID_ELEMENTS.test(name) ? " /" : `></${name}` : ""}>`
+  ).replace(
+    holes,
+    (hole2) => hole2 === "" ? `<!--${prefix2 + i2++}-->` : prefix2 + i2++
+  );
+};
+
+// node_modules/uhtml/esm/create-content.js
+var template = document.createElement("template");
+var svg;
+var range2;
+var create_content_default = (text2, xml) => {
+  if (xml) {
+    if (!svg) {
+      svg = document.createElementNS(SVG_NAMESPACE, "svg");
+      range2 = newRange();
+      range2.selectNodeContents(svg);
+    }
+    return range2.createContextualFragment(text2);
+  }
+  template.innerHTML = text2;
+  const { content } = template;
+  template = template.cloneNode(false);
+  return content;
+};
+
+// node_modules/uhtml/esm/parser.js
+var createPath = (node) => {
+  const path = [];
+  let parentNode;
+  while (parentNode = node.parentNode) {
+    path.push(path.indexOf.call(parentNode.childNodes, node));
+    node = parentNode;
+  }
+  return path;
+};
+var textNode = () => document.createTextNode("");
+var resolve = (template2, values, xml) => {
+  const content = create_content_default(esm_default2(template2, prefix, xml), xml);
+  const { length } = template2;
+  let entries = empty;
+  if (length > 1) {
+    const replace = [];
+    const tw = document.createTreeWalker(content, 1 | 128);
+    let i2 = 0, search = `${prefix}${i2++}`;
+    entries = [];
+    while (i2 < length) {
+      const node = tw.nextNode();
+      if (node.nodeType === COMMENT_NODE) {
+        if (node.data === search) {
+          const update = isArray(values[i2 - 1]) ? array : hole;
+          if (update === hole) replace.push(node);
+          entries.push(abc(createPath(node), update, null));
+          search = `${prefix}${i2++}`;
+        }
+      } else {
+        let path;
+        while (node.hasAttribute(search)) {
+          if (!path) path = createPath(node);
+          const name = node.getAttribute(search);
+          entries.push(abc(path, attribute(node, name, xml), name));
+          removeAttribute(node, search);
+          search = `${prefix}${i2++}`;
+        }
+        if (!xml && TEXT_ELEMENTS.test(node.localName) && node.textContent.trim() === `<!--${search}-->`) {
+          entries.push(abc(path || createPath(node), text, null));
+          search = `${prefix}${i2++}`;
+        }
+      }
+    }
+    for (i2 = 0; i2 < replace.length; i2++)
+      replace[i2].replaceWith(textNode());
+  }
+  const { childNodes } = content;
+  let { length: len } = childNodes;
+  if (len < 1) {
+    len = 1;
+    content.appendChild(textNode());
+  } else if (len === 1 && // ignore html`static` or svg`static` because
+  // these nodes can be passed directly as never mutated
+  length !== 1 && childNodes[0].nodeType !== ELEMENT_NODE) {
+    len = 0;
+  }
+  return set(cache2, template2, abc(content, entries, len === 1));
+};
+var cache2 = /* @__PURE__ */ new WeakMap();
+var prefix = "is\xB5";
+var parser_default = (xml) => (template2, values) => cache2.get(template2) || resolve(template2, values, xml);
+
+// node_modules/uhtml/esm/rabbit.js
+var createHTML = creator_default(parser_default(false));
+var createSVG = creator_default(parser_default(true));
+var unroll = (info, { s: s2, t: t2, v: v2 }) => {
+  if (info.a !== t2) {
+    const { b: b2, c: c2 } = (s2 ? createSVG : createHTML)(t2, v2);
+    info.a = t2;
+    info.b = b2;
+    info.c = c2;
+  }
+  for (let { c: c2 } = info, i2 = 0; i2 < c2.length; i2++) {
+    const value = v2[i2];
+    const detail2 = c2[i2];
+    switch (detail2.u) {
+      case array:
+        detail2.v = array(
+          detail2.t,
+          unrollValues(detail2.c, value),
+          detail2.v
+        );
+        break;
+      case hole:
+        const current = value instanceof Hole ? unroll(detail2.c || (detail2.c = cache()), value) : (detail2.c = null, value);
+        if (current !== detail2.v)
+          detail2.v = hole(detail2, current);
+        break;
+      default:
+        if (value !== detail2.v)
+          detail2.v = detail2.u(detail2.t, value, detail2.n, detail2.v);
+        break;
+    }
+  }
+  return info.b;
+};
+var unrollValues = (stack, values) => {
+  let i2 = 0, { length } = values;
+  if (length < stack.length) stack.splice(length);
+  for (; i2 < length; i2++) {
+    const value = values[i2];
+    if (value instanceof Hole)
+      values[i2] = unroll(stack[i2] || (stack[i2] = cache()), value);
+    else stack[i2] = null;
+  }
+  return values;
+};
+var Hole = class {
+  constructor(svg3, template2, values) {
+    this.s = svg3;
+    this.t = template2;
+    this.v = values;
+  }
+  toDOM(info = cache()) {
+    return unroll(info, this);
+  }
+};
+
+// node_modules/uhtml/esm/index.js
+var tag = (svg3) => (template2, ...values) => new Hole(svg3, template2, values);
+var html = tag(false);
+var svg2 = tag(true);
+
+// node_modules/uhtml/esm/render/shared.js
+var known = /* @__PURE__ */ new WeakMap();
+var shared_default = (where, what, check) => {
+  const info = known.get(where) || set(known, where, cache());
+  const { b: b2 } = info;
+  const hole2 = check && typeof what === "function" ? what() : what;
+  const node = hole2 instanceof Hole ? hole2.toDOM(info) : hole2;
+  if (b2 !== node)
+    where.replaceChildren((info.b = node).valueOf());
+  return where;
+};
+
+// node_modules/uhtml/esm/keyed.js
+var keyed = /* @__PURE__ */ new WeakMap();
+var createRef = (svg3) => (
+  /** @type {Bound} */
+  (ref2, key) => {
+    function tag2(template2, ...values) {
+      return new Hole(svg3, template2, values).toDOM(this);
+    }
+    const memo = keyed.get(ref2) || set(keyed, ref2, /* @__PURE__ */ new Map());
+    return memo.get(key) || set(memo, key, tag2.bind(cache()));
+  }
+);
+var htmlFor = createRef(false);
+var svgFor = createRef(true);
+
+// node_modules/gc-hook/esm/index.js
+var registry = new FinalizationRegistry(
+  ([onGarbageCollected, held, debug]) => {
+    if (debug) console.debug(`%c${String(held)}`, "font-weight:bold", "collected");
+    onGarbageCollected(held);
+  }
+);
+var nullHandler = /* @__PURE__ */ Object.create(null);
+var create = (hold, onGarbageCollected, { debug, handler, return: r, token = hold } = nullHandler) => {
+  const target = r || new Proxy(hold, handler || nullHandler);
+  const args = [target, [onGarbageCollected, hold, !!debug]];
+  if (token !== false) args.push(token);
+  registry.register(...args);
+  return target;
+};
+var drop = (token) => registry.unregister(token);
+
+// node_modules/uhtml/esm/render/reactive.js
+var effects = /* @__PURE__ */ new WeakMap();
+var onGC = (dispose) => dispose();
+var remove2 = true;
+var attach = (effect) => {
+  return (where, what) => {
+    remove2 = typeof what !== "function";
+    detach(where);
+    if (remove2) return shared_default(where, what, false);
+    remove2 = true;
+    const wr = new WeakRef(where);
+    const dispose = effect(() => {
+      shared_default(wr.deref(), what(), false);
+    });
+    effects.set(where, dispose);
+    return create(dispose, onGC, { return: where });
+  };
+};
+var detach = (where) => {
+  const dispose = effects.get(where);
+  if (dispose) {
+    if (remove2) effects.delete(where);
+    drop(dispose);
+    dispose();
+  }
+};
+
+// node_modules/@preact/signals-core/dist/signals-core.module.js
+var i = Symbol.for("preact-signals");
+function t() {
+  if (!(s > 1)) {
+    var i2, t2 = false;
+    while (void 0 !== h) {
+      var r = h;
+      h = void 0;
+      f++;
+      while (void 0 !== r) {
+        var o2 = r.o;
+        r.o = void 0;
+        r.f &= -3;
+        if (!(8 & r.f) && c(r)) try {
+          r.c();
+        } catch (r2) {
+          if (!t2) {
+            i2 = r2;
+            t2 = true;
+          }
+        }
+        r = o2;
+      }
+    }
+    f = 0;
+    s--;
+    if (t2) throw i2;
+  } else s--;
+}
+var o = void 0;
+var h = void 0;
+var s = 0;
+var f = 0;
+var v = 0;
+function e(i2) {
+  if (void 0 !== o) {
+    var t2 = i2.n;
+    if (void 0 === t2 || t2.t !== o) {
+      t2 = { i: 0, S: i2, p: o.s, n: void 0, t: o, e: void 0, x: void 0, r: t2 };
+      if (void 0 !== o.s) o.s.n = t2;
+      o.s = t2;
+      i2.n = t2;
+      if (32 & o.f) i2.S(t2);
+      return t2;
+    } else if (-1 === t2.i) {
+      t2.i = 0;
+      if (void 0 !== t2.n) {
+        t2.n.p = t2.p;
+        if (void 0 !== t2.p) t2.p.n = t2.n;
+        t2.p = o.s;
+        t2.n = void 0;
+        o.s.n = t2;
+        o.s = t2;
+      }
+      return t2;
+    }
+  }
+}
+function u(i2) {
+  this.v = i2;
+  this.i = 0;
+  this.n = void 0;
+  this.t = void 0;
+}
+u.prototype.brand = i;
+u.prototype.h = function() {
+  return true;
+};
+u.prototype.S = function(i2) {
+  if (this.t !== i2 && void 0 === i2.e) {
+    i2.x = this.t;
+    if (void 0 !== this.t) this.t.e = i2;
+    this.t = i2;
+  }
+};
+u.prototype.U = function(i2) {
+  if (void 0 !== this.t) {
+    var t2 = i2.e, r = i2.x;
+    if (void 0 !== t2) {
+      t2.x = r;
+      i2.e = void 0;
+    }
+    if (void 0 !== r) {
+      r.e = t2;
+      i2.x = void 0;
+    }
+    if (i2 === this.t) this.t = r;
+  }
+};
+u.prototype.subscribe = function(i2) {
+  var t2 = this;
+  return E(function() {
+    var r = t2.value, n = o;
+    o = void 0;
+    try {
+      i2(r);
+    } finally {
+      o = n;
+    }
+  });
+};
+u.prototype.valueOf = function() {
+  return this.value;
+};
+u.prototype.toString = function() {
+  return this.value + "";
+};
+u.prototype.toJSON = function() {
+  return this.value;
+};
+u.prototype.peek = function() {
+  var i2 = o;
+  o = void 0;
+  try {
+    return this.value;
+  } finally {
+    o = i2;
+  }
+};
+Object.defineProperty(u.prototype, "value", { get: function() {
+  var i2 = e(this);
+  if (void 0 !== i2) i2.i = this.i;
+  return this.v;
+}, set: function(i2) {
+  if (i2 !== this.v) {
+    if (f > 100) throw new Error("Cycle detected");
+    this.v = i2;
+    this.i++;
+    v++;
+    s++;
+    try {
+      for (var r = this.t; void 0 !== r; r = r.x) r.t.N();
+    } finally {
+      t();
+    }
+  }
+} });
+function d(i2) {
+  return new u(i2);
+}
+function c(i2) {
+  for (var t2 = i2.s; void 0 !== t2; t2 = t2.n) if (t2.S.i !== t2.i || !t2.S.h() || t2.S.i !== t2.i) return true;
+  return false;
+}
+function a(i2) {
+  for (var t2 = i2.s; void 0 !== t2; t2 = t2.n) {
+    var r = t2.S.n;
+    if (void 0 !== r) t2.r = r;
+    t2.S.n = t2;
+    t2.i = -1;
+    if (void 0 === t2.n) {
+      i2.s = t2;
+      break;
+    }
+  }
+}
+function l(i2) {
+  var t2 = i2.s, r = void 0;
+  while (void 0 !== t2) {
+    var o2 = t2.p;
+    if (-1 === t2.i) {
+      t2.S.U(t2);
+      if (void 0 !== o2) o2.n = t2.n;
+      if (void 0 !== t2.n) t2.n.p = o2;
+    } else r = t2;
+    t2.S.n = t2.r;
+    if (void 0 !== t2.r) t2.r = void 0;
+    t2 = o2;
+  }
+  i2.s = r;
+}
+function y(i2) {
+  u.call(this, void 0);
+  this.x = i2;
+  this.s = void 0;
+  this.g = v - 1;
+  this.f = 4;
+}
+(y.prototype = new u()).h = function() {
+  this.f &= -3;
+  if (1 & this.f) return false;
+  if (32 == (36 & this.f)) return true;
+  this.f &= -5;
+  if (this.g === v) return true;
+  this.g = v;
+  this.f |= 1;
+  if (this.i > 0 && !c(this)) {
+    this.f &= -2;
+    return true;
+  }
+  var i2 = o;
+  try {
+    a(this);
+    o = this;
+    var t2 = this.x();
+    if (16 & this.f || this.v !== t2 || 0 === this.i) {
+      this.v = t2;
+      this.f &= -17;
+      this.i++;
+    }
+  } catch (i3) {
+    this.v = i3;
+    this.f |= 16;
+    this.i++;
+  }
+  o = i2;
+  l(this);
+  this.f &= -2;
+  return true;
+};
+y.prototype.S = function(i2) {
+  if (void 0 === this.t) {
+    this.f |= 36;
+    for (var t2 = this.s; void 0 !== t2; t2 = t2.n) t2.S.S(t2);
+  }
+  u.prototype.S.call(this, i2);
+};
+y.prototype.U = function(i2) {
+  if (void 0 !== this.t) {
+    u.prototype.U.call(this, i2);
+    if (void 0 === this.t) {
+      this.f &= -33;
+      for (var t2 = this.s; void 0 !== t2; t2 = t2.n) t2.S.U(t2);
+    }
+  }
+};
+y.prototype.N = function() {
+  if (!(2 & this.f)) {
+    this.f |= 6;
+    for (var i2 = this.t; void 0 !== i2; i2 = i2.x) i2.t.N();
+  }
+};
+Object.defineProperty(y.prototype, "value", { get: function() {
+  if (1 & this.f) throw new Error("Cycle detected");
+  var i2 = e(this);
+  this.h();
+  if (void 0 !== i2) i2.i = this.i;
+  if (16 & this.f) throw this.v;
+  return this.v;
+} });
+function w(i2) {
+  return new y(i2);
+}
+function _(i2) {
+  var r = i2.u;
+  i2.u = void 0;
+  if ("function" == typeof r) {
+    s++;
+    var n = o;
+    o = void 0;
+    try {
+      r();
+    } catch (t2) {
+      i2.f &= -2;
+      i2.f |= 8;
+      g(i2);
+      throw t2;
+    } finally {
+      o = n;
+      t();
+    }
+  }
+}
+function g(i2) {
+  for (var t2 = i2.s; void 0 !== t2; t2 = t2.n) t2.S.U(t2);
+  i2.x = void 0;
+  i2.s = void 0;
+  _(i2);
+}
+function p(i2) {
+  if (o !== this) throw new Error("Out-of-order effect");
+  l(this);
+  o = i2;
+  this.f &= -2;
+  if (8 & this.f) g(this);
+  t();
+}
+function b(i2) {
+  this.x = i2;
+  this.u = void 0;
+  this.s = void 0;
+  this.o = void 0;
+  this.f = 32;
+}
+b.prototype.c = function() {
+  var i2 = this.S();
+  try {
+    if (8 & this.f) return;
+    if (void 0 === this.x) return;
+    var t2 = this.x();
+    if ("function" == typeof t2) this.u = t2;
+  } finally {
+    i2();
+  }
+};
+b.prototype.S = function() {
+  if (1 & this.f) throw new Error("Cycle detected");
+  this.f |= 1;
+  this.f &= -9;
+  _(this);
+  a(this);
+  s++;
+  var i2 = o;
+  o = this;
+  return p.bind(this, i2);
+};
+b.prototype.N = function() {
+  if (!(2 & this.f)) {
+    this.f |= 2;
+    this.o = h;
+    h = this;
+  }
+};
+b.prototype.d = function() {
+  this.f |= 8;
+  if (!(1 & this.f)) g(this);
+};
+function E(i2) {
+  var t2 = new b(i2);
+  try {
+    t2.c();
+  } catch (i3) {
+    t2.d();
+    throw i3;
+  }
+  return t2.d.bind(t2);
+}
+
+// src/core/state.ts
+var State = class extends u {
+  emit(value) {
+    if (typeof value === "object" && value !== null && typeof this.value === "object") {
+      const currentClone = cloneDeep(this.value);
+      this.value = { ...currentClone, ...value };
+    } else {
+      this.value = value;
+    }
+  }
+};
+function createState(initialValue) {
+  const baseSignal = d(initialValue);
+  Object.setPrototypeOf(baseSignal, State.prototype);
+  return baseSignal;
+}
+function cloneDeep(obj) {
+  if (obj === null || typeof obj !== "object") {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(cloneDeep);
+  }
+  const clonedObj = {};
+  for (const key of Reflect.ownKeys(obj)) {
+    clonedObj[key] = cloneDeep(obj[key]);
+  }
+  return clonedObj;
+}
+function compute(computeFn) {
+  return (...args) => {
+    const signal = w(() => computeFn(...args));
+    return signal.value;
+  };
+}
+function createComputed(computedFn) {
+  const computedSignals = /* @__PURE__ */ new Map();
+  const computedCache = /* @__PURE__ */ new Map();
+  const computed = Object.entries(computedFn()).reduce((acc, [key, fn]) => {
+    if (fn.length === 0) {
+      if (!computedSignals.has(key)) {
+        computedSignals.set(key, w(() => fn()));
+      }
+      return {
+        ...acc,
+        [key]: () => computedSignals.get(key).value
+      };
+    }
+    return {
+      ...acc,
+      [key]: (...args) => {
+        const cacheKey = JSON.stringify(args);
+        let argCache = computedCache.get(key);
+        if (!argCache) {
+          argCache = /* @__PURE__ */ new Map();
+          computedCache.set(key, argCache);
+        }
+        if (!argCache.has(cacheKey)) {
+          const signal = w(() => fn(...args));
+          argCache.set(cacheKey, signal);
+        }
+        return argCache.get(cacheKey).value;
+      }
+    };
+  }, {});
+  return computed;
+}
+
+// src/core/untils.ts
+var ComputedManager = class {
+  static createCacheKey(args) {
+    return args.map((arg) => {
+      if (arg === null) return "null";
+      if (arg === void 0) return "undefined";
+      if (typeof arg === "object") {
+        const obj = arg;
+        if ("id" in obj) return String(obj.id);
+        if ("key" in obj) return String(obj.key);
+        return JSON.stringify(this.sortObjectKeys(obj));
+      }
+      return String(arg);
+    }).join("|");
+  }
+  static sortObjectKeys(obj) {
+    if (Array.isArray(obj)) {
+      return obj.map(
+        (item) => typeof item === "object" && item !== null ? this.sortObjectKeys(item) : item
+      );
+    }
+    return Object.keys(obj).sort().reduce((acc, key) => {
+      const value = obj[key];
+      acc[key] = typeof value === "object" && value !== null ? this.sortObjectKeys(value) : value;
+      return acc;
+    }, {});
+  }
+  static argsEqual(a2, b2) {
+    if (a2.length !== b2.length) return false;
+    return a2.every((val, i2) => {
+      if (Object.is(val, b2[i2])) return true;
+      if (typeof val === "object" && val && typeof b2[i2] === "object" && b2[i2]) {
+        return JSON.stringify(this.sortObjectKeys(val)) === JSON.stringify(this.sortObjectKeys(b2[i2]));
+      }
+      return false;
+    });
+  }
+  static createComputed(fn, options = {}) {
+    var _a, _b;
+    const cache3 = /* @__PURE__ */ new Map();
+    const maxAge = (_a = options.maxAge) != null ? _a : this.cacheTimeout;
+    const maxSize = (_b = options.cacheSize) != null ? _b : this.maxCacheSize;
+    return (...args) => {
+      if (args.length === 0) {
+        if (!cache3.has("_")) {
+          const signal2 = w(() => fn(...args));
+          cache3.set("_", {
+            signal: signal2,
+            args: [],
+            lastAccessed: Date.now()
+          });
+        }
+        const cached2 = cache3.get("_");
+        cached2.lastAccessed = Date.now();
+        return cached2.signal.value;
+      }
+      const cacheKey = this.createCacheKey(args);
+      const cached = cache3.get(cacheKey);
+      if (cached && this.argsEqual(cached.args, args)) {
+        const now = Date.now();
+        if (now - cached.lastAccessed <= maxAge) {
+          cached.lastAccessed = now;
+          return cached.signal.value;
+        }
+      }
+      if (cache3.size >= maxSize * this.cleanupThreshold) {
+        this.cleanup(cache3, maxAge);
+      }
+      const signal = w(() => fn(...args));
+      cache3.set(cacheKey, {
+        signal,
+        args: [...args],
+        lastAccessed: Date.now()
+      });
+      return signal.value;
+    };
+  }
+  static cleanup(cache3, maxAge) {
+    const now = Date.now();
+    for (const [key, value] of cache3.entries()) {
+      if (now - value.lastAccessed > maxAge) {
+        cache3.delete(key);
+      }
+    }
+  }
+};
+ComputedManager.maxCacheSize = 1e3;
+ComputedManager.cleanupThreshold = 0.8;
+ComputedManager.cacheTimeout = 5 * 60 * 1e3;
+
+// src/core/store.ts
+var globalStore = {};
+function createStore(options) {
+  const { state: initialState, getters: gettersFn, computed: computedFn, actions: actionsFn } = options;
+  const state = createState(initialState);
+  const getters = gettersFn ? Object.entries(gettersFn({ state })).reduce((acc, [key, fn]) => ({
+    ...acc,
+    [key]: fn()
+  }), {}) : {};
+  const computed = computedFn ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => {
+    const computedProperty = ComputedManager.createComputed(
+      () => fn(),
+      {
+        maxAge: 15 * 60 * 1e3,
+        // 15 минут для store computed
+        cacheSize: 500
+        // больший размер кэша для store
+      }
+    );
+    return {
+      ...acc,
+      [key]: {
+        get value() {
+          return computedProperty();
+        }
+      }
+    };
+  }, {}) : {};
+  const actions = actionsFn ? actionsFn({
+    state,
+    computed
+  }) : {};
+  return { state, getters, computed, actions };
+}
+function registerStore(key, store) {
+  if (globalStore[key]) {
+    throw new Error(`Store "${key}" already exists`);
+  }
+  globalStore[key] = store;
+}
+function getStore(key) {
+  const store = globalStore[key];
+  if (!store) {
+    throw new Error(`Store "${key}" not found`);
+  }
+  return store;
+}
+function defineStore(options) {
+  const { key, state, ...rest } = options;
+  const store = createStore({ state, ...rest });
+  storeRegistry.register(key, store);
+  return store;
+}
+var storeRegistry = {
+  list: globalStore,
+  $: getStore,
+  register: registerStore
+};
+
+// src/core/component.ts
+function defineComponent(options) {
+  const {
+    tagName,
+    props: propsDefinition = {},
+    state: initialState,
+    getters: gettersFn = () => ({}),
+    computed: computedFn = () => ({}),
+    actions: actionsFn = () => ({}),
+    connected,
+    disconnected,
+    render,
+    listen
+  } = options;
+  const uRender = attach(E);
+  class CustomElement extends HTMLElement {
+    constructor() {
+      super();
+      this.slots = {};
+      this.cleanup = [];
+      this.props = d({});
+      this.props.value = this.initializeProps();
+      this.state = createState(initialState);
+      this.getters = this.setupGetters();
+      this.computed = this.setupComputed();
+      this.actions = this.setupActions();
+    }
+    static get observedAttributes() {
+      return Object.keys(propsDefinition).map((name) => `data-${name}`);
+    }
+    $(key) {
+      return this[key];
+    }
+    emitEvent(name, detail2 = {}) {
+      this.dispatchEvent(new CustomEvent(name, { detail: detail2 }));
+    }
+    setupGetters() {
+      const getterObj = gettersFn({
+        props: this.getPropValue(),
+        state: this.state,
+        store: storeRegistry,
+        el: this,
+        slots: this.slots
+      });
+      return Object.entries(getterObj).reduce((acc, [key, fn]) => ({
+        ...acc,
+        [key]: fn()
+      }), {});
+    }
+    setupComputed() {
+      const context = {
+        props: this.getPropValue(),
+        state: this.state,
+        store: storeRegistry,
+        el: this,
+        slots: this.slots
+      };
+      const computedObj = computedFn(context);
+      const computed = {};
+      for (const [key, fn] of Object.entries(computedObj)) {
+        const computedProperty = ComputedManager.createComputed(
+          () => fn(),
+          {
+            maxAge: 5 * 60 * 1e3,
+            // 5 минут для компонентов
+            cacheSize: 100
+            // меньший размер кэша для компонентов
+          }
+        );
+        Object.defineProperty(computed, key, {
+          get: () => computedProperty(),
+          enumerable: true
+        });
+      }
+      return computed;
+    }
+    setupActions() {
+      return actionsFn({
+        props: this.getPropValue(),
+        state: this.state,
+        computed: this.computed,
+        store: storeRegistry,
+        el: this,
+        slots: this.slots
+      });
+    }
+    get context() {
+      return {
+        props: this.getPropValue(),
+        state: this.state,
+        getters: this.getters,
+        computed: this.computed,
+        actions: this.actions,
+        el: this,
+        slots: this.slots,
+        store: storeRegistry
+      };
+    }
+    initializeProps() {
+      var _a;
+      const props = {};
+      for (const [key, definition] of Object.entries(propsDefinition)) {
+        const attrName = `data-${key}`;
+        const attrValue = this.getAttribute(attrName);
+        const defaultValue = (_a = definition.default) != null ? _a : this.getDefaultForType(definition.type);
+        props[key] = attrValue !== null ? this.parseAttributeValue(attrValue, definition.type) : defaultValue;
+      }
+      return props;
+    }
+    getDefaultForType(type) {
+      switch (type) {
+        case String:
+          return "";
+        case Number:
+          return 0;
+        case Boolean:
+          return false;
+        case Object:
+          return {};
+        case Array:
+          return [];
+        default:
+          return null;
+      }
+    }
+    parseAttributeValue(value, type) {
+      switch (type) {
+        case Number:
+          return Number(value);
+        case Boolean:
+          return value !== null && value !== "false";
+        case Object:
+        case Array:
+          try {
+            return JSON.parse(value);
+          } catch {
+            return type === Object ? {} : [];
+          }
+        default:
+          return value;
+      }
+    }
+    attributeChangedCallback(name, oldValue, newValue) {
+      const propName = name.replace(/^data-/, "");
+      const propDef = propsDefinition[propName];
+      if (!propDef) return;
+      const value = this.parseAttributeValue(newValue, propDef.type);
+      this.updateProp(propName, value);
+    }
+    updateProp(name, value) {
+      this.props.value = {
+        ...this.props.peek(),
+        [name]: value
+      };
+    }
+    getPropValue() {
+      return this.props.value;
+    }
+    setupListener() {
+      if (!listen) return;
+      let previousValue = this.state.peek();
+      const cleanup = E(() => {
+        const currentValue = this.state.value;
+        listen({
+          ...this.context,
+          newValue: currentValue,
+          oldValue: previousValue
+        });
+        previousValue = currentValue;
+      });
+      this.cleanup.push(cleanup);
+    }
+    setupRender() {
+      if (!render) return;
+      const cleanup = uRender(this, () => render(this.context));
+      this.cleanup.push(cleanup);
+    }
+    collectSlots() {
+      const slots = { default: [] };
+      Array.from(this.childNodes).forEach((node) => {
+        var _a;
+        if (node instanceof Element) {
+          const slotName = node.getAttribute("data-slot") || "default";
+          slots[slotName] = slots[slotName] || [];
+          slots[slotName].push(node);
+        } else if ((_a = node.textContent) == null ? void 0 : _a.trim()) {
+          slots.default.push(node);
+        }
+      });
+      this.slots = slots;
+    }
+    connectedCallback() {
+      requestAnimationFrame(() => {
+        this.collectSlots();
+        this.setupListener();
+        this.setupRender();
+        connected == null ? void 0 : connected(this.context);
+      });
+    }
+    disconnectedCallback() {
+      this.cleanup.forEach((cleanup) => cleanup());
+      this.cleanup = [];
+      disconnected == null ? void 0 : disconnected(this.context);
+    }
+  }
+  if (tagName) {
+    customElements.define(tagName, CustomElement);
+  }
+}
+
+// src/components/button/button.ts
+var counterStore = defineStore({
+  key: "counter",
+  state: { count: 0 },
+  computed: () => ({
+    double: () => true
+  })
+});
+defineComponent({
+  tagName: "my-counter",
+  state: { count: 0 },
+  props: {
+    val: {
+      type: Number,
+      default: 20
+    }
+  },
+  listen(params) {
+  },
+  connected(ctx) {
+  },
+  disconnected(ctx) {
+  },
+  getters: (context) => ({
+    counterStore: () => {
+      return context.store.$("counter");
+    },
+    hi: () => "hi"
+  }),
+  computed: ({ state, props }) => {
+    console.log(props);
+    return {
+      doubleCount: () => state.value.count + props.val,
+      isEven: () => state.value.count % 2 === 0
+    };
+  },
+  actions: ({ state }) => ({
+    increment: (amount) => {
+      state.emit({ count: state.value.count + amount });
+    },
+    reset: () => {
+      state.emit({ count: 0 });
+    }
+  }),
+  render: (context) => {
+    const { state, computed, actions, getters: { counterStore: counterStore2 } } = context;
+    return html`<div> <p>Count test: ${state.value.count}</p> <p>Double: ${computed.doubleCount}</p> <p>Is Even: ${computed.isEven}</p> <button onclick=${() => actions.increment(1)}>+1</button> <button onclick=${actions.reset}>Reset</button> </div>`;
+  }
+});
+defineComponent({
+  tagName: "my-counter-2",
+  state: { count: 0 },
+  props: {
+    count: {
+      type: Number,
+      default: 0
+    }
+  },
+  getters: (context) => ({
+    hi: () => "hi",
+    counterStore: () => context.store.$("counter")
+  }),
+  computed: ({ state }) => ({
+    doubleCount: () => state.value.count * 2,
+    isEven: () => state.value.count % 2 === 0
+  }),
+  actions: ({ state }) => ({
+    increment: (amount) => {
+      state.emit({ count: state.value.count + amount });
+    },
+    reset: () => {
+      state.emit({ count: 0 });
+    }
+  }),
+  listen(params) {
+  },
+  render: ({ props, state, computed, actions, getters: { counterStore: counterStore2, hi } }) => {
+    return html`<div> counter 2 component props value ${props.count} <p>Count: ${state.value.count}</p> <p>Double: ${computed.doubleCount}</p> <p>Is Even: ${computed.isEven}</p> <button onclick=${() => actions.increment(1)}>+1</button> <button onclick=${actions.reset}>Reset</button> <my-component data-count="${state.value.count}"></my-component> </div>`;
+  }
+});
+defineComponent({
+  tagName: "my-component",
+  state: { count: 0 },
+  props: {
+    count: {
+      type: Number,
+      default: 0
+    }
+  },
+  getters: (context) => ({
+    hi: () => "hi",
+    counterStore: () => context.store.$("counter")
+  }),
+  computed: ({ state }) => ({
+    doubleCount: () => state.value.count * 2,
+    isEven: () => state.value.count % 2 === 0
+  }),
+  actions: ({ state }) => ({
+    increment: (amount) => {
+      state.emit({ count: state.value.count + amount });
+    },
+    reset: () => {
+      state.emit({ count: 0 });
+    }
+  }),
+  listen(params) {
+  },
+  render: ({ props, state, computed, actions, getters: { counterStore: counterStore2 } }) => {
+    return html`<div> <div>props: ${props.count}</div> <p >Count: ${state.value.count}</p> <button onclick=${() => actions.increment(1)}>+1</button> <button onclick=${actions.reset}>Reset</button> </div>`;
+  }
+});
+var counterStateValue = { count: 0 };
+var useActions = (state) => ({
+  inc: () => state.emit({ count: state.value.count + 1 })
+});
+defineComponent({
+  tagName: "parent-example-cmp-2",
+  state: { example: 0, ...counterStateValue },
+  // owner local state + external
+  actions: ({ state }) => ({
+    ...useActions(state),
+    myinc: () => {
+      state.emit({ example: state.value.example + 1 });
+    }
+  }),
+  render(context) {
+    return html`${context.state.value.example}<example-cmp @button-click="${() => console.log("button-click event")}"></example-cmp>`;
+  }
+});
+defineComponent({
+  tagName: "example-cmp",
+  render(context) {
+    return html`<button @click="${() => context.el.emitEvent("button-click")}">Click</button>`;
+  }
+});
+var exState = createState(0);
+var inc = exState.value + 1;
+defineComponent({
+  tagName: "example-cmp-2",
+  render(context) {
+    return html`<button @click="${() => context.el.emitEvent("button-click")}">Click</button>`;
+  }
+});
+var Button = defineComponent({
+  tagName: "signa-button",
+  props: {
+    variant: { type: String, default: "primary" }
+  },
+  render: ({ slots }) => {
+    console.log(slots.default);
+    return html`<button class="signa-button"> ${slots.default} </button>`;
+  }
+});
+export {
+  Button,
+  State,
+  compute,
+  createComputed,
+  createState,
+  createStore,
+  defineComponent,
+  defineStore,
+  E as effect,
+  html,
+  htmlFor,
+  w as preactComputed,
+  storeRegistry
+};
 /*! Bundled license information:
 
 uhtml/esm/index.js:
@@ -8,3 +1483,4 @@ uhtml/esm/index.js:
 uhtml/esm/keyed.js:
   (*! (c) Andrea Giammarchi - MIT *)
 */
+//# sourceMappingURL=index.esm.v1.0.0.js.map
