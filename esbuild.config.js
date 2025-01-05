@@ -6,6 +6,7 @@ import optimizeCSSAndHTMLPlugin from './plugins/optimize-css-html.js';
 import { sassPlugin, postcssModules } from 'esbuild-sass-plugin'
 import path from 'path';
 import { createHash } from 'crypto';
+import { cleanCssPlugin } from './plugins/clean-css.js';
 
 const isDev = process.argv.includes('--dev');
 const buildPath = 'dist';
@@ -24,6 +25,7 @@ const sharedConfig = {
     bundle: true,
     target: ['es2019'],
     plugins: [
+        cleanCssPlugin(),
         sassPlugin({
             filter: /\.module\.scss$/,
             transform: postcssModules({
@@ -82,8 +84,8 @@ if (isDev) {
                     ...config.plugins,
                     useClean(examplesPath)
                 ],
-                sourcemap: true,
-                minify: false,
+                sourcemap: false,
+                minify: true,
             })
         )
     );

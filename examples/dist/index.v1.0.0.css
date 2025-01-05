@@ -1,13 +1,1 @@
-/* esbuild-sass-plugin:css-chunk:src/components/button/button.module.scss */
-.signa_button_d5bc2 {
-  background-color: #007bff;
-  color: #fff;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.signa_button_d5bc2:hover {
-  background-color: #0056b3;
-}
-/*# sourceMappingURL=index.v1.0.0.css.map */
+.signa_button_d5bc2{background-color:#007bff;color:#fff;padding:8px 16px;border:none;border-radius:4px;cursor:pointer}.signa_button_d5bc2:hover{background-color:#0056b3}
