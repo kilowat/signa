@@ -51,11 +51,12 @@ defineComponent({
     },
     render: (context) => {
         const { state, computed, actions, getters: { counterStore } } = context;
+
         return html`
         <div>
             <p>Count test: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount.value}</p>
-            <p>Is Even: ${computed.isEven.value}</p>
+            <p>Double: ${computed.doubleCount}</p>
+            <p>Is Even: ${computed.isEven}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
         </div>
@@ -96,8 +97,8 @@ defineComponent({
         <div>
             counter 2 component props value ${props.count}
             <p>Count: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount.value}</p>
-            <p>Is Even: ${computed.isEven.value}</p>
+            <p>Double: ${computed.doubleCount}</p>
+            <p>Is Even: ${computed.isEven}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
             <my-component  data-count="${state.value.count}"></my-component>
@@ -139,8 +140,8 @@ defineComponent({
         <div>
             <div>props: ${props.count}</div>
             <p >Count: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount.value}</p>
-            <p>Is Even: ${computed.isEven.value}</p>
+            <p>Double: ${computed.doubleCount}</p>
+            <p>Is Even: ${computed.isEven}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
          
@@ -170,6 +171,18 @@ defineComponent({
 
 defineComponent({
     tagName: 'example-cmp',
+    render(context) {
+        return html`<button @click="${() => context.el.emitEvent('button-click')}">Click</button>`
+    },
+})
+
+
+const exState = createState(0);
+const inc = exState.value + 1;
+
+
+defineComponent({
+    tagName: 'example-cmp-2',
     render(context) {
         return html`<button @click="${() => context.el.emitEvent('button-click')}">Click</button>`
     },

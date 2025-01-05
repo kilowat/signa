@@ -1,7 +1,8 @@
 import { reactive } from 'uhtml/reactive';
 import { effect, ReadonlySignal, Signal, signal, computed as preactComputed } from '@preact/signals-core';
 import { State, createState } from './state';
-import { StoreRegistry, storeRegistry, GlobalStore } from './store';
+import { StoreRegistry, storeRegistry } from './store';
+import { ComputedManager } from './untils';
 
 type ConstructorToType<T> =
     T extends StringConstructor ? string :
@@ -40,7 +41,7 @@ type InferProps<T extends Record<string, PropDefinition>> = {
 
 export type ComputedProperties<C> = {
     [K in keyof C]: C[K] extends (...args: any[]) => any
-    ? ReadonlySignal<ReturnType<C[K]>>
+    ? ReturnType<C[K]>
     : never;
 };
 
@@ -186,18 +187,34 @@ export function defineComponent<
         }
 
         setupComputed(): ComputedProperties<ReturnType<C>> {
-            const computedObj = computedFn({
+            const context = {
                 props: this.getPropValue(),
                 state: this.state,
                 store: storeRegistry,
                 el: this,
                 slots: this.slots,
-            });
+            };
 
-            return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
-                ...acc,
-                [key]: preactComputed(() => fn())
-            }), {}) as ComputedProperties<ReturnType<C>>;
+            const computedObj = computedFn(context);
+            const computed = {} as ComputedProperties<ReturnType<C>>;
+
+            // Используем ComputedManager для каждого computed свойства
+            for (const [key, fn] of Object.entries(computedObj)) {
+                const computedProperty = ComputedManager.createComputed(
+                    () => fn(),
+                    {
+                        maxAge: 5 * 60 * 1000, // 5 минут для компонентов
+                        cacheSize: 100 // меньший размер кэша для компонентов
+                    }
+                );
+
+                Object.defineProperty(computed, key, {
+                    get: () => computedProperty(),
+                    enumerable: true
+                });
+            }
+
+            return computed;
         }
 
         setupActions(): ReturnType<A> {

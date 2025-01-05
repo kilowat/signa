@@ -1,6 +1,7 @@
 import { State, createState } from './state';
 import { ComputedProperties, GettersProperties } from './component';
-import { computed as preactComputed } from '@preact/signals-core';
+import { ComputedManager } from './untils';
+
 type ComputedFn<S> = (context: {
     state: State<S>;
 }) => Record<string, (...args: any[]) => any>;
@@ -53,11 +54,26 @@ export function createStore<S, G extends GettersFn<S>, C extends ComputedFn<S>, 
         }), {}) as GettersProperties<ReturnType<G>>
         : ({} as GettersProperties<ReturnType<G>>);
 
+    // Оптимизированные computed
     const computed = computedFn
-        ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => ({
-            ...acc,
-            [key]: preactComputed(() => fn())
-        }), {}) as ComputedProperties<ReturnType<C>>
+        ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => {
+            const computedProperty = ComputedManager.createComputed(
+                () => fn(),
+                {
+                    maxAge: 15 * 60 * 1000, // 15 минут для store computed
+                    cacheSize: 500 // больший размер кэша для store
+                }
+            );
+
+            return {
+                ...acc,
+                [key]: {
+                    get value() {
+                        return computedProperty();
+                    }
+                }
+            };
+        }, {}) as ComputedProperties<ReturnType<C>>
         : ({} as ComputedProperties<ReturnType<C>>);
 
     const actions = actionsFn

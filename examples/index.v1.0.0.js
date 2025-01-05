@@ -984,6 +984,98 @@ var Signa = (() => {
     return computed;
   }
 
+  // src/core/untils.ts
+  var ComputedManager = class {
+    // 5 minutes
+    static createCacheKey(args) {
+      return args.map((arg) => {
+        if (arg === null) return "null";
+        if (arg === void 0) return "undefined";
+        if (typeof arg === "object") {
+          const obj = arg;
+          if ("id" in obj) return String(obj.id);
+          if ("key" in obj) return String(obj.key);
+          return JSON.stringify(this.sortObjectKeys(obj));
+        }
+        return String(arg);
+      }).join("|");
+    }
+    static sortObjectKeys(obj) {
+      if (Array.isArray(obj)) {
+        return obj.map(
+          (item) => typeof item === "object" && item !== null ? this.sortObjectKeys(item) : item
+        );
+      }
+      return Object.keys(obj).sort().reduce((acc, key) => {
+        const value = obj[key];
+        acc[key] = typeof value === "object" && value !== null ? this.sortObjectKeys(value) : value;
+        return acc;
+      }, {});
+    }
+    static argsEqual(a2, b2) {
+      if (a2.length !== b2.length) return false;
+      return a2.every((val, i2) => {
+        if (Object.is(val, b2[i2])) return true;
+        if (typeof val === "object" && val && typeof b2[i2] === "object" && b2[i2]) {
+          return JSON.stringify(this.sortObjectKeys(val)) === JSON.stringify(this.sortObjectKeys(b2[i2]));
+        }
+        return false;
+      });
+    }
+    static createComputed(fn, options = {}) {
+      var _a, _b;
+      const cache3 = /* @__PURE__ */ new Map();
+      const maxAge = (_a = options.maxAge) != null ? _a : this.cacheTimeout;
+      const maxSize = (_b = options.cacheSize) != null ? _b : this.maxCacheSize;
+      return (...args) => {
+        if (args.length === 0) {
+          if (!cache3.has("_")) {
+            const signal2 = w(() => fn(...args));
+            cache3.set("_", {
+              signal: signal2,
+              args: [],
+              lastAccessed: Date.now()
+            });
+          }
+          const cached2 = cache3.get("_");
+          cached2.lastAccessed = Date.now();
+          return cached2.signal.value;
+        }
+        const cacheKey = this.createCacheKey(args);
+        const cached = cache3.get(cacheKey);
+        if (cached && this.argsEqual(cached.args, args)) {
+          const now = Date.now();
+          if (now - cached.lastAccessed <= maxAge) {
+            cached.lastAccessed = now;
+            return cached.signal.value;
+          }
+        }
+        if (cache3.size >= maxSize * this.cleanupThreshold) {
+          this.cleanup(cache3, maxAge);
+        }
+        const signal = w(() => fn(...args));
+        cache3.set(cacheKey, {
+          signal,
+          args: [...args],
+          lastAccessed: Date.now()
+        });
+        return signal.value;
+      };
+    }
+    static cleanup(cache3, maxAge) {
+      const now = Date.now();
+      for (const [key, value] of cache3.entries()) {
+        if (now - value.lastAccessed > maxAge) {
+          cache3.delete(key);
+        }
+      }
+    }
+  };
+  ComputedManager.maxCacheSize = 1e3;
+  ComputedManager.cleanupThreshold = 0.8;
+  // 80% of maxCacheSize
+  ComputedManager.cacheTimeout = 5 * 60 * 1e3;
+
   // src/core/store.ts
   var globalStore = {};
   function createStore(options) {
@@ -993,10 +1085,25 @@ var Signa = (() => {
       ...acc,
       [key]: fn()
     }), {}) : {};
-    const computed = computedFn ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => ({
-      ...acc,
-      [key]: w(() => fn())
-    }), {}) : {};
+    const computed = computedFn ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => {
+      const computedProperty = ComputedManager.createComputed(
+        () => fn(),
+        {
+          maxAge: 15 * 60 * 1e3,
+          // 15 минут для store computed
+          cacheSize: 500
+          // больший размер кэша для store
+        }
+      );
+      return {
+        ...acc,
+        [key]: {
+          get value() {
+            return computedProperty();
+          }
+        }
+      };
+    }, {}) : {};
     const actions = actionsFn ? actionsFn({
       state,
       computed
@@ -1078,17 +1185,31 @@ var Signa = (() => {
         }), {});
       }
       setupComputed() {
-        const computedObj = computedFn({
+        const context = {
           props: this.getPropValue(),
           state: this.state,
           store: storeRegistry,
           el: this,
           slots: this.slots
-        });
-        return Object.entries(computedObj).reduce((acc, [key, fn]) => ({
-          ...acc,
-          [key]: w(() => fn())
-        }), {});
+        };
+        const computedObj = computedFn(context);
+        const computed = {};
+        for (const [key, fn] of Object.entries(computedObj)) {
+          const computedProperty = ComputedManager.createComputed(
+            () => fn(),
+            {
+              maxAge: 5 * 60 * 1e3,
+              // 5 минут для компонентов
+              cacheSize: 100
+              // меньший размер кэша для компонентов
+            }
+          );
+          Object.defineProperty(computed, key, {
+            get: () => computedProperty(),
+            enumerable: true
+          });
+        }
+        return computed;
       }
       setupActions() {
         return actionsFn({
@@ -1267,8 +1388,8 @@ var Signa = (() => {
       return html`
         <div>
             <p>Count test: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount.value}</p>
-            <p>Is Even: ${computed.isEven.value}</p>
+            <p>Double: ${computed.doubleCount}</p>
+            <p>Is Even: ${computed.isEven}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
         </div>
@@ -1307,8 +1428,8 @@ var Signa = (() => {
         <div>
             counter 2 component props value ${props.count}
             <p>Count: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount.value}</p>
-            <p>Is Even: ${computed.isEven.value}</p>
+            <p>Double: ${computed.doubleCount}</p>
+            <p>Is Even: ${computed.isEven}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
             <my-component  data-count="${state.value.count}"></my-component>
@@ -1348,8 +1469,8 @@ var Signa = (() => {
         <div>
             <div>props: ${props.count}</div>
             <p >Count: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount.value}</p>
-            <p>Is Even: ${computed.isEven.value}</p>
+            <p>Double: ${computed.doubleCount}</p>
+            <p>Is Even: ${computed.isEven}</p>
             <button onclick=${() => actions.increment(1)}>+1</button>
             <button onclick=${actions.reset}>Reset</button>
          
@@ -1381,153 +1502,13 @@ var Signa = (() => {
       return html`<button @click="${() => context.el.emitEvent("button-click")}">Click</button>`;
     }
   });
-
-  // src/components/slide.ts
+  var exState = createState(0);
+  var inc = exState.value + 1;
   defineComponent({
-    tagName: "range-slider",
-    props: {
-      min: {
-        type: Number,
-        default: 0
-      },
-      max: {
-        type: Number,
-        default: 100
-      },
-      step: {
-        type: Number,
-        default: 1
-      },
-      values: {
-        type: Array,
-        default: [0]
-      },
-      disabled: {
-        type: Boolean,
-        default: false
-      },
-      range: {
-        type: Boolean,
-        default: false
-      }
-    },
-    state: {
-      values: [0],
-      isDragging: false,
-      activeDot: null
-    },
-    computed: ({ state, props }) => ({
-      positions: () => {
-        return state.value.values.map((value) => {
-          const percent = (value - props.min) / (props.max - props.min) * 100;
-          return Math.min(Math.max(0, percent), 100);
-        });
-      },
-      trackStyle: () => {
-        const positions = state.value.values.sort((a2, b2) => a2 - b2);
-        const leftPos = (positions[0] - props.min) / (props.max - props.min) * 100;
-        const rightPos = positions[1] ? (positions[1] - props.min) / (props.max - props.min) * 100 : 100;
-        return `left: ${leftPos}%; right: ${100 - rightPos}%;`;
-      }
-    }),
-    actions: ({ state, props, el }) => ({
-      updateValue(clientX) {
-        const rect = el.getBoundingClientRect();
-        const percent = (clientX - rect.left) / rect.width;
-        const rawValue = props.min + (props.max - props.min) * percent;
-        const steppedValue = Math.round(rawValue / props.step) * props.step;
-        const clampedValue = Math.min(Math.max(props.min, steppedValue), props.max);
-        if (state.value.activeDot !== null) {
-          const newValues = [...state.value.values];
-          newValues[state.value.activeDot] = clampedValue;
-          state.emit({ values: newValues });
-          el.emitEvent("change", { values: newValues });
-        }
-      },
-      onDotMouseDown(index, event) {
-        if (props.disabled) return;
-        event.preventDefault();
-        state.emit({ isDragging: true, activeDot: index });
-        const onMouseMove = (e2) => {
-          this.updateValue(e2.clientX);
-        };
-        const onMouseUp = () => {
-          state.emit({ isDragging: false, activeDot: null });
-          document.removeEventListener("mousemove", onMouseMove);
-          document.removeEventListener("mouseup", onMouseUp);
-        };
-        document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", onMouseUp);
-      },
-      onTrackClick(event) {
-        if (props.disabled) return;
-        const rect = el.getBoundingClientRect();
-        const clickPosition = (event.clientX - rect.left) / rect.width;
-        const clickValue = props.min + (props.max - props.min) * clickPosition;
-        if (props.range && state.value.values.length > 1) {
-          const distances = state.value.values.map((value) => Math.abs(value - clickValue));
-          const closestIndex = distances.indexOf(Math.min(...distances));
-          state.emit({ activeDot: closestIndex });
-          this.updateValue(event.clientX);
-        } else {
-          state.emit({ activeDot: 0 });
-          this.updateValue(event.clientX);
-        }
-      }
-    }),
-    connected({ props, state }) {
-      state.emit({
-        values: props.range ? [props.min, props.max] : [props.min]
-      });
-    },
-    render: ({ props, state, computed, actions }) => html`
-        <div class="slider-container" style="position: relative; width: 100%; height: 40px;">
-            <div class="slider-track" 
-                @click=${actions.onTrackClick}
-            >
-                <div class="slider-track-fill"
-                ></div>
-            </div>
-            ${state.value.values.map((value, index) => html`
-                <div class="slider-dot"
-                    @mousedown=${(e2) => actions.onDotMouseDown(index, e2)}
-                ></div>
-            `)}
-        </div>
-    `
-  });
-  var slide_default = defineComponent({
-    tagName: "price-filter",
-    state: {
-      minPrice: 0,
-      maxPrice: 1e3
-    },
-    computed: ({ state }) => ({
-      formattedRange: () => `$${state.value.minPrice} - $${state.value.maxPrice}`
-    }),
-    actions: ({ state }) => ({
-      updatePriceRange: (event) => {
-        const [min, max] = event.detail.values;
-        state.emit({
-          minPrice: min,
-          maxPrice: max
-        });
-      }
-    }),
-    render: ({ state, computed, actions }) => html`
-        <div>
-            <h3>Price Range</h3>
-            <p>${computed.formattedRange}</p>
-            <range-slider
-                data-min="0"
-                data-max="1000"
-                data-step="10"
-                data-range="true"
-                data-values="${JSON.stringify([state.value.minPrice, state.value.maxPrice])}"
-                @change=${actions.updatePriceRange}
-            ></range-slider>
-        </div>
-    `
+    tagName: "example-cmp-2",
+    render(context) {
+      return html`<button @click="${() => context.el.emitEvent("button-click")}">Click</button>`;
+    }
   });
   return __toCommonJS(index_exports);
 })();
