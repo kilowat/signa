@@ -131,13 +131,13 @@ type ComponentOptions<
     getters?: G;
     computed?: C;
     actions?: A;
-    connected?: (context: ComponentContext<InferProps<P>, S, G, C, A>) => void;
-    render?: (context: ComponentContext<InferProps<P>, S, G, C, A>) => unknown;
-    listen?: (params: ComponentContext<InferProps<P>, S, G, C, A> & {
+    connected?: (ctx: ComponentContext<InferProps<P>, S, G, C, A>) => void;
+    render?: (ctx: ComponentContext<InferProps<P>, S, G, C, A>) => unknown;
+    listen?: (ctx: ComponentContext<InferProps<P>, S, G, C, A> & {
         newValue: S;
         oldValue: S;
     }) => void;
-    disconnected?: (context: ComponentContext<InferProps<P>, S, G, C, A>) => void;
+    disconnected?: (ctx: ComponentContext<InferProps<P>, S, G, C, A>) => void;
 };
 
 

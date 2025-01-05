@@ -1,5 +1,3 @@
-// computed-utils.ts
-
 import { ReadonlySignal, Signal, computed as preactComputed } from '@preact/signals-core';
 
 interface ComputedCache<T> {
@@ -140,7 +138,6 @@ export type ComputedProperties<C> = {
     : never;
 };
 
-// Helper type for inferring computed types
 export type InferComputedType<T> = T extends (...args: any[]) => any
     ? ReturnType<T>
     : never;
