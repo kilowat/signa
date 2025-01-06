@@ -97,9 +97,6 @@ function registerStore<K extends keyof GlobalStore>(
     key: K,
     store: GlobalStore[K]
 ): void {
-    if (globalStore[key]) {
-        throw new Error(`Store "${key}" already exists`);
-    }
     globalStore[key] = store;
 
 }
