@@ -3,9 +3,9 @@ import { clean } from 'esbuild-plugin-clean';
 import { readFileSync } from 'fs';
 import liveServer from "live-server";
 import optimizeCSSAndHTMLPlugin from './plugins/optimize-css-html.js';
-import { sassPlugin, postcssModules } from 'esbuild-sass-plugin'
+import { sassPlugin, postcssModules } from 'esbuild-sass-plugin';
 import { createHash } from 'crypto';
-import { cleanCssPlugin } from './plugins/clean-css.js';
+import fsPath from 'path';
 
 const isDev = process.argv.includes('--dev');
 const buildPath = 'dist';
@@ -23,7 +23,6 @@ const sharedConfig = {
     bundle: true,
     target: ['es2019'],
     plugins: [
-        cleanCssPlugin(),
         sassPlugin({
             filter: /\.module\.scss$/,
             transform: postcssModules({
@@ -42,38 +41,26 @@ const sharedConfig = {
 };
 
 const createConfigs = (path) => [
-    // Core ESM
-    {
-        ...sharedConfig,
-        entryPoints: ['src/core/index.ts'],
-        format: 'esm',
-        outfile: `${path}/signa.core.esm.v${version}.js`,
-        alias: {
-            'VERSION': JSON.stringify(version),
-        },
-    },
-    // Core IIFE
     {
         ...sharedConfig,
         entryPoints: ['src/core/index.ts'],
         format: 'iife',
         outfile: `${path}/signa.core.v${version}.js`,
-        globalName: 'signa.core',
+        globalName: 'Signa',
         alias: {
             'VERSION': JSON.stringify(version),
         },
     },
-    // Components IIFE only
     {
         ...sharedConfig,
         entryPoints: ['src/components/index.ts'],
         format: 'iife',
         outfile: `${path}/signa.components.v${version}.js`,
-        globalName: 'signa.components',
         alias: {
             'VERSION': JSON.stringify(version),
+            'signa/core': fsPath.resolve(process.cwd(), 'src/core/index.ts')
         },
-        external: ['signa/core'],
+        globalName: 'SignaComponents'
     },
 ];
 
@@ -101,17 +88,6 @@ if (isDev) {
         open: false,
         file: "index.html",
     });
-
-    // Generate minified versions in dev
-    await Promise.all(
-        configs.map(config =>
-            esbuild.build({
-                ...config,
-                minify: true,
-                sourcemap: false,
-            })
-        )
-    );
 } else {
     const configs = createConfigs(buildPath);
     await Promise.all(

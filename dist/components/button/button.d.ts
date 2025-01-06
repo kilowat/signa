@@ -5,6 +5,7 @@ declare const counterStore: import("signa/core").StoreContext<{
     state: State<{
         count: number;
     }>;
+    app: import("../../core/app").App;
 }) => Record<string, (...args: any[]) => any>, (context: {
     state: State<{
         count: number;
@@ -18,6 +19,7 @@ declare const counterStore: import("signa/core").StoreContext<{
     computed: import("signa/core").ComputedProperties<{
         double: () => boolean;
     }>;
+    app: import("../../core/app").App;
 }) => Record<string, (...args: any[]) => any>>;
 declare module "signa/core" {
     interface GlobalStore {

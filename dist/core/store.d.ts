@@ -1,13 +1,19 @@
 import { State } from './state';
 import { ComputedProperties, GettersProperties } from './component';
+import { App } from './app';
 type ComputedFn<S> = (context: {
     state: State<S>;
+    app: App;
 }) => Record<string, (...args: any[]) => any>;
 type ActionsFn<S, C> = (context: {
     state: State<S>;
     computed: ComputedProperties<C>;
+    app: App;
 }) => Record<string, (...args: any[]) => any>;
-type GettersFn<S> = ComputedFn<S>;
+type GettersFn<S> = (context: {
+    state: State<S>;
+    app: App;
+}) => Record<string, (...args: any[]) => any>;
 export interface StoreOptions<S = any, G extends GettersFn<S> = any, C extends ComputedFn<S> = any, A extends ActionsFn<S, ReturnType<C>> = any> {
     state: S;
     getters?: G;
@@ -19,6 +25,7 @@ export interface StoreContext<S, G extends GettersFn<S>, C extends ComputedFn<S>
     getters: GettersProperties<ReturnType<G>>;
     computed: ComputedProperties<ReturnType<C>>;
     actions: ReturnType<A>;
+    app: App;
 }
 export interface GlobalStore extends Record<string, StoreContext<any, any, any, any>> {
 }

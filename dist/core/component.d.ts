@@ -1,5 +1,6 @@
 import { State } from './state';
 import { StoreRegistry } from './store';
+import { App } from './app';
 type ConstructorToType<T> = T extends StringConstructor ? string : T extends NumberConstructor ? number : T extends BooleanConstructor ? boolean : T extends ArrayConstructor ? T[] : T extends ObjectConstructor ? Record<string, unknown> : T;
 type ModelPropDefinition<T> = {
     type: TypeConstructor;
@@ -30,21 +31,17 @@ type BaseContext<P, S> = {
     slots: Record<string, Node[]>;
     state: State<S>;
     store: StoreRegistry;
+    app: App;
 };
 type GettersFn<P, S> = (context: BaseContext<P, S>) => Record<string, () => any>;
 type ComputedFn<P, S> = (context: BaseContext<P, S>) => Record<string, () => any>;
 type ActionsFn<P, S, C> = (context: BaseContext<P, S> & {
     computed: ComputedProperties<C>;
 }) => Record<string, (...args: any[]) => any>;
-export interface ComponentContext<P, S, G extends GettersFn<P, S>, C extends ComputedFn<P, S>, A extends ActionsFn<P, S, ReturnType<C>>> {
-    props: P;
-    state: State<S>;
+export interface ComponentContext<P, S, G extends GettersFn<P, S>, C extends ComputedFn<P, S>, A extends ActionsFn<P, S, ReturnType<C>>> extends BaseContext<P, S> {
     getters: GettersProperties<ReturnType<G>>;
     computed: ComputedProperties<ReturnType<C>>;
     actions: ReturnType<A>;
-    el: CustomHtmlElement;
-    slots: Record<string, Node[]>;
-    store: StoreRegistry;
 }
 export interface CustomHtmlElement extends HTMLElement {
     $<T = any>(key: string): T | undefined;
