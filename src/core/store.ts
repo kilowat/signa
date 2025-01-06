@@ -38,6 +38,9 @@ export interface StoreRegistry {
     ) => void;
 }
 
+const maxAge = 15 * 60 * 1000; // 15 min store computed
+const cacheSize = 500; // cache store size computed
+
 const globalStore: Partial<GlobalStore> = {};
 
 export function createStore<S, G extends GettersFn<S>, C extends ComputedFn<S>, A extends ActionsFn<S, ReturnType<C>>>(
@@ -54,14 +57,13 @@ export function createStore<S, G extends GettersFn<S>, C extends ComputedFn<S>, 
         }), {}) as GettersProperties<ReturnType<G>>
         : ({} as GettersProperties<ReturnType<G>>);
 
-    // Оптимизированные computed
     const computed = computedFn
         ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => {
             const computedProperty = ComputedManager.createComputed(
                 () => fn(),
                 {
-                    maxAge: 15 * 60 * 1000, // 15 минут для store computed
-                    cacheSize: 500 // больший размер кэша для store
+                    maxAge,
+                    cacheSize,
                 }
             );
 

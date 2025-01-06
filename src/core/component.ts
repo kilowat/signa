@@ -1,5 +1,5 @@
 import { reactive } from 'uhtml/reactive';
-import { effect, ReadonlySignal, Signal, signal, computed as preactComputed } from '@preact/signals-core';
+import { effect, Signal, signal } from '@preact/signals-core';
 import { State, createState } from './state';
 import { StoreRegistry, storeRegistry } from './store';
 import { ComputedManager } from './untils';
@@ -94,30 +94,6 @@ export interface CustomHtmlElement extends HTMLElement {
     emitEvent<T = any>(name: string, detail?: T): void;
 }
 
-export interface ComponentOptions2<
-    P extends Record<string, PropDefinition> = any,
-    S = any,
-    G extends GettersFn<InferProps<P>, S> = any,
-    C extends ComputedFn<InferProps<P>, S> = any,
-    A extends ActionsFn<InferProps<P>, S, ReturnType<C>> = any
-> {
-    tagName: string;
-    props?: P;
-    state?: S;
-    getters?: G;
-    computed?: C;
-    actions?: A;
-    connected?: (context: ComponentContext<InferProps<P>, S, G, C, A>) => void;
-    render?: (context: ComponentContext<InferProps<P>, S, G, C, A>) => unknown;
-    listen?: (params: ComponentContext<InferProps<P>, S, G, C, A> & {
-        newValue: S;
-        oldValue: S;
-    }) => void;
-    disconnected?: (context: ComponentContext<InferProps<P>, S, G, C, A>) => void;
-}
-
-
-
 type ComponentOptions<
     P extends Record<string, PropDefinition>,
     S,
@@ -140,6 +116,9 @@ type ComponentOptions<
     disconnected?: (ctx: ComponentContext<InferProps<P>, S, G, C, A>) => void;
 };
 
+
+const maxAge = 5 * 60 * 1000; // time cache computed
+const cacheSize = 100 // cache size computed
 
 export function defineComponent<
     P extends Record<string, PropDefinition>,
@@ -221,13 +200,12 @@ export function defineComponent<
             const computedObj = computedFn(context);
             const computed = {} as ComputedProperties<ReturnType<C>>;
 
-            // Используем ComputedManager для каждого computed свойства
             for (const [key, fn] of Object.entries(computedObj)) {
                 const computedProperty = ComputedManager.createComputed(
                     () => fn(),
                     {
-                        maxAge: 5 * 60 * 1000, // 5 минут для компонентов
-                        cacheSize: 100 // меньший размер кэша для компонентов
+                        maxAge,
+                        cacheSize,
                     }
                 );
 
