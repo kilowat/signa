@@ -4,7 +4,7 @@ import styles from './button.module.scss';
 
 const api = { f: () => null };
 type ApiType = typeof api;
-app.provide('api', api);
+app.register('api', () => api);
 
 const counterStore = defineStore({
     key: 'counter',
@@ -57,7 +57,7 @@ defineComponent({
             state.emit({ count: state.value.count + amount });
         },
         reset: () => {
-            const api = app.inject('api');
+            const apiTest = app.get<ApiType>('api');
             state.emit({ count: 0 });
         }
     }),
