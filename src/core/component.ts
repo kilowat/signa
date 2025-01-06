@@ -3,6 +3,7 @@ import { effect, Signal, signal } from '@preact/signals-core';
 import { State, createState } from './state';
 import { StoreRegistry, storeRegistry } from './store';
 import { ComputedManager } from './untils';
+import { app, App } from './app';
 
 type ConstructorToType<T> =
     T extends StringConstructor ? string :
@@ -64,6 +65,7 @@ type BaseContext<P, S> = {
     slots: Record<string, Node[]>,
     state: State<S>;
     store: StoreRegistry;
+    app: App;
 };
 
 type GettersFn<P, S> = (context: BaseContext<P, S>) => Record<string, () => any>;
@@ -78,15 +80,10 @@ export interface ComponentContext<
     G extends GettersFn<P, S>,
     C extends ComputedFn<P, S>,
     A extends ActionsFn<P, S, ReturnType<C>>
-> {
-    props: P;
-    state: State<S>;
+> extends BaseContext<P, S> {
     getters: GettersProperties<ReturnType<G>>;
     computed: ComputedProperties<ReturnType<C>>;
     actions: ReturnType<A>;
-    el: CustomHtmlElement;
-    slots: Record<string, Node[]>;
-    store: StoreRegistry;
 }
 
 export interface CustomHtmlElement extends HTMLElement {
@@ -180,6 +177,7 @@ export function defineComponent<
                 store: storeRegistry,
                 el: this,
                 slots: this.slots,
+                app,
             });
 
             return Object.entries(getterObj).reduce((acc, [key, fn]) => ({
@@ -195,6 +193,7 @@ export function defineComponent<
                 store: storeRegistry,
                 el: this,
                 slots: this.slots,
+                app,
             };
 
             const computedObj = computedFn(context);
@@ -226,6 +225,7 @@ export function defineComponent<
                 store: storeRegistry,
                 el: this,
                 slots: this.slots,
+                app,
             }) as ReturnType<A>;
         }
 
@@ -239,6 +239,7 @@ export function defineComponent<
                 el: this,
                 slots: this.slots,
                 store: storeRegistry,
+                app,
             };
         }
 

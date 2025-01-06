@@ -1,17 +1,24 @@
 import { State, createState } from './state';
 import { ComputedProperties, GettersProperties } from './component';
 import { ComputedManager } from './untils';
+import { app, App } from './app';
 
 type ComputedFn<S> = (context: {
     state: State<S>;
+    app: App;
 }) => Record<string, (...args: any[]) => any>;
 
 type ActionsFn<S, C> = (context: {
     state: State<S>;
     computed: ComputedProperties<C>;
+    app: App;
 }) => Record<string, (...args: any[]) => any>;
 
-type GettersFn<S> = ComputedFn<S>;
+type GettersFn<S> = (context: {
+    state: State<S>;
+    app: App;
+}) => Record<string, (...args: any[]) => any>;
+
 
 export interface StoreOptions<S = any, G extends GettersFn<S> = any, C extends ComputedFn<S> = any, A extends ActionsFn<S, ReturnType<C>> = any> {
     state: S;
@@ -25,6 +32,7 @@ export interface StoreContext<S, G extends GettersFn<S>, C extends ComputedFn<S>
     getters: GettersProperties<ReturnType<G>>;
     computed: ComputedProperties<ReturnType<C>>;
     actions: ReturnType<A>;
+    app: App;
 }
 
 export interface GlobalStore extends Record<string, StoreContext<any, any, any, any>> { }
@@ -51,14 +59,14 @@ export function createStore<S, G extends GettersFn<S>, C extends ComputedFn<S>, 
     const state = createState(initialState);
 
     const getters = gettersFn
-        ? Object.entries(gettersFn({ state })).reduce((acc, [key, fn]) => ({
+        ? Object.entries(gettersFn({ state, app })).reduce((acc, [key, fn]) => ({
             ...acc,
             [key]: fn()
         }), {}) as GettersProperties<ReturnType<G>>
         : ({} as GettersProperties<ReturnType<G>>);
 
     const computed = computedFn
-        ? Object.entries(computedFn({ state })).reduce((acc, [key, fn]) => {
+        ? Object.entries(computedFn({ state, app })).reduce((acc, [key, fn]) => {
             const computedProperty = ComputedManager.createComputed(
                 () => fn(),
                 {
@@ -69,11 +77,7 @@ export function createStore<S, G extends GettersFn<S>, C extends ComputedFn<S>, 
 
             return {
                 ...acc,
-                [key]: {
-                    get value() {
-                        return computedProperty();
-                    }
-                }
+                [key]: computedProperty
             };
         }, {}) as ComputedProperties<ReturnType<C>>
         : ({} as ComputedProperties<ReturnType<C>>);
@@ -81,11 +85,12 @@ export function createStore<S, G extends GettersFn<S>, C extends ComputedFn<S>, 
     const actions = actionsFn
         ? (actionsFn({
             state,
-            computed
+            computed,
+            app
         }) as ReturnType<A>)
         : ({} as ReturnType<A>);
 
-    return { state, getters, computed, actions };
+    return { state, getters, computed, actions, app };
 }
 
 function registerStore<K extends keyof GlobalStore>(

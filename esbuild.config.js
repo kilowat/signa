@@ -4,7 +4,6 @@ import { readFileSync } from 'fs';
 import liveServer from "live-server";
 import optimizeCSSAndHTMLPlugin from './plugins/optimize-css-html.js';
 import { sassPlugin, postcssModules } from 'esbuild-sass-plugin'
-import path from 'path';
 import { createHash } from 'crypto';
 import { cleanCssPlugin } from './plugins/clean-css.js';
 
@@ -13,7 +12,6 @@ const buildPath = 'dist';
 const examplesPath = 'examples/dist';
 const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'));
 const version = packageJson.version;
-
 
 const useClean = (path) => clean({
     patterns: [`${path}/**/*`],
@@ -43,39 +41,44 @@ const sharedConfig = {
     tsconfig: 'tsconfig.json',
 };
 
-const createConfig = (entryPoint, outputPath, globalName = null, external = []) => [
+const createConfigs = (path) => [
+    // Core ESM
     {
         ...sharedConfig,
-        entryPoints: [entryPoint],
+        entryPoints: ['src/core/index.ts'],
         format: 'esm',
-        outfile: `${outputPath}.esm.v${version}.js`,
+        outfile: `${path}/signa.core.esm.v${version}.js`,
         alias: {
             'VERSION': JSON.stringify(version),
         },
-        external,
     },
+    // Core IIFE
     {
         ...sharedConfig,
-        entryPoints: [entryPoint],
+        entryPoints: ['src/core/index.ts'],
         format: 'iife',
-        outfile: `${outputPath}.v${version}.js`,
-        globalName,
+        outfile: `${path}/signa.core.v${version}.js`,
+        globalName: 'signa.core',
         alias: {
             'VERSION': JSON.stringify(version),
         },
-        external,
+    },
+    // Components IIFE only
+    {
+        ...sharedConfig,
+        entryPoints: ['src/components/index.ts'],
+        format: 'iife',
+        outfile: `${path}/signa.components.v${version}.js`,
+        globalName: 'signa.components',
+        alias: {
+            'VERSION': JSON.stringify(version),
+        },
+        external: ['signa/core'],
     },
 ];
-
-const useConfigs = (path) => [
-    ...createConfig('src/core/index.ts', `${path}/core`, 'Signa'),
-    ...createConfig('src/components/index.ts', `${path}/components`, 'SignaCmp', ['signa/core']),
-    ...createConfig('src/index.ts', `${path}/index`, 'Signa'),
-];
-
 
 if (isDev) {
-    const configs = useConfigs(examplesPath)
+    const configs = createConfigs(examplesPath);
     const ctx = await Promise.all(
         configs.map(config =>
             esbuild.context({
@@ -110,7 +113,7 @@ if (isDev) {
         )
     );
 } else {
-    const configs = useConfigs(buildPath)
+    const configs = createConfigs(buildPath);
     await Promise.all(
         configs.map(config =>
             esbuild.build({
@@ -124,4 +127,4 @@ if (isDev) {
             })
         )
     );
-} 
+}

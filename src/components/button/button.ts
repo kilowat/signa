@@ -1,6 +1,10 @@
 
-import { defineStore, defineComponent, html, State, createState } from "signa/core";
+import { defineStore, defineComponent, html, State, createState, app } from "signa/core";
 import styles from './button.module.scss';
+
+const api = { f: () => null };
+type ApiType = typeof api;
+app.provide('api', api);
 
 const counterStore = defineStore({
     key: 'counter',
@@ -48,11 +52,12 @@ defineComponent({
             isEven: () => state.value.count % 2 === 0,
         });
     },
-    actions: ({ state }) => ({
+    actions: ({ state, app }) => ({
         increment: (amount: number) => {
             state.emit({ count: state.value.count + amount });
         },
         reset: () => {
+            const api = app.inject('api');
             state.emit({ count: 0 });
         }
     }),
@@ -144,6 +149,7 @@ defineComponent({
 
     },
     render: ({ props, state, computed, actions, getters: { counterStore } }) => {
+
         return html`
         <div>
             <div>props: ${props.count}</div>
