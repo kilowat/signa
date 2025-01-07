@@ -68,11 +68,13 @@ const createConfigs = (path) => [
         plugins: [...sharedConfig.plugins,],
         bundle: true,
         platform: 'browser',
-        outfile: `${path}/signa.components.v${version}.js`,
+        format: 'iife',
+        outfile: `${path}/signa.pack.v${version}.js`,
         alias: {
             VERSION: JSON.stringify(version),
         },
-        external: ['signa'],
+        globalName: 'signa',
+        external: [],
     },
 ];
 if (isDev) {
