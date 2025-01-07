@@ -39,31 +39,42 @@ const sharedConfig = {
     ],
     tsconfig: 'tsconfig.json',
 };
-
 const createConfigs = (path) => [
+    //core esm
+    {
+        ...sharedConfig,
+        entryPoints: ['src/core/index.ts'],
+        format: 'esm',
+        outfile: `${path}/signa.core.esm.v${version}.js`,
+        alias: {
+            'VERSION': JSON.stringify(version),
+        },
+    },
     {
         ...sharedConfig,
         entryPoints: ['src/core/index.ts'],
         format: 'iife',
+        platform: 'browser',
         outfile: `${path}/signa.core.v${version}.js`,
-        globalName: 'Signa',
+        globalName: 'signa',
         alias: {
-            'VERSION': JSON.stringify(version),
+            VERSION: JSON.stringify(version),
         },
+        external: [],
     },
     {
         ...sharedConfig,
         entryPoints: ['src/components/index.ts'],
-        format: 'iife',
+        plugins: [...sharedConfig.plugins,],
+        bundle: true,
+        platform: 'browser',
         outfile: `${path}/signa.components.v${version}.js`,
         alias: {
-            'VERSION': JSON.stringify(version),
-            'signa/core': fsPath.resolve(process.cwd(), 'src/core/index.ts')
+            VERSION: JSON.stringify(version),
         },
-        globalName: 'SignaComponents'
+        external: ['signa'],
     },
 ];
-
 if (isDev) {
     const configs = createConfigs(examplesPath);
     const ctx = await Promise.all(
@@ -72,7 +83,6 @@ if (isDev) {
                 ...config,
                 plugins: [
                     ...config.plugins,
-                    useClean(examplesPath)
                 ],
                 sourcemap: false,
                 minify: true,

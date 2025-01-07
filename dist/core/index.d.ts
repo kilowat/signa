@@ -1,6 +1,5 @@
-export * from './component';
-export * from './state';
-export * from './store';
-export { app } from './app';
+export { defineComponent } from './component';
+export { useState, computed, State } from './state';
 export { html, htmlFor } from 'uhtml/reactive';
-export { computed as preactComputed, effect } from '@preact/signals-core';
+export { effect } from '@preact/signals-core';
+export { app } from './app';

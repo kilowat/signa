@@ -10,15 +10,11 @@
 
 <body>
     <h1>Component Examples</h1>
-    <signa-button>Signa button</signa-button>
-    <my-button>Click Me</my-button>
-    <my-counter></my-counter>
-    <my-counter-2></my-counter-2>
-    <my-component data-count="20"></my-component>
-    <parent-example-cmp></parent-example-cmp>
-    <price-filter></price-filter>
-    <range-slider></range-slider>
-    <smart-filter></smart-filter>
+    <signa-button>
+        <div data-slot="header">Header content</div>
+        Default content
+        <div data-slot="footer">Footer content</div>
+    </signa-button>
 </body>
 
 

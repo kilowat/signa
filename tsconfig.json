@@ -15,11 +15,13 @@
         ],
         "baseUrl": "./src",
         "paths": {
-            "signa/*": [
-                "*",
-                "store"
+            "signa": [
+                "core/index"
+            ],
+            "signa/components": [
+                "components/index"
             ]
-        }
+        },
     },
     "include": [
         "src"

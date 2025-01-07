@@ -1,220 +1,61 @@
 
-import { defineStore, defineComponent, html, State, createState, app } from "signa/core";
-import styles from './button.module.scss';
+import { app, computed, defineComponent, html, useState } from "signa";
 
-const api = { f: () => null };
-type ApiType = typeof api;
-app.register('api', () => api);
-
-const counterStore = defineStore({
-    key: 'counter',
-    state: { count: 0 },
-    computed: () => ({
-        double: () => true,
-    })
-})
-
-// example def types
-declare module "signa/core" {
-    interface GlobalStore {
-        counter: typeof counterStore
-    }
-}
-
-defineComponent({
-    tagName: 'my-counter',
-    state: { count: 0 },
-    props: {
-        val: {
-            type: Number,
-            default: 20,
-        }
-    },
-    listen(params) {
-
-    },
-    connected(ctx) {
-
-    },
-    disconnected(ctx) {
-
-    },
-    getters: (context) => ({
-        counterStore: () => {
-            return context.store.$('counter')
-        },
-        hi: () => 'hi',
-    }),
-    computed: ({ state, props }) => {
-        console.log(props)
-        return ({
-            doubleCount: () => state.value.count + props.val,
-            isEven: () => state.value.count % 2 === 0,
-        });
-    },
-    actions: ({ state, app }) => ({
-        increment: (amount: number) => {
-            state.emit({ count: state.value.count + amount });
-        },
-        reset: () => {
-            const apiTest = app.get<ApiType>('api');
-            state.emit({ count: 0 });
-        }
-    }),
-
-    render: (context) => {
-        const { state, computed, actions, getters: { counterStore } } = context;
-
-        return html`
-        <div>
-            <p>Count test: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount}</p>
-            <p>Is Even: ${computed.isEven}</p>
-            <button onclick=${() => actions.increment(1)}>+1</button>
-            <button onclick=${actions.reset}>Reset</button>
-        </div>
-    `;
-    },
-});
-
-defineComponent({
-    tagName: 'my-counter-2',
-    state: { count: 0 },
-    props: {
-        count: {
-            type: Number,
-            default: 0
-        }
-    },
-    getters: (context) => ({
-        hi: () => 'hi',
-        counterStore: () => context.store.$('counter'),
-    }),
-    computed: ({ state }) => ({
-        doubleCount: () => state.value.count * 2,
-        isEven: () => state.value.count % 2 === 0,
-    }),
-    actions: ({ state }) => ({
-        increment: (amount: number) => {
-            state.emit({ count: state.value.count + amount });
-        },
-        reset: () => {
-            state.emit({ count: 0 });
-        }
-    }),
-    listen(params) {
-
-    },
-    render: ({ props, state, computed, actions, getters: { counterStore, hi } }) => {
-        return html`
-        <div>
-            counter 2 component props value ${props.count}
-            <p>Count: ${state.value.count}</p>
-            <p>Double: ${computed.doubleCount}</p>
-            <p>Is Even: ${computed.isEven}</p>
-            <button onclick=${() => actions.increment(1)}>+1</button>
-            <button onclick=${actions.reset}>Reset</button>
-            <my-component  data-count="${state.value.count}"></my-component>
-        </div>
-    `;
-    },
-});
-
-defineComponent({
-    tagName: 'my-component',
-    state: { count: 0 },
-    props: {
-        count: {
-            type: Number,
-            default: 0
-        }
-    },
-    getters: (context) => ({
-        hi: () => 'hi',
-        counterStore: () => context.store.$('counter'),
-    }),
-    computed: ({ state }) => ({
-        doubleCount: () => state.value.count * 2,
-        isEven: () => state.value.count % 2 === 0,
-    }),
-    actions: ({ state }) => ({
-        increment: (amount: number) => {
-            state.emit({ count: state.value.count + amount });
-        },
-        reset: () => {
-            state.emit({ count: 0 });
-        }
-    }),
-    listen(params) {
-
-    },
-    render: ({ props, state, computed, actions, getters: { counterStore } }) => {
-
-        return html`
-        <div>
-            <div>props: ${props.count}</div>
-            <p >Count: ${state.value.count}</p>
-            <button onclick=${() => actions.increment(1)}>+1</button>
-            <button onclick=${actions.reset}>Reset</button>
-         
-        </div>
-    `;
-    },
-});
-
-const counterStateValue = { count: 0 };
-const useActions = (state: State<typeof counterStateValue>) => ({
-    inc: () => state.emit({ count: state.value.count + 1 })
-})
+const myApi = { fetch: () => '1' }
+type MyAPi = typeof myApi;
+app.register('api', () => myApi)
 
 
-// owner + external composition state actions ...
-defineComponent({
-    tagName: 'parent-example-cmp-2',
-    state: { example: 0, ...counterStateValue }, // owner local state + external
-    actions: ({ state }) => ({
-        ...useActions(state),
-        myinc: () => { state.emit({ example: state.value.example + 1 }) }
-    }),
-    render(context) {
-        return html`${context.state.value.example}<example-cmp @button-click="${() => console.log('button-click event')}"></example-cmp>`
-    },
-})
 
-defineComponent({
-    tagName: 'example-cmp',
-    render(context) {
-        return html`<button @click="${() => context.el.emitEvent('button-click')}">Click</button>`
-    },
-})
-
-
-const exState = createState(0);
-const inc = exState.value + 1;
-
-
-defineComponent({
-    tagName: 'example-cmp-2',
-    render(context) {
-        return html`<button @click="${() => context.el.emitEvent('button-click')}">Click</button>`
-    },
-})
-
-export interface ButtonProps {
-    variant: 'primary' | 'secondary' | 'outline';
-}
-
-export const Button = defineComponent({
+export default defineComponent({
     tagName: 'signa-button',
+    slots: ['header', 'footer'],
     props: {
-        variant: { type: String, default: 'primary' }
-    } as const,
-    render: ({ slots }) => {
-        console.log(slots.default)
+        name: {
+            type: String,
+            default: 'test'
+        }
+    },
+    setup({ props, app }) {
+        const count = useState(0);
+        const someApi = app.get<MyAPi>('api');
+
+        const inc = () => {
+            count.value++;
+        }
+        const isDouble = computed(() => count.value % 2 === 0);
+        return {
+            count,
+            inc,
+            isDouble,
+        }
+    },
+    connected() {
+
+    },
+    render() {
         return html`
-        <button class="${styles.button}">
-            ${slots.default}
-        </button>
-    `;
+        <div>
+            <div>IsDouble: ${this.isDouble.value}</div>
+            <div>Header slot result: ${this.slots.header}</div>
+            <div>${this.count.value}</div>
+            <div>Default slot result: ${this.slots.default}</div>
+            <div>Footer slot result: ${this.slots.footer}</div>
+            <div><button @click="${() => this.inc()}">inc</button></div>
+            <prop-example data-example="${this.count.value}"></prop-example>
+        </div>`;
     }
 });
+
+defineComponent({
+    tagName: 'prop-example',
+    props: {
+        example: {
+            type: Number,
+            default: 0
+        }
+    },
+    render() {
+        return html`prop: ${this.example.value}`
+    },
+})

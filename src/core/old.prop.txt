@@ -1,5 +1,5 @@
 import { reactive } from 'uhtml/reactive';
-import { effect, Signal, signal } from '@preact/signals-core';
+import { effect, Signal, signal, computed } from '@preact/signals-core';
 import { App, app } from './app';
 
 type TypeConstructor = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor;
@@ -49,7 +49,7 @@ export interface CustomElement extends HTMLElement {
 
 type ComponentInstance<P extends Record<string, PropDefinition<any>>, S, SL extends Slots> =
     CustomElement &
-    SignalProps<P> &
+    InferProps<P> &
     S & {
         slots: InferSlots<SL>;
     };
@@ -109,14 +109,10 @@ export function defineComponent<
         constructor() {
             super();
             this.propsSignals = this.initializeProps();
-
-            Object.keys(this.propsSignals).forEach(key => {
-                (this as any)[key] = this.propsSignals[key];
-            });
-
+            console.log(this.propsSignals)
             this.setupResult = setup?.({
                 props: this.propsSignals,
-                app,
+                app
             }) || {} as S;
 
             Object.entries(this.setupResult).forEach(([key, value]) => {
@@ -125,6 +121,13 @@ export function defineComponent<
                 } else {
                     (this as any)[key] = value;
                 }
+            });
+
+            Object.keys(this.propsSignals).forEach(key => {
+                Object.defineProperty(this, key, {
+                    get: () => this.propsSignals[key].value,
+                    set: (value) => { this.propsSignals[key].value = value }
+                });
             });
         }
 
@@ -144,7 +147,6 @@ export function defineComponent<
 
             return signals;
         }
-
 
         private getDefaultForType(type: TypeConstructor): any {
             switch (type) {
@@ -186,7 +188,7 @@ export function defineComponent<
         private setupRender() {
             if (!render) return;
             const cleanup = uRender(this, () => {
-                return render.call(this as unknown as ComponentInstance<P, S, SL>);
+                return render.call(this as ComponentInstance<P, S, SL>);
             });
             this.cleanup.push(cleanup);
         }
@@ -196,7 +198,7 @@ export function defineComponent<
                 this.collectSlots();
                 this.setupRender();
                 if (connected) {
-                    connected.call(this as unknown as ComponentInstance<P, S, SL>);
+                    connected.call(this as ComponentInstance<P, S, SL>);
                 }
             });
         }
@@ -205,7 +207,7 @@ export function defineComponent<
             this.cleanup.forEach(cleanup => cleanup());
             this.cleanup = [];
             if (disconnected) {
-                disconnected.call(this as unknown as ComponentInstance<P, S, SL>);
+                disconnected.call(this as ComponentInstance<P, S, SL>);
             }
         }
 
