@@ -8,12 +8,80 @@
 </head>
 
 <body>
+    <script>
+        const { def, computed, useState, app, html } = window.signa;
+        const myApi = {
+            fetchNews: async () => [{ id: 1 }]
+        }
+        // Это за место контейнера можно ложит любой обьект потом достать в компнентах
+        app.register('api', () => myApi);
+
+        def({
+            tagName: 'my-button',
+            slots: ['header', 'footer'],
+            props: {
+                name: {
+                    type: String,
+                    default: 'test'
+                }
+            },
+            setup({ props, app }) {
+                const api = app.get('api');
+                const count = useState(0);
+                const fetchNews = () => api.fetchNews()
+                const inc = () => count.value++;
+                const isDouble = computed(() => count.value % 2 === 0);
+
+                return {
+                    app,
+                    count,
+                    inc,
+                    isDouble,
+                    fetchNews,
+                }
+            },
+            connected() {
+                console.log('connected:');
+                console.log(this.inc, this.fetchNews, this.count.value, this.isDouble.value, this.app);
+            },
+            disconnected() {
+                console.log('disconnected');
+                console.log(this.inc, this.fetchNews, this.count.value, this.isDouble.value, this.app);
+            },
+            render() {
+                console.log(this.inc, this.fetchNews, this.count.value, this.isDouble.value, this.app);
+                return html`
+                    <div>
+                        <div>IsDouble: ${this.isDouble.value}</div>
+                        <div>Header slot result: ${this.slots.header}</div>
+                        <div>${this.count.value}</div>
+                        <div>Default slot result: ${this.slots.default}</div>
+                        <div>Footer slot result: ${this.slots.footer}</div>
+                        <div><button @click="${() => this.inc()}">inc</button></div>
+                        <prop-example data-example="${this.count.value}"></prop-example>
+                    </div>`;
+            }
+        });
+
+        def({
+            tagName: 'prop-example-tag',
+            props: {
+                example: {
+                    type: Number,
+                    default: 0
+                }
+            },
+            render() {
+                return html`prop: ${this.example.value}`
+            },
+        })
+    </script>
     <h1>Component Examples</h1>
-    <signa-button>
+    <my-button>
         <div data-slot="header">Header content</div>
         Default content
         <div data-slot="footer">Footer content</div>
-    </signa-button>
+    </my-button>
 </body>
 
 

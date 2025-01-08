@@ -1,13 +1,11 @@
 
-import { app, computed, defineComponent, html, useState } from "signa";
+import { app, computed, def, html, useState } from "signa";
 
 const myApi = { fetch: () => '1' }
 type MyAPi = typeof myApi;
 app.register('api', () => myApi)
 
-
-
-export default defineComponent({
+export default def({
     tagName: 'signa-button',
     slots: ['header', 'footer'],
     props: {
@@ -47,7 +45,7 @@ export default defineComponent({
     }
 });
 
-defineComponent({
+def({
     tagName: 'prop-example',
     props: {
         example: {

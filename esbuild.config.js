@@ -85,6 +85,7 @@ if (isDev) {
                 ...config,
                 plugins: [
                     ...config.plugins,
+                    useClean(examplesPath)
                 ],
                 sourcemap: false,
                 minify: true,

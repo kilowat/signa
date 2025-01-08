@@ -19,12 +19,6 @@ type PropDefinition<T extends TypeConstructor> = {
 
 type InferPropType<T> = T extends PropDefinition<infer U> ? ConstructorToType<U> : never;
 
-// Обновленный тип для вывода типов props
-type InferProps<T extends Record<string, PropDefinition<any>>> = {
-    [K in keyof T]: InferPropType<T[K]>;
-};
-
-// Обновленный тип для сигналов с правильным выводом типов
 type SignalProps<T extends Record<string, PropDefinition<any>>> = {
     [K in keyof T]: Signal<InferPropType<T[K]>>;
 };
@@ -68,7 +62,7 @@ type ComponentOptions<
     disconnected?: (this: ComponentInstance<P, S, SL>) => void;
 };
 
-export function defineComponent<
+export function def<
     P extends Record<string, PropDefinition<any>>,
     S extends SetupResult,
     SL extends Slots = undefined

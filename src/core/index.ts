@@ -1,4 +1,4 @@
-export { defineComponent } from './component';
+export { def } from './component';
 export { useState, computed, State } from './state'
 export { html, htmlFor } from 'uhtml/reactive';
 export { effect } from '@preact/signals-core';
