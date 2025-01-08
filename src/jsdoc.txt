@@ -1,0 +1,82 @@
+/**
+ * @template T
+ * @class State
+ * @extends {Signal<T>}
+ * @implements {StateType<T>}
+ */
+ /**
+ * @module @custom/ui-library
+ * @description A reactive UI component library with service locator pattern
+ */
+
+/**
+ * @typedef {Object} ServiceLocator
+ * @property {function(string, function)} register - Registers a new service factory
+ * @property {function(string, ...any): any} get - Retrieves a service instance
+ * @property {function} clear - Clears all registered services
+ */
+
+/**
+ * @typedef {Object} PropDefinition
+ * @property {StringConstructor|NumberConstructor|BooleanConstructor|ObjectConstructor|ArrayConstructor} type - The prop type constructor
+ * @property {*} [default] - Default value for the prop
+ */
+
+/**
+ * @typedef {Object} SetupContext
+ * @property {Object.<string, Signal>} props - Reactive props as signals
+ * @property {ServiceLocator} app - Service locator instance
+ */
+
+/**
+ * @typedef {Object} ComponentOptions
+ * @property {string} tagName - Custom element tag name
+ * @property {Object.<string, PropDefinition>} [props] - Component props definition
+ * @property {string[]} [slots] - Available named slots
+ * @property {function(SetupContext): Object} [setup] - Setup function for component initialization
+ * @property {function} [connected] - Lifecycle hook called when component is connected
+ * @property {function} [render] - Component's render function
+ * @property {function} [disconnected] - Lifecycle hook called when component is disconnected
+ */
+
+/**
+ * @interface CustomElement
+ * @extends HTMLElement
+ * @property {function(string): any} $ - Get component property by key
+ * @property {function(string, any): void} emitEvent - Emit custom event
+ * @property {Object.<string, Node[]>} slots - Component slots
+ */
+
+/**
+ * Defines a new custom element component
+ * @function def
+ * @param {ComponentOptions} options - Component configuration options
+ */
+
+/**
+ * Creates a reactive state with deep update capabilities
+ * @function useState
+ * @template T
+ * @param {T} initialValue - Initial state value
+ * @returns {State<T>} Reactive state instance
+ */
+
+/**
+ * Creates a computed signal that automatically updates when dependencies change
+ * @function computed
+ * @template T
+ * @param {function(): T} fn - Computation function
+ * @returns {Signal<T>} Computed signal
+ */
+
+/**
+ * @class State
+ * @template T
+ * @extends Signal
+ * @property {function(Partial<T>|T): void} emit - Updates state with deep merge capability
+ */
+
+/**
+ * Global application service locator instance
+ * @const {ServiceLocator} app
+ */

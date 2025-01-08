@@ -34,5 +34,5 @@ type ComponentOptions<P extends Record<string, PropDefinition<any>>, S extends S
     render?: (this: ComponentInstance<P, S, SL>) => unknown;
     disconnected?: (this: ComponentInstance<P, S, SL>) => void;
 };
-export declare function defineComponent<P extends Record<string, PropDefinition<any>>, S extends SetupResult, SL extends Slots = undefined>(options: ComponentOptions<P, S, SL>): void;
+export declare function def<P extends Record<string, PropDefinition<any>>, S extends SetupResult, SL extends Slots = undefined>(options: ComponentOptions<P, S, SL>): void;
 export {};

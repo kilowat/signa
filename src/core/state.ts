@@ -1,7 +1,13 @@
 import { Signal, signal as createSignal, computed as preactComputed } from '@preact/signals-core';
 
+export interface State<T> {
+    value: T;
+    emit(value: Partial<T> | T): void;
+    peek(): T;
+    subscribe(fn: () => void): () => void;
+}
 
-export class State<T> extends Signal<T> {
+class StateSignal<T> extends Signal<T> implements State<T> {
     emit(value: Partial<T> | T): void {
         if (typeof value === 'object' && value !== null && typeof this.value === 'object') {
             const currentClone = cloneDeep(this.value);
@@ -14,10 +20,9 @@ export class State<T> extends Signal<T> {
 
 export function useState<T>(initialValue: T): State<T> {
     const baseSignal = createSignal(initialValue);
-    Object.setPrototypeOf(baseSignal, State.prototype);
-    return baseSignal as State<T>;
+    Object.setPrototypeOf(baseSignal, StateSignal.prototype);
+    return baseSignal as StateSignal<T>;
 }
-
 
 function cloneDeep<T>(obj: T): T {
     if (obj === null || typeof obj !== 'object') {
