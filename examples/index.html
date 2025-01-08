@@ -13,7 +13,7 @@
         const myApi = {
             fetchNews: async () => [{ id: 1 }]
         }
-        // Это за место контейнера можно ложит любой обьект потом достать в компнентах
+        // Это за место контейнера можно ложит любой обьект потом достать в компонентах
         app.register('api', () => myApi);
 
         def({
@@ -58,7 +58,7 @@
                         <div>Default slot result: ${this.slots.default}</div>
                         <div>Footer slot result: ${this.slots.footer}</div>
                         <div><button @click="${() => this.inc()}">inc</button></div>
-                        <prop-example data-example="${this.count.value}"></prop-example>
+                        <prop-example-tag data-example="${this.count.value}"></prop-example-tag>
                     </div>`;
             }
         });
