@@ -16,16 +16,19 @@ export default def({
     },
     setup({ props, app }) {
         const count = useState(0);
+        const state = useState({ count: 0 })
         const someApi = app.get<MyAPi>('api');
-
         const inc = () => {
             count.value++;
+            state.emit({ count: state.value.count + 1 })
         }
         const isDouble = computed(() => count.value % 2 === 0);
         return {
             count,
             inc,
             isDouble,
+            state,
+
         }
     },
     connected() {
@@ -34,6 +37,7 @@ export default def({
     render() {
         return html`
         <div>
+            <div>State count: ${this.state.value.count}</div>
             <div>IsDouble: ${this.isDouble.value}</div>
             <div>Header slot result: ${this.slots.header}</div>
             <div>${this.count.value}</div>

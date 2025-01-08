@@ -10,10 +10,23 @@
 <body>
     <script>
         const { def, computed, useState, app, html } = window.signa;
+        const _news = [];
+        /**
+         * @typedef {Object} MyApi
+         * @property {() => Promise<{ id: number }[]>} fetchNews - Функция для получения новостей
+         */
+        /** @type {MyApi} */
         const myApi = {
-            fetchNews: async () => [{ id: 1 }]
+            fetchNews: async () => new Promise((resolve) => {
+                const newItem = { id: _news.length + 1, name: 'name' + _news.length + 1 }
+                setTimeout(() => {
+                    _news.push(newItem)
+                    resolve(_news)
+                }, 100)
+            })
         }
-        // Это за место контейнера можно ложит любой обьект потом достать в компонентах
+
+        // Это сервис патерн сервис локатор  можно ложить любой обьект потом достать поддержка lazy и разруливание зависимостей
         app.register('api', () => myApi);
 
         def({
@@ -26,11 +39,22 @@
                 }
             },
             setup({ props, app }) {
+                /** @type {MyApi} */
                 const api = app.get('api');
+
                 const count = useState(0);
-                const fetchNews = () => api.fetchNews()
-                const inc = () => count.value++;
+                const news = useState({ items: [], isLoading: false });
+
+                const newsDebug = computed(() => JSON.stringify(news.value));
                 const isDouble = computed(() => count.value % 2 === 0);
+
+                const fetchNews = async () => {
+                    news.emit({ isLoading: true })
+                    const items = await api.fetchNews()
+                    news.emit({ isLoading: false, items })
+                }
+
+                const inc = () => count.value++;
 
                 return {
                     app,
@@ -38,26 +62,30 @@
                     inc,
                     isDouble,
                     fetchNews,
+                    news,
+                    newsDebug
                 }
             },
             connected() {
                 console.log('connected:');
                 console.log(this.inc, this.fetchNews, this.count.value, this.isDouble.value, this.app);
+
             },
             disconnected() {
                 console.log('disconnected');
                 console.log(this.inc, this.fetchNews, this.count.value, this.isDouble.value, this.app);
             },
             render() {
-                console.log(this.inc, this.fetchNews, this.count.value, this.isDouble.value, this.app);
                 return html`
                     <div>
+                        <div>${this.newsDebug.value}</div>
+                        <div><button @click=${this.fetchNews}>fetch news</button></div>
                         <div>IsDouble: ${this.isDouble.value}</div>
                         <div>Header slot result: ${this.slots.header}</div>
                         <div>${this.count.value}</div>
                         <div>Default slot result: ${this.slots.default}</div>
                         <div>Footer slot result: ${this.slots.footer}</div>
-                        <div><button @click="${() => this.inc()}">inc</button></div>
+                        <div><button @click="${this.inc}">inc</button></div>
                         <prop-example-tag data-example="${this.count.value}"></prop-example-tag>
                     </div>`;
             }
@@ -82,6 +110,7 @@
         Default content
         <div data-slot="footer">Footer content</div>
     </my-button>
+    <signa-button></signa-button>
 </body>
 
 
