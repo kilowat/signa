@@ -5,30 +5,16 @@
         "moduleResolution": "bundler",
         "declaration": true,
         "emitDeclarationOnly": true,
-        "outDir": "./dist",
         "strict": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "typeRoots": [
             "./node_modules/@types",
-            "./src/types",
-        ],
-        "baseUrl": "./src",
-        "paths": {
-            "signa": [
-                "core/index"
-            ],
-            "signa/components": [
-                "components/index"
-            ]
-        },
+        ]
     },
-    "include": [
-        "src"
-    ],
     "exclude": [
         "node_modules",
-        "dist",
+        "**/dist",
         "examples"
     ]
 }

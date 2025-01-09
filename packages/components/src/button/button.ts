@@ -1,5 +1,5 @@
 
-import { app, computed, def, html, useState } from "signa";
+import { app, computed, def, html, useState } from "@signa/core";
 
 const myApi = { fetch: () => '1' }
 type MyAPi = typeof myApi;

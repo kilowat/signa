@@ -8,16 +8,33 @@ import { createHash } from 'crypto';
 import fsPath from 'path';
 
 const isDev = process.argv.includes('--dev');
-const buildPath = 'dist';
 const examplesPath = 'examples/dist';
-const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'));
-const version = packageJson.version;
+
+// Читаем версии из package.json каждого пакета
+const coreVersion = JSON.parse(readFileSync('./packages/core/package.json', 'utf-8')).version;
+const componentsVersion = JSON.parse(readFileSync('./packages/components/package.json', 'utf-8')).version;
 
 const useClean = (path) => clean({
     patterns: [`${path}/**/*`],
     cleanOnStartPatterns: ['./prepare'],
     cleanOnEndPatterns: ['./post'],
 });
+
+// Плагин для обработки внешних зависимостей
+const externalGlobalsPlugin = {
+    name: 'external-globals',
+    setup(build) {
+        build.onResolve({ filter: /^@signa\/core$/ }, args => ({
+            path: args.path,
+            namespace: 'external-globals',
+        }));
+
+        build.onLoad({ filter: /.*/, namespace: 'external-globals' }, () => ({
+            contents: 'module.exports = signa;',
+            loader: 'js',
+        }));
+    },
+};
 
 const sharedConfig = {
     bundle: true,
@@ -37,58 +54,73 @@ const sharedConfig = {
         }),
         optimizeCSSAndHTMLPlugin(),
     ],
-    tsconfig: 'tsconfig.json',
 };
-const createConfigs = (path) => [
-    //core esm
+
+const createConfigs = (outputPath) => [
+    // Core ESM
     {
         ...sharedConfig,
-        entryPoints: ['src/core/index.ts'],
+        entryPoints: ['packages/core/src/index.ts'],
         format: 'esm',
-        outfile: `${path}/signa.core.esm.v${version}.js`,
+        outfile: `packages/core/${outputPath}/signa.core.esm.js`,
         alias: {
-            'VERSION': JSON.stringify(version),
+            'VERSION': JSON.stringify(coreVersion),
         },
     },
+    // Core IIFE
     {
         ...sharedConfig,
-        entryPoints: ['src/core/index.ts'],
+        entryPoints: ['packages/core/src/index.ts'],
         format: 'iife',
         platform: 'browser',
-        outfile: `${path}/signa.core.v${version}.js`,
+        outfile: `packages/core/${outputPath}/signa.core.js`,
         globalName: 'signa',
         alias: {
-            VERSION: JSON.stringify(version),
+            'VERSION': JSON.stringify(coreVersion),
         },
-        external: [],
     },
+    // Components ESM
     {
         ...sharedConfig,
-        entryPoints: ['src/components/index.ts'],
-        plugins: [...sharedConfig.plugins,],
-        bundle: true,
-        platform: 'browser',
-        format: 'iife',
-        outfile: `${path}/signa.pack.v${version}.js`,
+        entryPoints: ['packages/components/src/index.ts'],
+        format: 'esm',
+        outfile: `packages/components/${outputPath}/signa.components.esm.js`,
+        external: ['@signa/core'],
         alias: {
-            VERSION: JSON.stringify(version),
+            'VERSION': JSON.stringify(componentsVersion),
         },
-        globalName: 'signa',
-        external: [],
+    },
+    // Components IIFE
+    {
+        ...sharedConfig,
+        entryPoints: ['packages/components/src/index.ts'],
+        plugins: [
+            ...sharedConfig.plugins,
+            externalGlobalsPlugin,
+        ],
+        format: 'iife',
+        platform: 'browser',
+        outfile: `packages/components/${outputPath}/signa.components.js`,
+        globalName: 'signaComponents',
+        external: ['@signa/core'],
+        alias: {
+            'VERSION': JSON.stringify(componentsVersion),
+        },
     },
 ];
+
 if (isDev) {
-    const configs = createConfigs(examplesPath);
+    const configs = createConfigs('dist');
     const ctx = await Promise.all(
         configs.map(config =>
             esbuild.context({
                 ...config,
                 plugins: [
                     ...config.plugins,
-                    useClean(examplesPath)
+                    useClean(config.outfile.replace(/\/[^/]+$/, ''))
                 ],
-                sourcemap: false,
-                minify: true,
+                sourcemap: true,
+                minify: false,
             })
         )
     );
@@ -97,19 +129,19 @@ if (isDev) {
 
     liveServer.start({
         port: 3000,
-        root: "examples",
+        root: ".",
         open: false,
-        file: "index.html",
+        file: "examples/index.html",
     });
 } else {
-    const configs = createConfigs(buildPath);
+    const configs = createConfigs('dist');
     await Promise.all(
         configs.map(config =>
             esbuild.build({
                 ...config,
                 plugins: [
                     ...config.plugins,
-                    useClean(buildPath)
+                    useClean(config.outfile)
                 ],
                 minify: true,
                 sourcemap: false,

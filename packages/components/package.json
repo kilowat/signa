@@ -1,0 +1,24 @@
+{
+    "name": "@signa/components",
+    "version": "1.0.0",
+    "type": "module",
+    "files": [
+        "dist"
+    ],
+    "main": "./dist/signa.components.js",
+    "module": "./dist/signa.components.esm.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/signa.components.esm.js",
+            "default": "./dist/signa.components.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc --emitDeclarationOnly"
+    },
+    "dependencies": {
+        "@signa/core": "1.0.0"
+    }
+}

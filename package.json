@@ -1,44 +1,29 @@
 {
-    "name": "signa",
-    "version": "1.0.0",
+    "name": "signa-monorepo",
+    "private": true,
     "type": "module",
-    "files": [
-        "dist"
+    "workspaces": [
+        "packages/*"
     ],
-    "main": "./dist/signa.core.js",
-    "module": "./dist/signa.core.esm.js",
-    "types": "./dist/core/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/core/index.d.ts",
-            "import": "./dist/signa.core.esm.js",
-            "default": "./dist/signa.core.js"
-        },
-        "./components": {
-            "types": "./dist/components/index.d.ts",
-            "default": "./dist/signa.components.js"
-        }
-    },
     "scripts": {
         "dev": "node esbuild.config.js --dev",
-        "build": "node esbuild.config.js && tsc --emitDeclarationOnly",
-        "version": "npm run build && git add dist",
-        "postversion": "git push && git push --tags",
-        "release:patch": "npm version patch -m \"Release %s\"",
-        "release:minor": "npm version minor -m \"Release %s\"",
-        "release:major": "npm version major -m \"Release %s\""
+        "build": "npm run build --workspaces",
+        "version": "npm version --workspaces",
+        "release:patch": "npm version patch --workspaces",
+        "release:minor": "npm version minor --workspaces",
+        "release:major": "npm version major --workspaces"
     },
     "devDependencies": {
         "@babel/generator": "^7.26.3",
         "@babel/parser": "^7.26.3",
         "@preact/signals-core": "^1.8.0",
         "@vanilla-extract/esbuild-plugin": "^2.3.13",
+        "esbuild": "^0.20.0",
         "esbuild-plugin-clean": "^1.0.1",
         "esbuild-sass-plugin": "^3.3.1",
         "live-server": "^1.2.2",
         "postcss": "^8.4.49",
         "postcss-modules": "^6.0.1",
-        "typescript": "^5.7.2",
-        "uhtml": "^4.7.0"
+        "typescript": "^5.7.2"
     }
 }
