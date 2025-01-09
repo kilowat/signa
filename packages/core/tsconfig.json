@@ -1,11 +1,22 @@
 {
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "outDir": "./dist",
-        "rootDir": "./src",
+        "outDir": "dist",
+        "rootDir": "src",
         "composite": true,
+        "declarationMap": false,
+        "tsBuildInfoFile": "dist/.tsbuildinfo",
+        "paths": {
+            "@signa/core": [
+                "./src"
+            ]
+        }
     },
     "include": [
-        "src"
+        "src/**/*"
+    ],
+    "exclude": [
+        "dist",
+        "node_modules"
     ]
 }

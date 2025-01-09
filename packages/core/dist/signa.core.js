@@ -1193,4 +1193,3 @@ uhtml/esm/index.js:
 uhtml/esm/keyed.js:
   (*! (c) Andrea Giammarchi - MIT *)
 */
-//# sourceMappingURL=signa.core.js.map

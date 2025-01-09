@@ -4,17 +4,26 @@
         "module": "ESNext",
         "moduleResolution": "bundler",
         "declaration": true,
-        "emitDeclarationOnly": true,
+        "declarationMap": false,
+        "sourceMap": false,
         "strict": true,
         "skipLibCheck": true,
+        "composite": true,
         "forceConsistentCasingInFileNames": true,
         "typeRoots": [
-            "./node_modules/@types",
+            "./node_modules/@types"
         ]
     },
+    "references": [
+        {
+            "path": "./packages/core"
+        },
+        {
+            "path": "./packages/components"
+        }
+    ],
     "exclude": [
-        "node_modules",
-        "**/dist",
-        "examples"
+        "**/node_modules",
+        "**/dist"
     ]
 }

@@ -9,6 +9,10 @@ var signaComponents = (() => {
   var __commonJS = (cb, mod) => function __require() {
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
   };
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
   var __copyProps = (to, from, except, desc) => {
     if (from && typeof from === "object" || typeof from === "function") {
       for (let key of __getOwnPropNames(from))
@@ -25,12 +29,19 @@ var signaComponents = (() => {
     isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
     mod
   ));
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
   // external-globals:@signa/core
   var require_core = __commonJS({
     "external-globals:@signa/core"(exports, module) {
       module.exports = signa;
     }
+  });
+
+  // packages/components/src/index.ts
+  var src_exports = {};
+  __export(src_exports, {
+    Button: () => button_default
   });
 
   // packages/components/src/button/button.ts
@@ -80,5 +91,5 @@ var signaComponents = (() => {
       return import_core.html`prop: ${this.example.value}`;
     }
   });
+  return __toCommonJS(src_exports);
 })();
-//# sourceMappingURL=signa.components.js.map

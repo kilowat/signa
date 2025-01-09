@@ -1,26 +1,17 @@
 import * as esbuild from 'esbuild';
-import { clean } from 'esbuild-plugin-clean';
 import { readFileSync } from 'fs';
 import liveServer from "live-server";
 import optimizeCSSAndHTMLPlugin from './plugins/optimize-css-html.js';
 import { sassPlugin, postcssModules } from 'esbuild-sass-plugin';
 import { createHash } from 'crypto';
-import fsPath from 'path';
 
 const isDev = process.argv.includes('--dev');
-const examplesPath = 'examples/dist';
+const isCore = process.argv.includes('--core');
+const isComponents = process.argv.includes('--components');
 
-// Читаем версии из package.json каждого пакета
 const coreVersion = JSON.parse(readFileSync('./packages/core/package.json', 'utf-8')).version;
 const componentsVersion = JSON.parse(readFileSync('./packages/components/package.json', 'utf-8')).version;
 
-const useClean = (path) => clean({
-    patterns: [`${path}/**/*`],
-    cleanOnStartPatterns: ['./prepare'],
-    cleanOnEndPatterns: ['./post'],
-});
-
-// Плагин для обработки внешних зависимостей
 const externalGlobalsPlugin = {
     name: 'external-globals',
     setup(build) {
@@ -56,96 +47,124 @@ const sharedConfig = {
     ],
 };
 
-const createConfigs = (outputPath) => [
-    // Core ESM
-    {
-        ...sharedConfig,
-        entryPoints: ['packages/core/src/index.ts'],
-        format: 'esm',
-        outfile: `packages/core/${outputPath}/signa.core.esm.js`,
-        alias: {
-            'VERSION': JSON.stringify(coreVersion),
-        },
-    },
-    // Core IIFE
-    {
-        ...sharedConfig,
-        entryPoints: ['packages/core/src/index.ts'],
-        format: 'iife',
-        platform: 'browser',
-        outfile: `packages/core/${outputPath}/signa.core.js`,
-        globalName: 'signa',
-        alias: {
-            'VERSION': JSON.stringify(coreVersion),
-        },
-    },
-    // Components ESM
-    {
-        ...sharedConfig,
-        entryPoints: ['packages/components/src/index.ts'],
-        format: 'esm',
-        outfile: `packages/components/${outputPath}/signa.components.esm.js`,
-        external: ['@signa/core'],
-        alias: {
-            'VERSION': JSON.stringify(componentsVersion),
-        },
-    },
-    // Components IIFE
-    {
-        ...sharedConfig,
-        entryPoints: ['packages/components/src/index.ts'],
-        plugins: [
-            ...sharedConfig.plugins,
-            externalGlobalsPlugin,
-        ],
-        format: 'iife',
-        platform: 'browser',
-        outfile: `packages/components/${outputPath}/signa.components.js`,
-        globalName: 'signaComponents',
-        external: ['@signa/core'],
-        alias: {
-            'VERSION': JSON.stringify(componentsVersion),
-        },
-    },
-];
+const createBuildConfigs = (outputPath, minify = false) => {
+    const configs = [];
+    const suffix = minify ? '.min' : '';
 
-if (isDev) {
-    const configs = createConfigs('dist');
-    const ctx = await Promise.all(
-        configs.map(config =>
-            esbuild.context({
-                ...config,
+    // Core configs
+    if (!isComponents) {
+        configs.push(
+            // Core ESM
+            {
+                ...sharedConfig,
+                entryPoints: ['packages/core/src/index.ts'],
+                format: 'esm',
+                outfile: `packages/core/${outputPath}/signa.core.esm${suffix}.js`,
+                alias: { 'VERSION': JSON.stringify(coreVersion) },
+            },
+            // Core IIFE
+            {
+                ...sharedConfig,
+                entryPoints: ['packages/core/src/index.ts'],
+                format: 'iife',
+                bundle: true,
+                platform: 'browser',
+                outfile: `packages/core/${outputPath}/signa.core${suffix}.js`,
+                globalName: 'signa',
+                alias: { 'VERSION': JSON.stringify(coreVersion) },
+            }
+        );
+    }
+
+    // Components configs
+    if (!isCore) {
+        configs.push(
+            // Components ESM
+            {
+                ...sharedConfig,
+                entryPoints: ['packages/components/src/index.ts'],
+                format: 'esm',
+                outfile: `packages/components/${outputPath}/signa.components.esm${suffix}.js`,
+                external: ['@signa/core'],
+                alias: { 'VERSION': JSON.stringify(componentsVersion) },
+            },
+            // Components IIFE
+            {
+                ...sharedConfig,
+                entryPoints: ['packages/components/src/index.ts'],
                 plugins: [
-                    ...config.plugins,
-                    useClean(config.outfile.replace(/\/[^/]+$/, ''))
+                    ...sharedConfig.plugins,
+                    externalGlobalsPlugin,
                 ],
-                sourcemap: true,
-                minify: false,
-            })
-        )
-    );
+                format: 'iife',
+                platform: 'browser',
+                bundle: true,
+                outfile: `packages/components/${outputPath}/signa.components${suffix}.js`,
+                globalName: 'signaComponents',
+                external: ['@signa/core'],
+                alias: { 'VERSION': JSON.stringify(componentsVersion) },
+            }
+        );
+    }
 
-    await Promise.all(ctx.map(c => c.watch()));
+    return configs;
+};
 
-    liveServer.start({
-        port: 3000,
-        root: ".",
-        open: false,
-        file: "examples/index.html",
-    });
-} else {
-    const configs = createConfigs('dist');
-    await Promise.all(
-        configs.map(config =>
-            esbuild.build({
-                ...config,
-                plugins: [
-                    ...config.plugins,
-                    useClean(config.outfile)
-                ],
-                minify: true,
-                sourcemap: false,
-            })
-        )
-    );
-}
+const build = async () => {
+    if (isDev) {
+        const configs = createBuildConfigs('dist', false);
+        const ctx = await Promise.all(
+            configs.map(config =>
+                esbuild.context({
+                    ...config,
+                    plugins: [
+                        ...config.plugins,
+                    ],
+                    sourcemap: false,
+                    minify: false,
+                })
+            )
+        );
+
+        await Promise.all(ctx.map(c => c.watch()));
+
+        liveServer.start({
+            port: 3000,
+            root: ".",
+            open: false,
+            file: "examples/index.html",
+        });
+    } else {
+        // Build non-minified version
+        const configs = createBuildConfigs('dist', false);
+        await Promise.all(
+            configs.map(config =>
+                esbuild.build({
+                    ...config,
+                    plugins: [
+                        ...config.plugins,
+                    ],
+                    sourcemap: false,
+                    minify: false,
+                })
+            )
+        );
+
+        // Build minified version
+        const minConfigs = createBuildConfigs('dist', true);
+        await Promise.all(
+            minConfigs.map(config =>
+                esbuild.build({
+                    ...config,
+                    sourcemap: false,
+                    minify: true,
+                })
+            )
+        );
+    }
+};
+
+build().catch((e) => {
+    console.error(e);
+    process.exit(1);
+});

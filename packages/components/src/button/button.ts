@@ -3,6 +3,7 @@ import { app, computed, def, html, useState } from "@signa/core";
 
 const myApi = { fetch: () => '1' }
 type MyAPi = typeof myApi;
+
 app.register('api', () => myApi)
 
 export default def({

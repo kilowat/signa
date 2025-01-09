@@ -7,11 +7,16 @@
     ],
     "scripts": {
         "dev": "node esbuild.config.js --dev",
-        "build": "npm run build --workspaces",
-        "version": "npm version --workspaces",
-        "release:patch": "npm version patch --workspaces",
-        "release:minor": "npm version minor --workspaces",
-        "release:major": "npm version major --workspaces"
+        "clean": "rimraf packages/core/dist packages/core/.tsbuildinfo packages/components/dist packages/components/.tsbuildinfo",
+        "prebuild": "npm run clean",
+        "build": "npm run build:types && npm run build:js",
+        "build:types": "tsc -b packages/core packages/components --emitDeclarationOnly",
+        "build:js": "node esbuild.config.js",
+        "build:core": "tsc -b packages/core --emitDeclarationOnly && node esbuild.config.js --core",
+        "build:components": "tsc -b packages/components --emitDeclarationOnly && node esbuild.config.js --components",
+        "release:core": "cd packages/core && npm run build && npm version patch && git add . && git commit -m \"Release: @signa/core v$(npm pkg get version | tr -d '\"')\" && git tag core-v$(npm pkg get version | tr -d '\"') && git push origin main --tags",
+        "release:components": "cd packages/components && npm run build && npm version patch && git add . && git commit -m \"Release: @signa/components v$(npm pkg get version | tr -d '\"')\" && git tag components-v$(npm pkg get version | tr -d '\"') && git push origin main --tags",
+        "release": "npm run release:core && npm run release:components"
     },
     "devDependencies": {
         "@babel/generator": "^7.26.3",
@@ -24,6 +29,7 @@
         "live-server": "^1.2.2",
         "postcss": "^8.4.49",
         "postcss-modules": "^6.0.1",
+        "rimraf": "^5.0.5",
         "typescript": "^5.7.2"
     }
 }

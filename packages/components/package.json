@@ -16,9 +16,10 @@
         }
     },
     "scripts": {
-        "build": "tsc --emitDeclarationOnly"
+        "build": "tsc --build",
+        "clean": "tsc --build --clean"
     },
     "dependencies": {
-        "@signa/core": "1.0.0"
+        "@signa/core": "^1.0.0"
     }
 }

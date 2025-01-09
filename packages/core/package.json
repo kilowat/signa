@@ -16,7 +16,8 @@
         }
     },
     "scripts": {
-        "build": "tsc --emitDeclarationOnly"
+        "build": "tsc --build",
+        "clean": "tsc --build --clean"
     },
     "dependencies": {
         "@preact/signals-core": "^1.8.0",

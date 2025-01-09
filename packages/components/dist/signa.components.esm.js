@@ -45,4 +45,6 @@ def({
     return html`prop: ${this.example.value}`;
   }
 });
-//# sourceMappingURL=signa.components.esm.js.map
+export {
+  button_default as Button
+};
