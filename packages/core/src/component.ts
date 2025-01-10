@@ -194,11 +194,11 @@ export function def<
         }
 
         disconnectedCallback() {
-            this.cleanup.forEach(cleanup => cleanup());
-            this.cleanup = [];
             if (disconnected) {
                 disconnected.call(this as unknown as ComponentInstance<P, S, SL>);
             }
+            this.cleanup.forEach(cleanup => cleanup());
+            this.cleanup = [];
         }
 
         private collectSlots() {

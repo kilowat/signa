@@ -26,8 +26,7 @@
                 }, 100)
             })
         }
-
-        // Это сервис патерн сервис локатор  можно ложить любой обьект потом достать поддержка lazy и разруливание зависимостей
+        // сервис локатор поддержка lazy
         app.register('api', () => myApi);
 
         def({
@@ -58,7 +57,6 @@
                 const inc = () => count.value++;
 
                 return {
-                    app,
                     count,
                     inc,
                     isDouble,
@@ -68,13 +66,13 @@
                 }
             },
             connected() {
-                console.log('connected:');
-                console.log(this.inc, this.fetchNews, this.count.value, this.isDouble.value, this.app);
+                console.log(`connected`);
+                console.log(this);
 
             },
             disconnected() {
-                console.log('disconnected');
-                console.log(this.inc, this.fetchNews, this.count.value, this.isDouble.value, this.app);
+                console.log(`disconnected`);
+                console.log(this);
             },
             render() {
                 return html`
@@ -112,8 +110,7 @@
         <div data-slot="footer">Footer content</div>
     </my-button>
     <signa-button></signa-button>
-    <smart-filter></smart-filter>
-    <filter-panel></filter-panel>
+
 </body>
 
 

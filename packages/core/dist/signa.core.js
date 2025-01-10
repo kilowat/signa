@@ -1132,11 +1132,11 @@ var signa = (() => {
         });
       }
       disconnectedCallback() {
-        this.cleanup.forEach((cleanup) => cleanup());
-        this.cleanup = [];
         if (disconnected) {
           disconnected.call(this);
         }
+        this.cleanup.forEach((cleanup) => cleanup());
+        this.cleanup = [];
       }
       collectSlots() {
         const slots = { default: [] };
