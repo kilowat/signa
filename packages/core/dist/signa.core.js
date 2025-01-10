@@ -39,13 +39,16 @@ var signa = (() => {
   // packages/core/src/index.ts
   var src_exports = {};
   __export(src_exports, {
+    Signal: () => u,
     app: () => app,
-    computed: () => computed,
+    batch: () => r,
+    computed: () => w,
     def: () => def,
     effect: () => E,
     html: () => html,
     htmlFor: () => htmlFor,
-    useState: () => useState
+    signal: () => d,
+    untracked: () => n
   });
 
   // node_modules/udomdiff/esm/index.js
@@ -335,7 +338,7 @@ var signa = (() => {
   // node_modules/uhtml/esm/literals.js
   var abc = (a2, b2, c2) => ({ a: a2, b: b2, c: c2 });
   var bc = (b2, c2) => ({ b: b2, c: c2 });
-  var detail = (u2, t2, n, c2) => ({ v: empty, u: u2, t: t2, n, c: c2 });
+  var detail = (u2, t2, n2, c2) => ({ v: empty, u: u2, t: t2, n: n2, c: c2 });
   var cache = () => abc(null, null, empty);
 
   // node_modules/uhtml/esm/creator.js
@@ -571,8 +574,8 @@ var signa = (() => {
     }
   );
   var nullHandler = /* @__PURE__ */ Object.create(null);
-  var create = (hold, onGarbageCollected, { debug, handler, return: r, token = hold } = nullHandler) => {
-    const target = r || new Proxy(hold, handler || nullHandler);
+  var create = (hold, onGarbageCollected, { debug, handler, return: r2, token = hold } = nullHandler) => {
+    const target = r2 || new Proxy(hold, handler || nullHandler);
     const args = [target, [onGarbageCollected, hold, !!debug]];
     if (token !== false)
       args.push(token);
@@ -616,23 +619,23 @@ var signa = (() => {
     if (!(s > 1)) {
       var i2, t2 = false;
       while (void 0 !== h) {
-        var r = h;
+        var r2 = h;
         h = void 0;
         f++;
-        while (void 0 !== r) {
-          var o2 = r.o;
-          r.o = void 0;
-          r.f &= -3;
-          if (!(8 & r.f) && c(r))
+        while (void 0 !== r2) {
+          var o2 = r2.o;
+          r2.o = void 0;
+          r2.f &= -3;
+          if (!(8 & r2.f) && c(r2))
             try {
-              r.c();
-            } catch (r2) {
+              r2.c();
+            } catch (r3) {
               if (!t2) {
-                i2 = r2;
+                i2 = r3;
                 t2 = true;
               }
             }
-          r = o2;
+          r2 = o2;
         }
       }
       f = 0;
@@ -642,7 +645,26 @@ var signa = (() => {
     } else
       s--;
   }
+  function r(i2) {
+    if (s > 0)
+      return i2();
+    s++;
+    try {
+      return i2();
+    } finally {
+      t();
+    }
+  }
   var o = void 0;
+  function n(i2) {
+    var t2 = o;
+    o = void 0;
+    try {
+      return i2();
+    } finally {
+      o = t2;
+    }
+  }
   var h = void 0;
   var s = 0;
   var f = 0;
@@ -694,28 +716,28 @@ var signa = (() => {
   };
   u.prototype.U = function(i2) {
     if (void 0 !== this.t) {
-      var t2 = i2.e, r = i2.x;
+      var t2 = i2.e, r2 = i2.x;
       if (void 0 !== t2) {
-        t2.x = r;
+        t2.x = r2;
         i2.e = void 0;
       }
-      if (void 0 !== r) {
-        r.e = t2;
+      if (void 0 !== r2) {
+        r2.e = t2;
         i2.x = void 0;
       }
       if (i2 === this.t)
-        this.t = r;
+        this.t = r2;
     }
   };
   u.prototype.subscribe = function(i2) {
     var t2 = this;
     return E(function() {
-      var r = t2.value, n = o;
+      var r2 = t2.value, n2 = o;
       o = void 0;
       try {
-        i2(r);
+        i2(r2);
       } finally {
-        o = n;
+        o = n2;
       }
     });
   };
@@ -751,8 +773,8 @@ var signa = (() => {
       v++;
       s++;
       try {
-        for (var r = this.t; void 0 !== r; r = r.x)
-          r.t.N();
+        for (var r2 = this.t; void 0 !== r2; r2 = r2.x)
+          r2.t.N();
       } finally {
         t();
       }
@@ -769,9 +791,9 @@ var signa = (() => {
   }
   function a(i2) {
     for (var t2 = i2.s; void 0 !== t2; t2 = t2.n) {
-      var r = t2.S.n;
-      if (void 0 !== r)
-        t2.r = r;
+      var r2 = t2.S.n;
+      if (void 0 !== r2)
+        t2.r = r2;
       t2.S.n = t2;
       t2.i = -1;
       if (void 0 === t2.n) {
@@ -781,7 +803,7 @@ var signa = (() => {
     }
   }
   function l(i2) {
-    var t2 = i2.s, r = void 0;
+    var t2 = i2.s, r2 = void 0;
     while (void 0 !== t2) {
       var o2 = t2.p;
       if (-1 === t2.i) {
@@ -791,13 +813,13 @@ var signa = (() => {
         if (void 0 !== t2.n)
           t2.n.p = o2;
       } else
-        r = t2;
+        r2 = t2;
       t2.S.n = t2.r;
       if (void 0 !== t2.r)
         t2.r = void 0;
       t2 = o2;
     }
-    i2.s = r;
+    i2.s = r2;
   }
   function y(i2) {
     u.call(this, void 0);
@@ -881,21 +903,21 @@ var signa = (() => {
     return new y(i2);
   }
   function _(i2) {
-    var r = i2.u;
+    var r2 = i2.u;
     i2.u = void 0;
-    if ("function" == typeof r) {
+    if ("function" == typeof r2) {
       s++;
-      var n = o;
+      var n2 = o;
       o = void 0;
       try {
-        r();
+        r2();
       } catch (t2) {
         i2.f &= -2;
         i2.f |= 8;
         g(i2);
         throw t2;
       } finally {
-        o = n;
+        o = n2;
         t();
       }
     }
@@ -973,31 +995,28 @@ var signa = (() => {
     return t2.d.bind(t2);
   }
 
-  // packages/core/src/app.ts
-  var createServiceLocator = () => {
-    const services = {};
-    const register = (name, factory) => {
-      services[name] = { factory };
-    };
-    const get = (name, ...args) => {
-      const service = services[name];
-      if (!service) {
-        throw new Error(`Service ${name} not found`);
-      }
-      if (!service.instance) {
-        service.instance = service.factory(...args);
-      }
-      return service.instance;
-    };
-    const clear = () => {
-      Object.keys(services).forEach((key) => {
-        delete services[key];
-      });
-    };
-    return { register, get, clear };
-  };
-  var app = {
-    ...createServiceLocator()
+  // packages/core/src/state.ts
+  function cloneDeep(obj) {
+    if (obj === null || typeof obj !== "object") {
+      return obj;
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(cloneDeep);
+    }
+    const clonedObj = {};
+    for (const key of Reflect.ownKeys(obj)) {
+      clonedObj[key] = cloneDeep(obj[key]);
+    }
+    return clonedObj;
+  }
+  u.prototype.valueCopy = function(value) {
+    if (typeof value === "object" && value !== null && typeof this.peek() === "object") {
+      const currentClone = cloneDeep(this.peek());
+      this.value = { ...currentClone, ...value };
+    } else {
+      this.value = value;
+    }
+    return this.peek();
   };
 
   // packages/core/src/component.ts
@@ -1029,8 +1048,7 @@ var signa = (() => {
           this[key] = this.propsSignals[key];
         });
         this.setupResult = (setup == null ? void 0 : setup({
-          props: this.propsSignals,
-          app
+          props: this.propsSignals
         })) || {};
         Object.entries(this.setupResult).forEach(([key, value]) => {
           if (typeof value === "function") {
@@ -1146,43 +1164,37 @@ var signa = (() => {
         this.slots = slots;
       }
     }
-    if (tagName) {
+    if (!customElements.get(tagName)) {
       customElements.define(tagName, Component);
     }
   }
 
-  // packages/core/src/state.ts
-  var StateSignal = class extends u {
-    emit(value) {
-      if (typeof value === "object" && value !== null && typeof this.value === "object") {
-        const currentClone = cloneDeep(this.value);
-        this.value = { ...currentClone, ...value };
-      } else {
-        this.value = value;
+  // packages/core/src/app.ts
+  var createServiceLocator = () => {
+    const services = {};
+    const register = (name, factory) => {
+      services[name] = { factory };
+    };
+    const get = (name, ...args) => {
+      const service = services[name];
+      if (!service) {
+        throw new Error(`Service ${name} not found`);
       }
-    }
+      if (!service.instance) {
+        service.instance = service.factory(...args);
+      }
+      return service.instance;
+    };
+    const clear = () => {
+      Object.keys(services).forEach((key) => {
+        delete services[key];
+      });
+    };
+    return { register, get, clear };
   };
-  function useState(initialValue) {
-    const baseSignal = d(initialValue);
-    Object.setPrototypeOf(baseSignal, StateSignal.prototype);
-    return baseSignal;
-  }
-  function cloneDeep(obj) {
-    if (obj === null || typeof obj !== "object") {
-      return obj;
-    }
-    if (Array.isArray(obj)) {
-      return obj.map(cloneDeep);
-    }
-    const clonedObj = {};
-    for (const key of Reflect.ownKeys(obj)) {
-      clonedObj[key] = cloneDeep(obj[key]);
-    }
-    return clonedObj;
-  }
-  function computed(fn) {
-    return w(fn);
-  }
+  var app = {
+    ...createServiceLocator()
+  };
   return __toCommonJS(src_exports);
 })();
 /*! Bundled license information:

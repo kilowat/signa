@@ -1,6 +1,6 @@
 import { reactive } from 'uhtml/reactive';
-import { effect, Signal, signal } from '@preact/signals-core';
-import { App, app } from './app';
+import { effect, signal, Signal } from './state';
+
 
 type TypeConstructor = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor;
 
@@ -25,7 +25,6 @@ type SignalProps<T extends Record<string, PropDefinition<any>>> = {
 
 type SetupContext<P extends Record<string, PropDefinition<any>>> = {
     props: SignalProps<P>;
-    app: App;
 }
 
 type SetupResult = Record<string, any>;
@@ -110,7 +109,6 @@ export function def<
 
             this.setupResult = setup?.({
                 props: this.propsSignals,
-                app,
             }) || {} as S;
 
             Object.entries(this.setupResult).forEach(([key, value]) => {
@@ -233,7 +231,7 @@ export function def<
         }
     }
 
-    if (tagName) {
+    if (!customElements.get(tagName)) {
         customElements.define(tagName, Component);
     }
 }

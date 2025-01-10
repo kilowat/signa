@@ -57,13 +57,13 @@ var signaComponents = (() => {
         default: "test"
       }
     },
-    setup({ props, app: app2 }) {
-      const count = (0, import_core.useState)(0);
-      const state = (0, import_core.useState)({ count: 0 });
-      const someApi = app2.get("api");
+    setup({ props }) {
+      const count = (0, import_core.signal)(0);
+      const state = (0, import_core.signal)({ count: 0 });
+      const someApi = import_core.app.get("api");
       const inc = () => {
         count.value++;
-        state.emit({ count: state.value.count + 1 });
+        state.valueCopy({ count: state.value.count + 1 });
       };
       const isDouble = (0, import_core.computed)(() => count.value % 2 === 0);
       return {

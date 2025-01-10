@@ -1,8 +1,8 @@
-export interface State<T> {
-    value: T;
-    emit(value: Partial<T> | T): void;
-    peek(): T;
-    subscribe(fn: () => void): () => void;
+export { effect, computed, batch, untracked } from '@preact/signals-core';
+import { Signal, signal as baseSignal } from '@preact/signals-core';
+declare module '@preact/signals-core' {
+    interface Signal<T> {
+        valueCopy(value: Partial<T>): T;
+    }
 }
-export declare function useState<T>(initialValue: T): State<T>;
-export declare function computed<T>(fn: () => T): import("@preact/signals-core").ReadonlySignal<T>;
+export { Signal, baseSignal as signal };

@@ -1,5 +1,4 @@
-import { Signal } from '@preact/signals-core';
-import { App } from './app';
+import { Signal } from './state';
 type TypeConstructor = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor;
 type ConstructorToType<T> = T extends StringConstructor ? string : T extends NumberConstructor ? number : T extends BooleanConstructor ? boolean : T extends ArrayConstructor ? any[] : T extends ObjectConstructor ? Record<string, unknown> : T;
 type PropDefinition<T extends TypeConstructor> = {
@@ -12,7 +11,6 @@ type SignalProps<T extends Record<string, PropDefinition<any>>> = {
 };
 type SetupContext<P extends Record<string, PropDefinition<any>>> = {
     props: SignalProps<P>;
-    app: App;
 };
 type SetupResult = Record<string, any>;
 type Slots = string[] | undefined;

@@ -1,5 +1,5 @@
 // packages/components/src/button/button.ts
-import { app, computed, def, html, useState } from "@signa/core";
+import { app, computed, def, html, signal } from "@signa/core";
 var myApi = { fetch: () => "1" };
 app.register("api", () => myApi);
 var button_default = def({
@@ -11,13 +11,13 @@ var button_default = def({
       default: "test"
     }
   },
-  setup({ props, app: app2 }) {
-    const count = useState(0);
-    const state = useState({ count: 0 });
-    const someApi = app2.get("api");
+  setup({ props }) {
+    const count = signal(0);
+    const state = signal({ count: 0 });
+    const someApi = app.get("api");
     const inc = () => {
       count.value++;
-      state.emit({ count: state.value.count + 1 });
+      state.valueCopy({ count: state.value.count + 1 });
     };
     const isDouble = computed(() => count.value % 2 === 0);
     return {
