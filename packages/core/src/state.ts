@@ -1,6 +1,7 @@
 
-export { effect, computed, batch, untracked } from '@preact/signals-core';
+export { effect, computed, batch, untracked, Signal, signal } from '@preact/signals-core';
 
+/*
 import { Signal, signal as baseSignal } from '@preact/signals-core';
 
 
@@ -38,3 +39,4 @@ Signal.prototype.valueCopy = function <T>(this: Signal<T>, value: Partial<T>): T
 };
 
 export { Signal, baseSignal as signal };
+*/

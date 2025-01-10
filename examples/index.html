@@ -10,7 +10,7 @@
 
 <body>
     <script>
-        const { def, computed, signal, app, html } = window.signa;
+        const { def, useComputed, useSignal, app, html } = window.signa;
         const _news = [];
         /**
          * @typedef {Object} MyApi
@@ -42,16 +42,16 @@
                 /** @type {MyApi} */
                 const api = app.get('api');
 
-                const count = signal(0);
-                const news = signal({ items: [], isLoading: false });
+                const count = useSignal(0);
+                const news = useSignal({ items: [], isLoading: false });
 
-                const newsDebug = computed(() => JSON.stringify(news.value));
-                const isDouble = computed(() => count.value % 2 === 0);
+                const newsDebug = useComputed(() => JSON.stringify(news.value));
+                const isDouble = useComputed(() => count.value % 2 === 0);
 
                 const fetchNews = async () => {
-                    news.valueCopy({ isLoading: true })
+                    news.value = { ...news.value, isLoading: true }
                     const items = await api.fetchNews()
-                    news.valueCopy({ isLoading: false, items })
+                    news.value = { items, isLoading: true }
                 }
 
                 const inc = () => count.value++;

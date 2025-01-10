@@ -41,14 +41,14 @@ var signa = (() => {
   __export(src_exports, {
     Signal: () => u,
     app: () => app,
-    batch: () => r,
-    computed: () => w,
     def: () => def,
-    effect: () => E,
     html: () => html,
     htmlFor: () => htmlFor,
-    signal: () => d,
-    untracked: () => n
+    svg: () => svg2,
+    svgFor: () => svgFor,
+    useComputed: () => useComputed,
+    useEffect: () => useEffect,
+    useSignal: () => useSignal
   });
 
   // node_modules/udomdiff/esm/index.js
@@ -645,26 +645,7 @@ var signa = (() => {
     } else
       s--;
   }
-  function r(i2) {
-    if (s > 0)
-      return i2();
-    s++;
-    try {
-      return i2();
-    } finally {
-      t();
-    }
-  }
   var o = void 0;
-  function n(i2) {
-    var t2 = o;
-    o = void 0;
-    try {
-      return i2();
-    } finally {
-      o = t2;
-    }
-  }
   var h = void 0;
   var s = 0;
   var f = 0;
@@ -995,29 +976,57 @@ var signa = (() => {
     return t2.d.bind(t2);
   }
 
-  // packages/core/src/state.ts
-  function cloneDeep(obj) {
-    if (obj === null || typeof obj !== "object") {
-      return obj;
-    }
-    if (Array.isArray(obj)) {
-      return obj.map(cloneDeep);
-    }
-    const clonedObj = {};
-    for (const key of Reflect.ownKeys(obj)) {
-      clonedObj[key] = cloneDeep(obj[key]);
-    }
-    return clonedObj;
+  // packages/core/src/hooks.ts
+  var contextStack = [];
+  function createHooksContext() {
+    return {
+      cleanups: [],
+      currentPhase: null
+    };
   }
-  u.prototype.valueCopy = function(value) {
-    if (typeof value === "object" && value !== null && typeof this.peek() === "object") {
-      const currentClone = cloneDeep(this.peek());
-      this.value = { ...currentClone, ...value };
-    } else {
-      this.value = value;
+  function pushContext(context, phase) {
+    context.currentPhase = phase;
+    contextStack.push(context);
+  }
+  function popContext() {
+    const context = contextStack.pop();
+    if (context) {
+      context.currentPhase = null;
     }
-    return this.peek();
-  };
+  }
+  function getCurrentContext() {
+    return contextStack[contextStack.length - 1];
+  }
+  function validateHookContext(hookName) {
+    const context = getCurrentContext();
+    if (!context) {
+      throw new Error(`${hookName} must be called within setup, connected, or disconnected lifecycle methods`);
+    }
+    return context;
+  }
+  function useSignal(initialValue) {
+    validateHookContext("useSignal");
+    return d(initialValue);
+  }
+  function useComputed(callback) {
+    const context = validateHookContext("useComputed");
+    const computedSignal = w(callback);
+    context.cleanups.push(() => {
+      var _a;
+      (_a = computedSignal.constructor.prototype.dispose) == null ? void 0 : _a.call(computedSignal);
+    });
+    return computedSignal;
+  }
+  function useEffect(callback) {
+    const context = validateHookContext("useEffect");
+    const cleanup = E(() => {
+      const result = callback();
+      if (typeof result === "function") {
+        context.cleanups.push(result);
+      }
+    });
+    context.cleanups.push(cleanup);
+  }
 
   // packages/core/src/component.ts
   function def(options) {
@@ -1043,13 +1052,20 @@ var signa = (() => {
       constructor() {
         super();
         this.cleanup = [];
+        this.hooksContext = createHooksContext();
         this.propsSignals = this.initializeProps();
         Object.keys(this.propsSignals).forEach((key) => {
           this[key] = this.propsSignals[key];
         });
-        this.setupResult = (setup == null ? void 0 : setup({
-          props: this.propsSignals
-        })) || {};
+        if (setup) {
+          pushContext(this.hooksContext, "setup");
+          this.setupResult = setup({
+            props: this.propsSignals
+          }) || {};
+          popContext();
+        } else {
+          this.setupResult = {};
+        }
         Object.entries(this.setupResult).forEach(([key, value]) => {
           if (typeof value === "function") {
             this[key] = value.bind(this);
@@ -1127,14 +1143,20 @@ var signa = (() => {
           this.collectSlots();
           this.setupRender();
           if (connected) {
+            pushContext(this.hooksContext, "connected");
             connected.call(this);
+            popContext();
           }
         });
       }
       disconnectedCallback() {
         if (disconnected) {
+          pushContext(this.hooksContext, "disconnected");
           disconnected.call(this);
+          popContext();
         }
+        this.hooksContext.cleanups.forEach((cleanup) => cleanup());
+        this.hooksContext.cleanups = [];
         this.cleanup.forEach((cleanup) => cleanup());
         this.cleanup = [];
       }

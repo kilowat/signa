@@ -1,6 +1,11 @@
 import { reactive } from 'uhtml/reactive';
-import { effect, signal, Signal } from './state';
-
+import { effect, Signal, signal } from './state';
+import {
+    createHooksContext,
+    pushContext,
+    popContext,
+    type HooksContext
+} from './hooks';
 
 type TypeConstructor = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor;
 
@@ -61,34 +66,6 @@ type ComponentOptions<
     disconnected?: (this: ComponentInstance<P, S, SL>) => void;
 };
 
-/**
- * Define web components
- * @template P - Props type
- * @template S - Setup function result type
- * @template SL - Slot type
- * @param {ComponentOptions<P, S, SL>} options - Confing component
- * @param {string} options.tagName - HTML tag
- * @param {P} [options.props] - Define props
- * @param {SL} [options.slots] - Define slots
- * @param {Function} [options.setup] - Define setup
- * @param {Function} [options.connected] - Callback on connected component to dom
- * @param {Function} [options.render] - Render function
- * @param {Function} [options.disconnected] - Callback on disconnected component from dom
- * @example
- * def({
- *   tagName: 'my-component',
- *   props: {
- *     title: { type: String, default: 'Default Title' }
- *   },
- *   setup({ props }) {
- *     // setup logic
- *   },
- *   render() {
- *     // render logic
- *   }
- * });
- */
-
 export function def<
     P extends Record<string, PropDefinition<any>>,
     S extends SetupResult,
@@ -121,6 +98,7 @@ export function def<
     class Component extends BaseComponent {
         private propsSignals: SignalProps<P>;
         private setupResult: S;
+        private hooksContext: HooksContext;
         private cleanup: (() => void)[] = [];
 
         static get observedAttributes() {
@@ -129,15 +107,23 @@ export function def<
 
         constructor() {
             super();
+            this.hooksContext = createHooksContext();
             this.propsSignals = this.initializeProps();
 
             Object.keys(this.propsSignals).forEach(key => {
                 (this as any)[key] = this.propsSignals[key];
             });
 
-            this.setupResult = setup?.({
-                props: this.propsSignals,
-            }) || {} as S;
+            // Setup phase with hooks
+            if (setup) {
+                pushContext(this.hooksContext, 'setup');
+                this.setupResult = setup({
+                    props: this.propsSignals,
+                }) || {} as S;
+                popContext();
+            } else {
+                this.setupResult = {} as S;
+            }
 
             Object.entries(this.setupResult).forEach(([key, value]) => {
                 if (typeof value === 'function') {
@@ -164,7 +150,6 @@ export function def<
 
             return signals;
         }
-
 
         private getDefaultForType(type: TypeConstructor): any {
             switch (type) {
@@ -215,16 +200,29 @@ export function def<
             requestAnimationFrame(() => {
                 this.collectSlots();
                 this.setupRender();
+
+                // Connected phase with hooks
                 if (connected) {
+                    pushContext(this.hooksContext, 'connected');
                     connected.call(this as unknown as ComponentInstance<P, S, SL>);
+                    popContext();
                 }
             });
         }
 
         disconnectedCallback() {
+            // Disconnected phase with hooks
             if (disconnected) {
+                pushContext(this.hooksContext, 'disconnected');
                 disconnected.call(this as unknown as ComponentInstance<P, S, SL>);
+                popContext();
             }
+
+            // Очищаем все эффекты и сигналы
+            this.hooksContext.cleanups.forEach(cleanup => cleanup());
+            this.hooksContext.cleanups = [];
+
+            // Очищаем рендер эффекты
             this.cleanup.forEach(cleanup => cleanup());
             this.cleanup = [];
         }

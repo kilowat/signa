@@ -58,14 +58,14 @@ var signaComponents = (() => {
       }
     },
     setup({ props }) {
-      const count = (0, import_core.signal)(0);
-      const state = (0, import_core.signal)({ count: 0 });
+      const count = (0, import_core.useSignal)(0);
+      const state = (0, import_core.useSignal)({ count: 0 });
       const someApi = import_core.app.get("api");
       const inc = () => {
         count.value++;
-        state.valueCopy({ count: state.value.count + 1 });
+        state.value = { count: state.value.count + 1 };
       };
-      const isDouble = (0, import_core.computed)(() => count.value % 2 === 0);
+      const isDouble = (0, import_core.useComputed)(() => count.value % 2 === 0);
       return {
         count,
         inc,

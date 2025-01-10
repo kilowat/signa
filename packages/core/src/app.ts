@@ -7,7 +7,13 @@ interface ServiceStore {
         instance?: Service;
     };
 }
-
+/**
+ * Creates a service locator for dependency injection
+ * @returns {Object} Service locator instance
+ * @property {Function} register - Registers a new service with the locator
+ * @property {Function} get - Retrieves a service instance
+ * @property {Function} clear - Removes all registered services
+ */
 const createServiceLocator = () => {
     const services: ServiceStore = {};
 
@@ -36,7 +42,6 @@ const createServiceLocator = () => {
 
     return { register, get, clear };
 };
-
 
 
 export const app = {

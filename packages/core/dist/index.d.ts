@@ -1,4 +1,6 @@
 export { def } from './component';
-export { signal, computed, Signal, batch, untracked, effect } from './state';
-export { html, htmlFor } from 'uhtml/reactive';
+export { Signal } from './state';
+export { useSignal, useComputed, useEffect } from './hooks';
+export { html, htmlFor, svg } from 'uhtml/reactive';
+export { svgFor } from 'uhtml/keyed';
 export { app } from './app';

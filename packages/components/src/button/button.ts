@@ -1,5 +1,5 @@
 
-import { app, computed, def, html, signal } from "@signa/core";
+import { app, def, html, useSignal, useComputed } from "@signa/core";
 
 const myApi = { fetch: () => '1' }
 type MyAPi = typeof myApi;
@@ -16,14 +16,14 @@ export default def({
         }
     },
     setup({ props }) {
-        const count = signal(0);
-        const state = signal({ count: 0 })
+        const count = useSignal(0);
+        const state = useSignal({ count: 0 })
         const someApi = app.get<MyAPi>('api');
         const inc = () => {
             count.value++;
-            state.valueCopy({ count: state.value.count + 1 })
+            state.value = { count: state.value.count + 1 }
         }
-        const isDouble = computed(() => count.value % 2 === 0);
+        const isDouble = useComputed(() => count.value % 2 === 0);
         return {
             count,
             inc,

@@ -9,3 +9,7 @@ declare module 'uhtml/reactive' {
     export function htmlFor<T extends object>(obj: T): (strings: TemplateStringsArray, ...values: any[]) => HTMLElement;
     export function reactive(hook: Function): any;
 }
+
+declare module 'uhtml/keyed' {
+    export function svgFor<T extends object>(obj: T): (strings: TemplateStringsArray, ...values: any[]) => HTMLElement;
+}
