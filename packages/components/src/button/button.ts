@@ -16,6 +16,7 @@ export default def({
         }
     },
     setup({ props }) {
+        console.log(props.name.value)
         const count = useSignal(0);
         const state = useSignal({ count: 0 })
         const someApi = app.get<MyAPi>('api');
@@ -33,7 +34,7 @@ export default def({
         }
     },
     connected() {
-
+        console.log(this.name.value)
     },
     render() {
         return html`

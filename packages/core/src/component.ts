@@ -6,6 +6,7 @@ import {
     popContext,
     type HooksContext
 } from './hooks';
+import { ReadonlySignal } from '@preact/signals-core';
 
 type TypeConstructor = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor;
 
@@ -24,17 +25,21 @@ type PropDefinition<T extends TypeConstructor> = {
 
 type InferPropType<T> = T extends PropDefinition<infer U> ? ConstructorToType<U> : never;
 
+type ReadonlySignalProps<T extends Record<string, PropDefinition<any>>> = {
+    [K in keyof T]: ReadonlySignal<InferPropType<T[K]>>;
+};
 type SignalProps<T extends Record<string, PropDefinition<any>>> = {
     [K in keyof T]: Signal<InferPropType<T[K]>>;
 };
 
 type SetupContext<P extends Record<string, PropDefinition<any>>> = {
-    props: SignalProps<P>;
+    readonly props: ReadonlySignalProps<P>;
 }
 
 type SetupResult = Record<string, any>;
 
 type Slots = string[] | undefined;
+
 type InferSlots<T extends Slots> = T extends string[]
     ? Record<T[number] | 'default', Node[]>
     : Record<'default', Node[]>;
@@ -52,6 +57,8 @@ type ComponentInstance<P extends Record<string, PropDefinition<any>>, S, SL exte
         slots: InferSlots<SL>;
     };
 
+type This<P extends Record<string, PropDefinition<any>>, S, SL extends Slots> = CustomElement & ReadonlySignalProps<P> & S & { slots: InferSlots<SL> }
+
 type ComponentOptions<
     P extends Record<string, PropDefinition<any>>,
     S extends SetupResult,
@@ -61,10 +68,28 @@ type ComponentOptions<
     props?: P;
     slots?: SL;
     setup?: (context: SetupContext<P>) => S;
-    connected?: (this: ComponentInstance<P, S, SL>) => void;
-    render?: (this: ComponentInstance<P, S, SL>) => unknown;
-    disconnected?: (this: ComponentInstance<P, S, SL>) => void;
+    connected?: (this: This<P, S, SL>) => void;
+    render?: (this: This<P, S, SL>) => unknown;
+    disconnected?: (this: This<P, S, SL>) => void;
 };
+
+function makeReadonlyProps<P extends Record<string, PropDefinition<any>>>(props: SignalProps<P>): SignalProps<P> {
+    const readonlyProps = {} as SignalProps<P>;
+
+    for (const key in props) {
+        readonlyProps[key] = new Proxy(props[key], {
+            get(target, prop) {
+                return Reflect.get(target, prop);
+            },
+            set() {
+                throw new Error(`Cannot modify value of prop "${key}". Props are readonly.`);
+            },
+        });
+    }
+
+    return readonlyProps;
+}
+
 
 export function def<
     P extends Record<string, PropDefinition<any>>,
@@ -114,16 +139,18 @@ export function def<
                 (this as any)[key] = this.propsSignals[key];
             });
 
-            // Setup phase with hooks
+            const readonlyProps = makeReadonlyProps(this.propsSignals);
+
             if (setup) {
                 pushContext(this.hooksContext, 'setup');
                 this.setupResult = setup({
-                    props: this.propsSignals,
+                    props: readonlyProps,
                 }) || {} as S;
                 popContext();
             } else {
                 this.setupResult = {} as S;
             }
+
 
             Object.entries(this.setupResult).forEach(([key, value]) => {
                 if (typeof value === 'function') {
@@ -201,7 +228,6 @@ export function def<
                 this.collectSlots();
                 this.setupRender();
 
-                // Connected phase with hooks
                 if (connected) {
                     pushContext(this.hooksContext, 'connected');
                     connected.call(this as unknown as ComponentInstance<P, S, SL>);
@@ -211,18 +237,15 @@ export function def<
         }
 
         disconnectedCallback() {
-            // Disconnected phase with hooks
             if (disconnected) {
                 pushContext(this.hooksContext, 'disconnected');
                 disconnected.call(this as unknown as ComponentInstance<P, S, SL>);
                 popContext();
             }
 
-            // Очищаем все эффекты и сигналы
             this.hooksContext.cleanups.forEach(cleanup => cleanup());
             this.hooksContext.cleanups = [];
 
-            // Очищаем рендер эффекты
             this.cleanup.forEach(cleanup => cleanup());
             this.cleanup = [];
         }

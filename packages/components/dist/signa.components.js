@@ -58,6 +58,7 @@ var signaComponents = (() => {
       }
     },
     setup({ props }) {
+      console.log(props.name.value);
       const count = (0, import_core.useSignal)(0);
       const state = (0, import_core.useSignal)({ count: 0 });
       const someApi = import_core.app.get("api");
@@ -74,6 +75,7 @@ var signaComponents = (() => {
       };
     },
     connected() {
+      console.log(this.name.value);
     },
     render() {
       return import_core.html`<div> <div>State count: ${this.state.value.count}</div> <div>IsDouble: ${this.isDouble.value}</div> <div>Header slot result: ${this.slots.header}</div> <div>${this.count.value}</div> <div>Default slot result: ${this.slots.default}</div> <div>Footer slot result: ${this.slots.footer}</div> <div><button @click="${() => this.inc()}">inc</button></div> <prop-example data-example="${this.count.value}"></prop-example> </div>`;

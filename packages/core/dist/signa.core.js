@@ -1029,6 +1029,20 @@ var signa = (() => {
   }
 
   // packages/core/src/component.ts
+  function makeReadonlyProps(props) {
+    const readonlyProps = {};
+    for (const key in props) {
+      readonlyProps[key] = new Proxy(props[key], {
+        get(target, prop) {
+          return Reflect.get(target, prop);
+        },
+        set() {
+          throw new Error(`Cannot modify value of prop "${key}". Props are readonly.`);
+        }
+      });
+    }
+    return readonlyProps;
+  }
   function def(options) {
     const {
       tagName,
@@ -1057,10 +1071,11 @@ var signa = (() => {
         Object.keys(this.propsSignals).forEach((key) => {
           this[key] = this.propsSignals[key];
         });
+        const readonlyProps = makeReadonlyProps(this.propsSignals);
         if (setup) {
           pushContext(this.hooksContext, "setup");
           this.setupResult = setup({
-            props: this.propsSignals
+            props: readonlyProps
           }) || {};
           popContext();
         } else {
