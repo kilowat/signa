@@ -51,9 +51,8 @@ export function useComputed<T>(callback: ComputedCallback<T>): Signal<T> {
     const context = validateHookContext('useComputed');
     const computedSignal = computed(callback);
 
-    // Добавляем очистку для computed сигнала
     context.cleanups.push(() => {
-        // @ts-ignore - доступ к внутреннему методу очистки computed сигнала
+        // @ts-ignore
         computedSignal.constructor.prototype.dispose?.call(computedSignal);
     });
 
@@ -73,7 +72,6 @@ export function useEffect(callback: EffectCallback): void {
     context.cleanups.push(cleanup);
 }
 
-// Экспортируем типы для использования в component.ts
 export type {
     HooksContext,
     Cleanup,
