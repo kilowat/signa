@@ -61,6 +61,34 @@ type ComponentOptions<
     disconnected?: (this: ComponentInstance<P, S, SL>) => void;
 };
 
+/**
+ * Define web components
+ * @template P - Props type
+ * @template S - Setup function result type
+ * @template SL - Slot type
+ * @param {ComponentOptions<P, S, SL>} options - Confing component
+ * @param {string} options.tagName - HTML tag
+ * @param {P} [options.props] - Define props
+ * @param {SL} [options.slots] - Define slots
+ * @param {Function} [options.setup] - Define setup
+ * @param {Function} [options.connected] - Callback on connected component to dom
+ * @param {Function} [options.render] - Render function
+ * @param {Function} [options.disconnected] - Callback on disconnected component from dom
+ * @example
+ * def({
+ *   tagName: 'my-component',
+ *   props: {
+ *     title: { type: String, default: 'Default Title' }
+ *   },
+ *   setup({ props }) {
+ *     // setup logic
+ *   },
+ *   render() {
+ *     // render logic
+ *   }
+ * });
+ */
+
 export function def<
     P extends Record<string, PropDefinition<any>>,
     S extends SetupResult,

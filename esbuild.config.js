@@ -12,6 +12,7 @@ const isComponents = process.argv.includes('--components');
 const coreVersion = JSON.parse(readFileSync('./packages/core/package.json', 'utf-8')).version;
 const componentsVersion = JSON.parse(readFileSync('./packages/components/package.json', 'utf-8')).version;
 
+
 const externalGlobalsPlugin = {
     name: 'external-globals',
     setup(build) {
@@ -28,7 +29,6 @@ const externalGlobalsPlugin = {
 };
 
 const sharedConfig = {
-    bundle: true,
     target: ['es2019'],
     plugins: [
         sassPlugin({
@@ -60,7 +60,6 @@ const createBuildConfigs = (outputPath, minify = false) => {
                 entryPoints: ['packages/core/src/index.ts'],
                 format: 'esm',
                 outfile: `packages/core/${outputPath}/signa.core.esm${suffix}.js`,
-                alias: { 'VERSION': JSON.stringify(coreVersion) },
             },
             // Core IIFE
             {
@@ -71,7 +70,6 @@ const createBuildConfigs = (outputPath, minify = false) => {
                 platform: 'browser',
                 outfile: `packages/core/${outputPath}/signa.core${suffix}.js`,
                 globalName: 'signa',
-                alias: { 'VERSION': JSON.stringify(coreVersion) },
             }
         );
     }
@@ -85,8 +83,7 @@ const createBuildConfigs = (outputPath, minify = false) => {
                 entryPoints: ['packages/components/src/index.ts'],
                 format: 'esm',
                 outfile: `packages/components/${outputPath}/signa.components.esm${suffix}.js`,
-                external: ['@signa/core'],
-                alias: { 'VERSION': JSON.stringify(componentsVersion) },
+                external: [],
             },
             // Components IIFE
             {
@@ -102,7 +99,6 @@ const createBuildConfigs = (outputPath, minify = false) => {
                 outfile: `packages/components/${outputPath}/signa.components${suffix}.js`,
                 globalName: 'signaComponents',
                 external: ['@signa/core'],
-                alias: { 'VERSION': JSON.stringify(componentsVersion) },
             }
         );
     }
