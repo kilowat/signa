@@ -49,7 +49,7 @@
                 const isDouble = useComputed(() => count.value % 2 === 0);
 
                 const fetchNews = async () => {
-                    news.value = { ...news.value, isLoading: true }
+                    news.value = { ...news.peek(), isLoading: true }
                     const items = await api.fetchNews()
                     news.value = { items, isLoading: true }
                 }
