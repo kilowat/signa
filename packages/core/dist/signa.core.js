@@ -1074,8 +1074,6 @@ var signa = (() => {
         super();
         this.cleanup = [];
         this.isMounted = false;
-        this.mountPromise = null;
-        this.mountResolve = null;
         this.hooksContext = createHooksContext();
         this.propsSignals = this.initializeProps();
         Object.keys(this.propsSignals).forEach((key) => {
@@ -1163,40 +1161,6 @@ var signa = (() => {
         });
         this.cleanup.push(cleanup);
       }
-      async mountComponent() {
-        var _a;
-        if (this.mountPromise)
-          return this.mountPromise;
-        this.mountPromise = new Promise((resolve2) => {
-          this.mountResolve = resolve2;
-        });
-        try {
-          if (this.isMounted) {
-            await new Promise((resolve2) => {
-              requestAnimationFrame(() => {
-                this.collectSlots();
-                this.setupRender();
-                resolve2();
-              });
-            });
-            if (connected) {
-              pushContext(this.hooksContext, "connected");
-              try {
-                await connected.call(this);
-              } finally {
-                popContext();
-              }
-            }
-          }
-        } catch (error) {
-          console.error(`Error mounting component ${this.tagName.toLowerCase()}:`, error);
-          this.handleMountError(error);
-        } finally {
-          (_a = this.mountResolve) == null ? void 0 : _a.call(this);
-          this.mountPromise = null;
-          this.mountResolve = null;
-        }
-      }
       handleMountError(error) {
         const errorContainer = document.createElement("div");
         errorContainer.style.cssText = "padding: 1rem; border: 1px solid #ff0000; border-radius: 4px; margin: 0.5rem; color: #ff0000;";
@@ -1206,7 +1170,22 @@ var signa = (() => {
       }
       connectedCallback() {
         this.isMounted = true;
-        this.mountComponent();
+        requestAnimationFrame(() => {
+          try {
+            if (!this.isMounted)
+              return;
+            this.collectSlots();
+            this.setupRender();
+            if (connected) {
+              pushContext(this.hooksContext, "connected");
+              connected.call(this);
+              popContext();
+            }
+          } catch (error) {
+            console.error(`Error mounting component ${this.tagName.toLowerCase()}:`, error);
+            this.handleMountError(error);
+          }
+        });
       }
       disconnectedCallback() {
         this.isMounted = false;

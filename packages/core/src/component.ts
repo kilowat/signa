@@ -126,9 +126,6 @@ export function def<
         private hooksContext: HooksContext;
         private cleanup: (() => void)[] = [];
         private isMounted: boolean = false;
-        private mountPromise: Promise<void> | null = null;
-        private mountResolve: (() => void) | null = null;
-
 
         static get observedAttributes() {
             return Object.keys(propsDefinition).map(name => `data-${name}`);
@@ -227,44 +224,6 @@ export function def<
             this.cleanup.push(cleanup);
         }
 
-        private async mountComponent(): Promise<void> {
-            if (this.mountPromise) return this.mountPromise;
-
-            this.mountPromise = new Promise((resolve) => {
-                this.mountResolve = resolve;
-            });
-
-            try {
-                if (this.isMounted) {
-                    // Оборачиваем requestAnimationFrame в Promise
-                    await new Promise<void>(resolve => {
-                        requestAnimationFrame(() => {
-                            this.collectSlots();
-                            this.setupRender();
-                            resolve();
-                        });
-                    });
-
-                    // Теперь connected будет вызван после того как слоты собраны
-                    if (connected) {
-                        pushContext(this.hooksContext, 'connected');
-                        try {
-                            await connected.call(this as unknown as ComponentInstance<P, S, SL>);
-                        } finally {
-                            popContext();
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error(`Error mounting component ${this.tagName.toLowerCase()}:`, error);
-                this.handleMountError(error);
-            } finally {
-                this.mountResolve?.();
-                this.mountPromise = null;
-                this.mountResolve = null;
-            }
-        }
-
         private handleMountError(error: unknown) {
             const errorContainer = document.createElement('div');
             errorContainer.style.cssText = 'padding: 1rem; border: 1px solid #ff0000; border-radius: 4px; margin: 0.5rem; color: #ff0000;';
@@ -279,10 +238,29 @@ export function def<
         }
 
         connectedCallback() {
-            this.isMounted = true;
-            this.mountComponent();
-        }
 
+            this.isMounted = true;
+            requestAnimationFrame(() => {
+                try {
+                    if (!this.isMounted) return;
+
+                    this.collectSlots();
+                    this.setupRender();
+
+                    if (connected) {
+                        pushContext(this.hooksContext, 'connected');
+                        connected.call(this as unknown as ComponentInstance<P, S, SL>);
+                        popContext();
+                    }
+                } catch (error) {
+                    console.error(`Error mounting component ${this.tagName.toLowerCase()}:`, error);
+                    this.handleMountError(error);
+                }
+
+            });
+
+
+        }
         disconnectedCallback() {
             this.isMounted = false;
 
