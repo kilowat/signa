@@ -1,5 +1,5 @@
-type Service = any;
-type ServiceFactory = (...args: any[]) => Service;
+type Service<T = unknown> = T;
+type ServiceFactory<T = unknown> = (...args: any[]) => Service<T>;
 
 interface ServiceStore {
     [key: string]: {
@@ -18,6 +18,12 @@ const createServiceLocator = () => {
     const services: ServiceStore = {};
 
     const register = (name: string, factory: ServiceFactory) => {
+        if (services[name]) {
+            throw new Error(`Service ${name} already registered`);
+        }
+        if (!name.match(/^[a-zA-Z][a-zA-Z0-9_]*$/)) {
+            throw new Error(`Invalid service name: ${name}`);
+        }
         services[name] = { factory };
     };
 
@@ -40,7 +46,13 @@ const createServiceLocator = () => {
         });
     };
 
-    return { register, get, clear };
+    const clearService = (name: string) => {
+        if (services[name]) {
+            delete services[name];
+        }
+    };
+
+    return { register, get, clear, clearService };
 };
 
 

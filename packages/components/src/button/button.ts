@@ -1,10 +1,6 @@
 
 import { app, def, html, useSignal, useComputed } from "@signa/core";
 
-const myApi = { fetch: () => '1' }
-type MyAPi = typeof myApi;
-
-app.register('api', () => myApi)
 
 export default def({
     tagName: 'signa-button',
@@ -19,7 +15,6 @@ export default def({
         console.log(props.name.value)
         const count = useSignal(0);
         const state = useSignal({ count: 0 })
-        const someApi = app.get<MyAPi>('api');
         const inc = () => {
             count.value++;
             state.value = { count: state.value.count + 1 }

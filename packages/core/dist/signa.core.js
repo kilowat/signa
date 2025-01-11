@@ -41,9 +41,12 @@ var signa = (() => {
   __export(src_exports, {
     Signal: () => u,
     app: () => app,
+    computed: () => w,
     def: () => def,
+    effect: () => E,
     html: () => html,
     htmlFor: () => htmlFor,
+    signal: () => d,
     svg: () => svg2,
     svgFor: () => svgFor,
     useComputed: () => useComputed,
@@ -989,6 +992,10 @@ var signa = (() => {
     contextStack.push(context);
   }
   function popContext() {
+    if (contextStack.length === 0) {
+      console.warn("Attempting to pop empty context stack");
+      return;
+    }
     const context = contextStack.pop();
     if (context) {
       context.currentPhase = null;
@@ -1066,6 +1073,9 @@ var signa = (() => {
       constructor() {
         super();
         this.cleanup = [];
+        this.isMounted = false;
+        this.mountPromise = null;
+        this.mountResolve = null;
         this.hooksContext = createHooksContext();
         this.propsSignals = this.initializeProps();
         Object.keys(this.propsSignals).forEach((key) => {
@@ -1153,27 +1163,65 @@ var signa = (() => {
         });
         this.cleanup.push(cleanup);
       }
-      connectedCallback() {
-        requestAnimationFrame(() => {
-          this.collectSlots();
-          this.setupRender();
-          if (connected) {
-            pushContext(this.hooksContext, "connected");
-            connected.call(this);
-            popContext();
-          }
+      async mountComponent() {
+        var _a;
+        if (this.mountPromise)
+          return this.mountPromise;
+        this.mountPromise = new Promise((resolve2) => {
+          this.mountResolve = resolve2;
         });
+        try {
+          if (this.isMounted) {
+            await new Promise((resolve2) => {
+              requestAnimationFrame(() => {
+                this.collectSlots();
+                this.setupRender();
+                resolve2();
+              });
+            });
+            if (connected) {
+              pushContext(this.hooksContext, "connected");
+              try {
+                await connected.call(this);
+              } finally {
+                popContext();
+              }
+            }
+          }
+        } catch (error) {
+          console.error(`Error mounting component ${this.tagName.toLowerCase()}:`, error);
+          this.handleMountError(error);
+        } finally {
+          (_a = this.mountResolve) == null ? void 0 : _a.call(this);
+          this.mountPromise = null;
+          this.mountResolve = null;
+        }
+      }
+      handleMountError(error) {
+        const errorContainer = document.createElement("div");
+        errorContainer.style.cssText = "padding: 1rem; border: 1px solid #ff0000; border-radius: 4px; margin: 0.5rem; color: #ff0000;";
+        errorContainer.innerHTML = `<div>Error in component ${this.tagName.toLowerCase()}</div> <pre style="font-size: 0.8em; margin-top: 0.5rem;">${error instanceof Error ? error.message : "Unknown error"}</pre>`;
+        this.innerHTML = "";
+        this.appendChild(errorContainer);
+      }
+      connectedCallback() {
+        this.isMounted = true;
+        this.mountComponent();
       }
       disconnectedCallback() {
+        this.isMounted = false;
         if (disconnected) {
           pushContext(this.hooksContext, "disconnected");
-          disconnected.call(this);
-          popContext();
+          try {
+            disconnected.call(this);
+          } finally {
+            popContext();
+          }
         }
-        this.hooksContext.cleanups.forEach((cleanup) => cleanup());
-        this.hooksContext.cleanups = [];
         this.cleanup.forEach((cleanup) => cleanup());
         this.cleanup = [];
+        this.hooksContext.cleanups.forEach((cleanup) => cleanup());
+        this.hooksContext.cleanups = [];
       }
       collectSlots() {
         const slots = { default: [] };
@@ -1210,6 +1258,12 @@ var signa = (() => {
   var createServiceLocator = () => {
     const services = {};
     const register = (name, factory) => {
+      if (services[name]) {
+        throw new Error(`Service ${name} already registered`);
+      }
+      if (!name.match(/^[a-zA-Z][a-zA-Z0-9_]*$/)) {
+        throw new Error(`Invalid service name: ${name}`);
+      }
       services[name] = { factory };
     };
     const get = (name, ...args) => {
@@ -1227,7 +1281,12 @@ var signa = (() => {
         delete services[key];
       });
     };
-    return { register, get, clear };
+    const clearService = (name) => {
+      if (services[name]) {
+        delete services[name];
+      }
+    };
+    return { register, get, clear, clearService };
   };
   var app = {
     ...createServiceLocator()

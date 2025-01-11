@@ -24,6 +24,10 @@ export function pushContext(context: HooksContext, phase: 'setup' | 'connected' 
 }
 
 export function popContext() {
+    if (contextStack.length === 0) {
+        console.warn('Attempting to pop empty context stack');
+        return;
+    }
     const context = contextStack.pop();
     if (context) {
         context.currentPhase = null;

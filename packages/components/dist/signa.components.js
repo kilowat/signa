@@ -46,8 +46,6 @@ var signaComponents = (() => {
 
   // packages/components/src/button/button.ts
   var import_core = __toESM(require_core(), 1);
-  var myApi = { fetch: () => "1" };
-  import_core.app.register("api", () => myApi);
   var button_default = (0, import_core.def)({
     tagName: "signa-button",
     slots: ["header", "footer"],
@@ -61,7 +59,6 @@ var signaComponents = (() => {
       console.log(props.name.value);
       const count = (0, import_core.useSignal)(0);
       const state = (0, import_core.useSignal)({ count: 0 });
-      const someApi = import_core.app.get("api");
       const inc = () => {
         count.value++;
         state.value = { count: state.value.count + 1 };
