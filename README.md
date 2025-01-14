@@ -44,7 +44,7 @@ def({
     initial: { type: Number, default: 0 }
   },
   setup({ props }) {
-    const count = useSignal(props.initial.peek());
+    const count = useSignal(props.initial.value);
     
     const increment = () => count.value++;
     
