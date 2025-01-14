@@ -291,17 +291,25 @@ export function def<
 
             Array.from(this.childNodes).forEach(node => {
                 if (node instanceof Element) {
-                    const slotName = node.getAttribute('data-slot') || 'default';
-                    if (slotName !== 'default' && slotsDefinition && !slotsDefinition.includes(slotName)) {
-                        console.warn(`Slot "${slotName}" is not defined in component slots`);
-                        return;
-                    }
+                    const slotName = node.getAttribute('data-slot');
 
-                    if (node.hasChildNodes()) {
+                    if (slotName) {
+                        // Для именованных слотов берем только содержимое
+                        if (slotName !== 'default' && slotsDefinition && !slotsDefinition.includes(slotName)) {
+                            console.warn(`Slot "${slotName}" is not defined in component slots`);
+                            return;
+                        }
+
                         slots[slotName] = slots[slotName] || [];
-                        slots[slotName].push(...Array.from(node.childNodes));
+                        Array.from(node.childNodes).forEach(child => {
+                            slots[slotName].push(child);
+                        });
+                    } else {
+                        // Для default слота берем весь элемент целиком
+                        slots.default.push(node);
                     }
-                } else if (node.textContent?.trim()) {
+                } else {
+                    // Текстовые узлы и другие типы узлов идут в default слот
                     slots.default.push(node);
                 }
             });

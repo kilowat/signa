@@ -1210,18 +1210,21 @@ var signa = (() => {
           });
         }
         Array.from(this.childNodes).forEach((node) => {
-          var _a;
           if (node instanceof Element) {
-            const slotName = node.getAttribute("data-slot") || "default";
-            if (slotName !== "default" && slotsDefinition && !slotsDefinition.includes(slotName)) {
-              console.warn(`Slot "${slotName}" is not defined in component slots`);
-              return;
-            }
-            if (node.hasChildNodes()) {
+            const slotName = node.getAttribute("data-slot");
+            if (slotName) {
+              if (slotName !== "default" && slotsDefinition && !slotsDefinition.includes(slotName)) {
+                console.warn(`Slot "${slotName}" is not defined in component slots`);
+                return;
+              }
               slots[slotName] = slots[slotName] || [];
-              slots[slotName].push(...Array.from(node.childNodes));
+              Array.from(node.childNodes).forEach((child) => {
+                slots[slotName].push(child);
+              });
+            } else {
+              slots.default.push(node);
             }
-          } else if ((_a = node.textContent) == null ? void 0 : _a.trim()) {
+          } else {
             slots.default.push(node);
           }
         });
