@@ -1,4 +1,4 @@
-import { effect as signalEffect, Signal, computed } from './state';
+import { effect, Signal, computed } from '@preact/signals-core';
 import { html, htmlFor } from 'uhtml/reactive';
 type TypeConstructor = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor;
 type InferPropType<T extends TypeConstructor> = T extends StringConstructor ? string : T extends NumberConstructor ? number : T extends BooleanConstructor ? boolean : T extends ArrayConstructor ? any[] : T extends ObjectConstructor ? Record<string, unknown> : never;
@@ -13,7 +13,7 @@ type SlotFunction = {
 };
 type ComponentContext = {
     signal: <T>(initialValue: T) => Signal<T>;
-    effect: typeof signalEffect;
+    effect: typeof effect;
     computed: typeof computed;
     html: typeof html;
     htmlFor: typeof htmlFor;

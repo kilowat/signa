@@ -1,6 +1,6 @@
 // component.ts
 import { reactive } from 'uhtml/reactive';
-import { effect as signalEffect, Signal, signal, computed } from './state';
+import { effect, Signal, signal, computed } from '@preact/signals-core';
 import { html, htmlFor } from 'uhtml/reactive';
 import {
     createHooksContext,
@@ -32,7 +32,7 @@ type SlotFunction = {
 
 type ComponentContext = {
     signal: <T>(initialValue: T) => Signal<T>;
-    effect: typeof signalEffect;
+    effect: typeof effect;
     computed: typeof computed;
     html: typeof html;
     htmlFor: typeof htmlFor;
@@ -51,7 +51,7 @@ export function def(
     tagName: string,
     setup: (context: ComponentContext) => RenderFunction
 ): void {
-    const uRender = reactive(signalEffect);
+    const uRender = reactive(effect);
 
     class Component extends HTMLElement implements CustomElement {
         private hooksContext: HooksContext;
@@ -88,7 +88,7 @@ export function def(
 
             return {
                 signal,
-                effect: signalEffect,
+                effect,
                 computed,
                 html,
                 htmlFor,
