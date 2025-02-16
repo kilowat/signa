@@ -40,7 +40,16 @@
             })
         })
 
-        def('counter-component', ({ signal, effect, computed, html, prop, slot, render }) => {
+        def('counter-component', (ctx) => {
+            const {
+                signal,
+                effect,
+                computed,
+                html,
+                prop,
+                slot,
+                render
+            } = ctx;
             const header = slot('header');
             const footer = slot('footer');
 
@@ -71,7 +80,15 @@
         });
 
 
-        def('counter-component-extended', ({ signal, effect, computed, html, prop, slot }) => {
+        def('counter-component-extended', (ctx) => {
+            const {
+                signal,
+                effect,
+                computed,
+                html,
+                prop,
+                slot
+            } = ctx;
             // Props
             const initialValue = prop({
                 name: 'initial-value',
