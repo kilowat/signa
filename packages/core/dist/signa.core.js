@@ -39,19 +39,9 @@ var signa = (() => {
   // packages/core/src/index.ts
   var src_exports = {};
   __export(src_exports, {
-    Signal: () => u,
     app: () => app,
-    computed: () => w,
-    def: () => def,
-    effect: () => E,
-    html: () => html,
-    htmlFor: () => htmlFor,
-    signal: () => d,
-    svg: () => svg2,
-    svgFor: () => svgFor,
-    useComputed: () => useComputed,
-    useEffect: () => useEffect,
-    useSignal: () => useSignal
+    createStore: () => createStore,
+    def: () => def
   });
 
   // node_modules/udomdiff/esm/index.js
@@ -1001,116 +991,53 @@ var signa = (() => {
       context.currentPhase = null;
     }
   }
-  function getCurrentContext() {
-    return contextStack[contextStack.length - 1];
-  }
-  function validateHookContext(hookName) {
-    const context = getCurrentContext();
-    if (!context) {
-      throw new Error(`${hookName} must be called within setup, connected, or disconnected lifecycle methods`);
-    }
-    return context;
-  }
-  function useSignal(initialValue) {
-    validateHookContext("useSignal");
-    return d(initialValue);
-  }
-  function useComputed(callback) {
-    const context = validateHookContext("useComputed");
-    const computedSignal = w(callback);
-    context.cleanups.push(() => {
-      var _a;
-      (_a = computedSignal.constructor.prototype.dispose) == null ? void 0 : _a.call(computedSignal);
-    });
-    return computedSignal;
-  }
-  function useEffect(callback) {
-    const context = validateHookContext("useEffect");
-    const cleanup = E(() => {
-      const result = callback();
-      if (typeof result === "function") {
-        context.cleanups.push(result);
-      }
-    });
-    context.cleanups.push(cleanup);
-  }
 
   // packages/core/src/component.ts
-  function makeReadonlyProps(props) {
-    const readonlyProps = {};
-    for (const key in props) {
-      readonlyProps[key] = new Proxy(props[key], {
-        get(target, prop) {
-          return Reflect.get(target, prop);
-        },
-        set() {
-          throw new Error(`Cannot modify value of prop "${key}". Props are readonly.`);
-        }
-      });
-    }
-    return readonlyProps;
-  }
-  function def(options) {
-    const {
-      tagName,
-      props: propsDefinition = {},
-      slots: slotsDefinition,
-      setup,
-      connected,
-      disconnected,
-      render
-    } = options;
+  function def(tagName, setup) {
     const uRender = attach(E);
-    class BaseComponent extends HTMLElement {
+    class Component extends HTMLElement {
+      constructor() {
+        super();
+        this.cleanup = [];
+        this.isMounted = false;
+        this.slots = { default: [] };
+        this.props = /* @__PURE__ */ new Map();
+        this.observedProps = /* @__PURE__ */ new Set();
+        this.hooksContext = createHooksContext();
+      }
+      static get observedAttributes() {
+        return Array.from(this.prototype.observedProps || []).map((name) => `data-${name}`);
+      }
       $(key) {
         return this[key];
       }
       emitEvent(name, detail2) {
         this.dispatchEvent(new CustomEvent(name, { detail: detail2 }));
       }
-    }
-    class Component extends BaseComponent {
-      constructor() {
-        super();
-        this.cleanup = [];
-        this.isMounted = false;
-        this.hooksContext = createHooksContext();
-        this.propsSignals = this.initializeProps();
-        Object.keys(this.propsSignals).forEach((key) => {
-          this[key] = this.propsSignals[key];
-        });
-        const readonlyProps = makeReadonlyProps(this.propsSignals);
-        if (setup) {
-          pushContext(this.hooksContext, "setup");
-          this.setupResult = setup({
-            props: readonlyProps
-          }) || {};
-          popContext();
-        } else {
-          this.setupResult = {};
-        }
-        Object.entries(this.setupResult).forEach(([key, value]) => {
-          if (typeof value === "function") {
-            this[key] = value.bind(this);
-          } else {
-            this[key] = value;
-          }
-        });
-      }
-      static get observedAttributes() {
-        return Object.keys(propsDefinition).map((name) => `data-${name}`);
-      }
-      initializeProps() {
-        var _a;
-        const signals = {};
-        for (const [key, definition] of Object.entries(propsDefinition)) {
-          const attrName = `data-${key}`;
-          const attrValue = this.getAttribute(attrName);
-          const defaultValue = (_a = definition.default) != null ? _a : this.getDefaultForType(definition.type);
-          const initialValue = attrValue !== null ? this.parseAttributeValue(attrValue, definition.type) : defaultValue;
-          signals[key] = d(initialValue);
-        }
-        return signals;
+      createComponentContext() {
+        const self = this;
+        const slotFn = Object.assign(
+          (name) => this.slots[name] || [],
+          { default: this.slots.default }
+        );
+        return {
+          signal: d,
+          effect: E,
+          computed: w,
+          html,
+          htmlFor,
+          prop: (config) => {
+            const { name, type, default: defaultValue } = config;
+            this.observedProps.add(name);
+            const attrName = `data-${name}`;
+            const attrValue = this.getAttribute(attrName);
+            const initialValue = attrValue !== null ? this.parseAttributeValue(attrValue, type) : defaultValue != null ? defaultValue : this.getDefaultForType(type);
+            const propSignal = d(initialValue);
+            this.props.set(name, propSignal);
+            return propSignal;
+          },
+          slot: slotFn
+        };
       }
       getDefaultForType(type) {
         switch (type) {
@@ -1145,78 +1072,12 @@ var signa = (() => {
             return value;
         }
       }
-      attributeChangedCallback(name, oldValue, newValue) {
-        const propName = name.replace(/^data-/, "");
-        const propDef = propsDefinition[propName];
-        if (!propDef)
-          return;
-        const value = this.parseAttributeValue(newValue, propDef.type);
-        this.propsSignals[propName].value = value;
-      }
-      setupRender() {
-        if (!render)
-          return;
-        const cleanup = uRender(this, () => {
-          return render.call(this);
-        });
-        this.cleanup.push(cleanup);
-      }
-      handleMountError(error) {
-        const errorContainer = document.createElement("div");
-        errorContainer.style.cssText = "padding: 1rem; border: 1px solid #ff0000; border-radius: 4px; margin: 0.5rem; color: #ff0000;";
-        errorContainer.innerHTML = `<div>Error in component ${this.tagName.toLowerCase()}</div> <pre style="font-size: 0.8em; margin-top: 0.5rem;">${error instanceof Error ? error.message : "Unknown error"}</pre>`;
-        this.innerHTML = "";
-        this.appendChild(errorContainer);
-      }
-      connectedCallback() {
-        this.isMounted = true;
-        requestAnimationFrame(() => {
-          try {
-            if (!this.isMounted)
-              return;
-            this.collectSlots();
-            this.setupRender();
-            if (connected) {
-              pushContext(this.hooksContext, "connected");
-              connected.call(this);
-              popContext();
-            }
-          } catch (error) {
-            console.error(`Error mounting component ${this.tagName.toLowerCase()}:`, error);
-            this.handleMountError(error);
-          }
-        });
-      }
-      disconnectedCallback() {
-        this.isMounted = false;
-        if (disconnected) {
-          pushContext(this.hooksContext, "disconnected");
-          try {
-            disconnected.call(this);
-          } finally {
-            popContext();
-          }
-        }
-        this.cleanup.forEach((cleanup) => cleanup());
-        this.cleanup = [];
-        this.hooksContext.cleanups.forEach((cleanup) => cleanup());
-        this.hooksContext.cleanups = [];
-      }
       collectSlots() {
         const slots = { default: [] };
-        if (slotsDefinition) {
-          slotsDefinition.forEach((slot) => {
-            slots[slot] = [];
-          });
-        }
         Array.from(this.childNodes).forEach((node) => {
           if (node instanceof Element) {
             const slotName = node.getAttribute("data-slot");
             if (slotName) {
-              if (slotName !== "default" && slotsDefinition && !slotsDefinition.includes(slotName)) {
-                console.warn(`Slot "${slotName}" is not defined in component slots`);
-                return;
-              }
               slots[slotName] = slots[slotName] || [];
               Array.from(node.childNodes).forEach((child) => {
                 slots[slotName].push(child);
@@ -1229,6 +1090,60 @@ var signa = (() => {
           }
         });
         this.slots = slots;
+      }
+      attributeChangedCallback(name, oldValue, newValue) {
+        const propName = name.replace(/^data-/, "");
+        const propSignal = this.props.get(propName);
+        if (propSignal) {
+          const type = this.getTypeFromValue(propSignal.value);
+          propSignal.value = this.parseAttributeValue(newValue, type);
+        }
+      }
+      getTypeFromValue(value) {
+        switch (typeof value) {
+          case "string":
+            return String;
+          case "number":
+            return Number;
+          case "boolean":
+            return Boolean;
+          case "object":
+            return Array.isArray(value) ? Array : Object;
+          default:
+            return String;
+        }
+      }
+      connectedCallback() {
+        this.isMounted = true;
+        requestAnimationFrame(() => {
+          if (!this.isMounted)
+            return;
+          try {
+            this.collectSlots();
+            pushContext(this.hooksContext, "setup");
+            const renderFn = setup(this.createComponentContext());
+            const cleanup = uRender(this, renderFn);
+            this.cleanup.push(cleanup);
+            popContext();
+          } catch (error) {
+            console.error(`Error mounting component ${this.tagName.toLowerCase()}:`, error);
+            this.handleMountError(error);
+          }
+        });
+      }
+      disconnectedCallback() {
+        this.isMounted = false;
+        this.cleanup.forEach((cleanup) => cleanup());
+        this.cleanup = [];
+        this.hooksContext.cleanups.forEach((cleanup) => cleanup());
+        this.hooksContext.cleanups = [];
+      }
+      handleMountError(error) {
+        const errorContainer = document.createElement("div");
+        errorContainer.style.cssText = "padding: 1rem; border: 1px solid #ff0000; border-radius: 4px; margin: 0.5rem; color: #ff0000;";
+        errorContainer.innerHTML = `<div>Error in component ${this.tagName.toLowerCase()}</div> <pre style="font-size: 0.8em; margin-top: 0.5rem;">${error instanceof Error ? error.message : "Unknown error"}</pre>`;
+        this.innerHTML = "";
+        this.appendChild(errorContainer);
       }
     }
     if (!customElements.get(tagName)) {
@@ -1273,6 +1188,16 @@ var signa = (() => {
   var app = {
     ...createServiceLocator()
   };
+
+  // packages/core/src/store.ts
+  function createStore(setup) {
+    const storeContext = {
+      signal: d,
+      effect: E,
+      computed: w
+    };
+    return setup(storeContext);
+  }
   return __toCommonJS(src_exports);
 })();
 /*! Bundled license information:

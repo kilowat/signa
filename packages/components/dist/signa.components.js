@@ -46,49 +46,17 @@ var signaComponents = (() => {
 
   // packages/components/src/button/button.ts
   var import_core = __toESM(require_core(), 1);
-  var button_default = (0, import_core.def)({
-    tagName: "signa-button",
-    slots: ["header", "footer"],
-    props: {
-      name: {
-        type: String,
-        default: "test"
-      }
-    },
-    setup({ props }) {
-      console.log(props.name.value);
-      const count = (0, import_core.useSignal)(0);
-      const state = (0, import_core.useSignal)({ count: 0 });
-      const inc = () => {
-        count.value++;
-        state.value = { count: state.value.count + 1 };
-      };
-      const isDouble = (0, import_core.useComputed)(() => count.value % 2 === 0);
-      return {
-        count,
-        inc,
-        isDouble,
-        state
-      };
-    },
-    connected() {
-      console.log(this.name.value);
-    },
-    render() {
-      return import_core.html`<div> <div>State count: ${this.state.value.count}</div> <div>IsDouble: ${this.isDouble.value}</div> <div>Header slot result: ${this.slots.header}</div> <div>${this.count.value}</div> <div>Default slot result: ${this.slots.default}</div> <div>Footer slot result: ${this.slots.footer}</div> <div><button @click="${() => this.inc()}">inc</button></div> <prop-example data-example="${this.count.value}"></prop-example> </div>`;
-    }
+  (0, import_core.def)("counter-component-t", ({ signal, effect, computed, html, prop, slot }) => {
+    const header = slot("header");
+    const footer = slot("footer");
+    const initialValue = prop({
+      name: "initial-value",
+      type: Number,
+      default: 0
+    });
+    const count = signal(initialValue.value);
+    return () => html`<div> <header>${header}</header> <main>${slot.default}</main> <footer>${footer}</footer> </div> <div> Count: ${count.value} <button onclick=${() => count.value++}>Increment</button> </div>`;
   });
-  (0, import_core.def)({
-    tagName: "prop-example",
-    props: {
-      example: {
-        type: Number,
-        default: 0
-      }
-    },
-    render() {
-      return import_core.html`prop: ${this.example.value}`;
-    }
-  });
+  var button_default = {};
   return __toCommonJS(src_exports);
 })();

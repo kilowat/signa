@@ -1,115 +1,74 @@
+// component.ts
 import { reactive } from 'uhtml/reactive';
-import { effect, Signal, signal } from './state';
+import { effect as signalEffect, Signal, signal, computed } from './state';
+import { html, htmlFor } from 'uhtml/reactive';
 import {
     createHooksContext,
     pushContext,
     popContext,
     type HooksContext
 } from './hooks';
-import { ReadonlySignal } from '@preact/signals-core';
 
 type TypeConstructor = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor;
 
-type ConstructorToType<T> =
+type InferPropType<T extends TypeConstructor> =
     T extends StringConstructor ? string :
     T extends NumberConstructor ? number :
     T extends BooleanConstructor ? boolean :
     T extends ArrayConstructor ? any[] :
     T extends ObjectConstructor ? Record<string, unknown> :
-    T;
+    never;
 
-type PropDefinition<T extends TypeConstructor> = {
+type PropConfig<T extends TypeConstructor = TypeConstructor> = {
+    name: string;
     type: T;
-    default?: ConstructorToType<T>;
+    default?: InferPropType<T>;
 };
 
-type InferPropType<T> = T extends PropDefinition<infer U> ? ConstructorToType<U> : never;
-
-type ReadonlySignalProps<T extends Record<string, PropDefinition<any>>> = {
-    [K in keyof T]: ReadonlySignal<InferPropType<T[K]>>;
-};
-type SignalProps<T extends Record<string, PropDefinition<any>>> = {
-    [K in keyof T]: Signal<InferPropType<T[K]>>;
+type SlotFunction = {
+    (name: string): Node[];
+    default: Node[];
 };
 
-type SetupContext<P extends Record<string, PropDefinition<any>>> = {
-    readonly props: ReadonlySignalProps<P>;
-}
+type ComponentContext = {
+    signal: <T>(initialValue: T) => Signal<T>;
+    effect: typeof signalEffect;
+    computed: typeof computed;
+    html: typeof html;
+    htmlFor: typeof htmlFor;
+    prop: <T extends TypeConstructor>(config: PropConfig<T>) => Signal<InferPropType<T>>;
+    slot: SlotFunction;
+};
 
-type SetupResult = Record<string, any>;
-
-type Slots = string[] | undefined;
-
-type InferSlots<T extends Slots> = T extends string[]
-    ? Record<T[number] | 'default', Node[]>
-    : Record<'default', Node[]>;
+type RenderFunction = () => unknown;
 
 export interface CustomElement extends HTMLElement {
     $<T = any>(key: string): T | undefined;
     emitEvent<T = any>(name: string, detail?: T): void;
-    slots: Record<string, Node[]>;
 }
 
-type ComponentInstance<P extends Record<string, PropDefinition<any>>, S, SL extends Slots> =
-    CustomElement &
-    SignalProps<P> &
-    S & {
-        slots: InferSlots<SL>;
-    };
+export function def(
+    tagName: string,
+    setup: (context: ComponentContext) => RenderFunction
+): void {
+    const uRender = reactive(signalEffect);
 
-type This<P extends Record<string, PropDefinition<any>>, S, SL extends Slots> = CustomElement & ReadonlySignalProps<P> & S & { slots: InferSlots<SL> }
+    class Component extends HTMLElement implements CustomElement {
+        private hooksContext: HooksContext;
+        private cleanup: (() => void)[] = [];
+        private isMounted: boolean = false;
+        private slots: Record<string, Node[]> = { default: [] };
+        private props: Map<string, Signal<any>> = new Map();
+        private observedProps: Set<string> = new Set();
 
-type ComponentOptions<
-    P extends Record<string, PropDefinition<any>>,
-    S extends SetupResult,
-    SL extends Slots = undefined
-> = {
-    tagName: string;
-    props?: P;
-    slots?: SL;
-    setup?: (context: SetupContext<P>) => S;
-    connected?: (this: This<P, S, SL>) => void;
-    render?: (this: This<P, S, SL>) => unknown;
-    disconnected?: (this: This<P, S, SL>) => void;
-};
+        static get observedAttributes() {
+            return Array.from(this.prototype.observedProps || []).map(name => `data-${name}`);
+        }
 
-function makeReadonlyProps<P extends Record<string, PropDefinition<any>>>(props: SignalProps<P>): SignalProps<P> {
-    const readonlyProps = {} as SignalProps<P>;
-
-    for (const key in props) {
-        readonlyProps[key] = new Proxy(props[key], {
-            get(target, prop) {
-                return Reflect.get(target, prop);
-            },
-            set() {
-                throw new Error(`Cannot modify value of prop "${key}". Props are readonly.`);
-            },
-        });
-    }
-
-    return readonlyProps;
-}
-
-
-export function def<
-    P extends Record<string, PropDefinition<any>>,
-    S extends SetupResult,
-    SL extends Slots = undefined
->(options: ComponentOptions<P, S, SL>) {
-    const {
-        tagName,
-        props: propsDefinition = {} as P,
-        slots: slotsDefinition,
-        setup,
-        connected,
-        disconnected,
-        render,
-    } = options;
-
-    const uRender = reactive(effect);
-
-    abstract class BaseComponent extends HTMLElement implements CustomElement {
-        public slots!: InferSlots<SL>;
+        constructor() {
+            super();
+            this.hooksContext = createHooksContext();
+        }
 
         public $<T = any>(key: string): T | undefined {
             return (this as any)[key];
@@ -118,65 +77,37 @@ export function def<
         public emitEvent<T = any>(name: string, detail?: T): void {
             this.dispatchEvent(new CustomEvent(name, { detail }));
         }
-    }
 
-    class Component extends BaseComponent {
-        private propsSignals: SignalProps<P>;
-        private setupResult: S;
-        private hooksContext: HooksContext;
-        private cleanup: (() => void)[] = [];
-        private isMounted: boolean = false;
+        private createComponentContext(): ComponentContext {
+            const self = this;
 
-        static get observedAttributes() {
-            return Object.keys(propsDefinition).map(name => `data-${name}`);
-        }
+            const slotFn = Object.assign(
+                (name: string) => this.slots[name] || [],
+                { default: this.slots.default }
+            );
 
-        constructor() {
-            super();
-            this.hooksContext = createHooksContext();
-            this.propsSignals = this.initializeProps();
+            return {
+                signal,
+                effect: signalEffect,
+                computed,
+                html,
+                htmlFor,
+                prop: <T extends TypeConstructor>(config: PropConfig<T>) => {
+                    const { name, type, default: defaultValue } = config;
+                    this.observedProps.add(name);
 
-            Object.keys(this.propsSignals).forEach(key => {
-                (this as any)[key] = this.propsSignals[key];
-            });
+                    const attrName = `data-${name}`;
+                    const attrValue = this.getAttribute(attrName);
+                    const initialValue = attrValue !== null
+                        ? this.parseAttributeValue(attrValue, type)
+                        : (defaultValue ?? this.getDefaultForType(type));
 
-            const readonlyProps = makeReadonlyProps(this.propsSignals);
-
-            if (setup) {
-                pushContext(this.hooksContext, 'setup');
-                this.setupResult = setup({
-                    props: readonlyProps,
-                }) || {} as S;
-                popContext();
-            } else {
-                this.setupResult = {} as S;
-            }
-
-
-            Object.entries(this.setupResult).forEach(([key, value]) => {
-                if (typeof value === 'function') {
-                    (this as any)[key] = value.bind(this);
-                } else {
-                    (this as any)[key] = value;
-                }
-            });
-        }
-
-        private initializeProps(): SignalProps<P> {
-            const signals = {} as SignalProps<P>;
-
-            for (const [key, definition] of Object.entries(propsDefinition)) {
-                const attrName = `data-${key}`;
-                const attrValue = this.getAttribute(attrName);
-                const defaultValue = definition.default ?? this.getDefaultForType(definition.type);
-                const initialValue = attrValue !== null
-                    ? this.parseAttributeValue(attrValue, definition.type)
-                    : defaultValue;
-
-                signals[key as keyof P] = signal(initialValue);
-            }
-
-            return signals;
+                    const propSignal = signal(initialValue);
+                    this.props.set(name, propSignal);
+                    return propSignal as Signal<InferPropType<T>>;
+                },
+                slot: slotFn,
+            };
         }
 
         private getDefaultForType(type: TypeConstructor): any {
@@ -208,20 +139,74 @@ export function def<
             }
         }
 
-        attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-            const propName = name.replace(/^data-/, '') as keyof P;
-            const propDef = propsDefinition[propName];
-            if (!propDef) return;
-            const value = this.parseAttributeValue(newValue, propDef.type);
-            this.propsSignals[propName].value = value;
+        private collectSlots() {
+            const slots: Record<string, Node[]> = { default: [] };
+
+            Array.from(this.childNodes).forEach(node => {
+                if (node instanceof Element) {
+                    const slotName = node.getAttribute('data-slot');
+                    if (slotName) {
+                        slots[slotName] = slots[slotName] || [];
+                        Array.from(node.childNodes).forEach(child => {
+                            slots[slotName].push(child);
+                        });
+                    } else {
+                        slots.default.push(node);
+                    }
+                } else {
+                    slots.default.push(node);
+                }
+            });
+
+            this.slots = slots;
         }
 
-        private setupRender() {
-            if (!render) return;
-            const cleanup = uRender(this, () => {
-                return render.call(this as unknown as ComponentInstance<P, S, SL>);
+        attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+            const propName = name.replace(/^data-/, '');
+            const propSignal = this.props.get(propName);
+            if (propSignal) {
+                const type = this.getTypeFromValue(propSignal.value);
+                propSignal.value = this.parseAttributeValue(newValue, type);
+            }
+        }
+
+        private getTypeFromValue(value: any): TypeConstructor {
+            switch (typeof value) {
+                case 'string': return String;
+                case 'number': return Number;
+                case 'boolean': return Boolean;
+                case 'object':
+                    return Array.isArray(value) ? Array : Object;
+                default: return String;
+            }
+        }
+
+        connectedCallback() {
+            this.isMounted = true;
+            requestAnimationFrame(() => {
+                if (!this.isMounted) return;
+
+                try {
+                    this.collectSlots();
+
+                    pushContext(this.hooksContext, 'setup');
+                    const renderFn = setup(this.createComponentContext());
+                    const cleanup = uRender(this, renderFn);
+                    this.cleanup.push(cleanup);
+                    popContext();
+                } catch (error) {
+                    console.error(`Error mounting component ${this.tagName.toLowerCase()}:`, error);
+                    this.handleMountError(error);
+                }
             });
-            this.cleanup.push(cleanup);
+        }
+
+        disconnectedCallback() {
+            this.isMounted = false;
+            this.cleanup.forEach(cleanup => cleanup());
+            this.cleanup = [];
+            this.hooksContext.cleanups.forEach(cleanup => cleanup());
+            this.hooksContext.cleanups = [];
         }
 
         private handleMountError(error: unknown) {
@@ -229,92 +214,10 @@ export function def<
             errorContainer.style.cssText = 'padding: 1rem; border: 1px solid #ff0000; border-radius: 4px; margin: 0.5rem; color: #ff0000;';
             errorContainer.innerHTML = `
                 <div>Error in component ${this.tagName.toLowerCase()}</div>
-                <pre style="font-size: 0.8em; margin-top: 0.5rem;">${error instanceof Error ? error.message : 'Unknown error'
-                }</pre>
+                <pre style="font-size: 0.8em; margin-top: 0.5rem;">${error instanceof Error ? error.message : 'Unknown error'}</pre>
             `;
-
             this.innerHTML = '';
             this.appendChild(errorContainer);
-        }
-
-        connectedCallback() {
-
-            this.isMounted = true;
-            requestAnimationFrame(() => {
-                try {
-                    if (!this.isMounted) return;
-
-                    this.collectSlots();
-                    this.setupRender();
-
-                    if (connected) {
-                        pushContext(this.hooksContext, 'connected');
-                        connected.call(this as unknown as ComponentInstance<P, S, SL>);
-                        popContext();
-                    }
-                } catch (error) {
-                    console.error(`Error mounting component ${this.tagName.toLowerCase()}:`, error);
-                    this.handleMountError(error);
-                }
-
-            });
-
-
-        }
-        disconnectedCallback() {
-            this.isMounted = false;
-
-            if (disconnected) {
-                pushContext(this.hooksContext, 'disconnected');
-                try {
-                    disconnected.call(this as unknown as ComponentInstance<P, S, SL>);
-                } finally {
-                    popContext();
-                }
-            }
-
-            this.cleanup.forEach(cleanup => cleanup());
-            this.cleanup = [];
-
-            this.hooksContext.cleanups.forEach(cleanup => cleanup());
-            this.hooksContext.cleanups = [];
-        }
-
-        private collectSlots() {
-            const slots: Record<string, Node[]> = { default: [] };
-
-            if (slotsDefinition) {
-                slotsDefinition.forEach(slot => {
-                    slots[slot] = [];
-                });
-            }
-
-            Array.from(this.childNodes).forEach(node => {
-                if (node instanceof Element) {
-                    const slotName = node.getAttribute('data-slot');
-
-                    if (slotName) {
-                        // Для именованных слотов берем только содержимое
-                        if (slotName !== 'default' && slotsDefinition && !slotsDefinition.includes(slotName)) {
-                            console.warn(`Slot "${slotName}" is not defined in component slots`);
-                            return;
-                        }
-
-                        slots[slotName] = slots[slotName] || [];
-                        Array.from(node.childNodes).forEach(child => {
-                            slots[slotName].push(child);
-                        });
-                    } else {
-                        // Для default слота берем весь элемент целиком
-                        slots.default.push(node);
-                    }
-                } else {
-                    // Текстовые узлы и другие типы узлов идут в default слот
-                    slots.default.push(node);
-                }
-            });
-
-            this.slots = slots as InferSlots<SL>;
         }
     }
 

@@ -29,86 +29,156 @@
 
         app.register('api', () => myApi);
 
-        def({
-            tagName: 'my-button',
-            slots: ['header', 'footer'],
-            props: {
-                name: {
-                    type: String,
-                    default: 'test'
-                }
-            },
-            setup({ props }) {
-                /** @type {MyApi} */
-                const api = app.get('api');
+        def('counter-component', ({ signal, effect, computed, html, prop, slot, render }) => {
+            const header = slot('header');
+            const footer = slot('footer');
 
-                const count = useSignal(0);
-                const news = useSignal({ items: [], isLoading: false });
+            const initialValue = prop({
+                name: 'initial-value',
+                type: Number,
+                default: 0
+            });
 
-                const newsDebug = useComputed(() => JSON.stringify(news.value));
-                const isDouble = useComputed(() => count.value % 2 === 0);
+            const count = signal(initialValue.value);
 
-                const fetchNews = async () => {
-                    news.value = { ...news.value, isLoading: true }
-                    const items = await api.fetchNews()
-                    news.value = { items, isLoading: true }
-                }
-
-                const inc = () => count.value++;
-
-                return {
-                    count,
-                    inc,
-                    isDouble,
-                    fetchNews,
-                    news,
-                    newsDebug
-                }
-            },
-            connected() {
-                console.log(`connected`);
-                console.log(this);
-
-            },
-            disconnected() {
-                console.log(`disconnected`);
-                console.log(this);
-            },
-            render() {
-                return html`
-                    <div>
-                        <div>${this.newsDebug.value}</div>
-                        <div><button @click=${this.fetchNews}>fetch news</button></div>
-                        <div>IsDouble: ${this.isDouble.value}</div>
-                        <div>Header slot result: ${this.slots.header}</div>
-                        <div>${this.count.value}</div>
-                        <div>Default slot result: ${this.slots.default}</div>
-                        <div>Footer slot result: ${this.slots.footer}</div>
-                        <div><button @click="${this.inc}">inc</button></div>
-                        <prop-example-tag data-example="${this.count.value}"></prop-example-tag>
-                    </div>`;
-            }
+            return () => html`
+                <div>
+                    <header>${header}</header>
+                    <main>${slot.default}</main>
+                    <footer>${footer}</footer>
+                </div>
+                <div>
+                    Count: ${count.value}
+                    <button onclick=${() => count.value++}>Increment</button>
+                </div>
+            `;
         });
 
-        def({
-            tagName: 'prop-example-tag',
-            props: {
-                example: {
-                    type: Number,
-                    default: 0
+
+        def('counter-component-extended', ({ signal, effect, computed, html, prop, slot }) => {
+            // Props
+            const initialValue = prop({
+                name: 'initial-value',
+                type: Number,
+                default: 0
+            });
+
+            const maxValue = prop({
+                name: 'max-value',
+                type: Number,
+                default: 100
+            });
+
+            // State
+            const count = signal(initialValue.value);
+            const isLoading = signal(false);
+
+            // Computed values
+            const isMaxReached = computed(() => count.value >= maxValue.value);
+            const counterClass = computed(() =>
+                isMaxReached.value ? 'counter counter--max' : 'counter'
+            );
+
+            // Methods
+            const increment = () => {
+                if (!isMaxReached.value) {
+                    count.value++;
                 }
-            },
-            render() {
-                return html`prop: ${this.example.value}`
-            },
-        })
+            };
+
+            const reset = () => {
+                count.value = initialValue.value;
+            };
+
+            // Effects
+            effect(() => {
+                if (isMaxReached.value) {
+                    console.log('Maximum value reached!');
+                }
+            });
+
+            effect(() => {
+                localStorage.setItem('counter-value', count.value.toString());
+            });
+
+            // Async operation
+            const saveToServer = async () => {
+                isLoading.value = true;
+                try {
+                    await myApi.fetchNews();
+                } finally {
+                    isLoading.value = false;
+                }
+            };
+
+            // Return render function
+            return () => html`
+                <div class=${counterClass.value}>
+                    <header class="counter__header">
+                        ${slot('header')}
+                    </header>
+
+                    <main class="counter__content">
+                        ${slot.default}
+                        
+                        <div class="counter__value">
+                            Count: ${count.value} / ${maxValue.value}
+                        </div>
+
+                        <div class="counter__actions">
+                            <button 
+                                onclick=${increment}
+                                disabled=${isMaxReached.value}
+                            >
+                                Increment
+                            </button>
+
+                            <button 
+                                onclick=${reset}
+                                disabled=${count.value === initialValue.value}
+                            >
+                                Reset
+                            </button>
+
+                            <button 
+                                onclick=${saveToServer}
+                                disabled=${isLoading.value}
+                            >
+                                ${isLoading.value ? 'Saving...' : 'Save'}
+                            </button>
+                        </div>
+
+                        ${isMaxReached.value
+                    ? html`<div class="counter__warning">Maximum value reached!</div>`
+                    : null}
+                    </main>
+
+                    <footer class="counter__footer">
+                        ${slot('footer')}
+                    </footer>
+                </div>
+            `;
+        });
+
+
     </script>
     <h1>Component Examples</h1>
-    <my-button>
+    <counter-component>
         <div data-slot="header"><b>Header content</b></div>
         <b>default slot</b>
         <div data-slot="footer">Footer content</div>
-    </my-button>
+    </counter-component>
+    <counter-component-extended data-initial-value="10" data-max-value="50">
+        <div data-slot="header">
+            <h2>Counter Example</h2>
+        </div>
+
+        <p>This is a counter with maximum value restriction</p>
+
+        <div data-slot="footer">
+            <p>Created with TypeScript Web Components</p>
+        </div>
+    </counter-component-extended>
 </body>
 
 

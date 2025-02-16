@@ -7,18 +7,20 @@ A lightweight lib for building reactive web components with signals and template
 - **TypeScript First**: Full type safety with generics support
 - **Web Components**: Create custom elements with a simple API
 - **Template**: Micro template engine from uhtml
-- **Reactive**: Built-in reactivity hooks using signals from prereact
+- **Reactive**: Built-in reactivity using @preact/signals-core
 - **Service Locator**: Simple dependency injection
-- **Slots**: Native slot system with TypeScript validation
+- **Store**: Simple state management with signals
 - **Dependencies**:
-    - [ @preact/signals-core](https://www.npmjs.com/package/@preact/signals-core) for reactivity
-    - [ uhtml](https://github.com/WebReflection/uhtml) for html template
+    - [@preact/signals-core](https://www.npmjs.com/package/@preact/signals-core) for reactivity
+    - [uhtml](https://github.com/WebReflection/uhtml) for html template
 - **Build size**: 20kb minify, 8kb gzib
+
 ## Installation
 
 ```bash
 todo
 ```
+
 ## Quick Start
 
 ### IIFE in browsers
@@ -26,38 +28,29 @@ todo
 <script src="../packages/core/dist/signa.core.min.js"></script>
 ```
 ```javascript
-const { def, html, htmlFor,useSignal, useComputed, useEffect, app } = window.signa;
+const { def, app, createStore } = window.signa;
 ```
+
 ### ESM 
 ```html
 <script>
-    import { def, html, htmlFor,useSignal, useComputed, useEffect, app } from '../packages/core/dist/signa.core.esm.min.js'
+    import { def, app, createStore } from '../packages/core/dist/signa.core.esm.min.js'
 </script>
 ```
-### npm to do publish
-```typescript
-import { def, html, useSignal } from '@signa/core';
 
-def({
-  tagName: 'my-counter',
-  props: {
-    initial: { type: Number, default: 0 }
-  },
-  setup({ props }) {
-    const count = useSignal(props.initial.value);
+### Component Example
+```typescript
+import { def } from '@signa/core';
+
+def('my-counter', (ctx) => {
+    const count = ctx.signal(0);
     
-    const increment = () => count.value++;
-    
-    return { count, increment };
-  },
-  render() {
-    return html`
-      <div>
-        <p>Count: ${this.count}</p>
-        <button onclick=${this.increment}>Increment</button>
-      </div>
+    return () => ctx.html`
+        <div>
+            <p>Count: ${count.value}</p>
+            <button onclick=${() => count.value++}>Increment</button>
+        </div>
     `;
-  }
 });
 ```
 
@@ -65,77 +58,147 @@ def({
 
 ### Component Definition
 
+Components are defined using the `def` function that takes a tag name and a setup function:
+
 ```typescript
-def({
-  // Component tag name
-  tagName: 'my-component',
-  
-  // Props definition
-  props: {
-    title: { type: String, default: 'Hello' },
-    count: { type: Number },
-    isActive: { type: Boolean },
-    items: { type: Array },
-    json: { type: Object },
-  },
-  
-  // Available slots
-  slots: ['header', 'footer'],
-  
-  // Setup function - returns reactive state and methods
-  setup({ props }) {
-    // Component logic
-    return { /* state and methods */ };
-  },
-  
-  // Lifecycle hooks
-  connected() {
-    // Called when component is mounted
-  },
-  
-  // Render function
-  render() {
-    return html`/* template */`;
-  },
-  
-  // Cleanup
-  disconnected() {
-    // Called when component is removed
-  }
+def('my-component', (ctx) => {
+    // Component Context provides:
+    const {
+        signal,       // Create reactive state
+        effect,       // Create side effects
+        computed,     // Create computed values
+        html,         // Template engine
+        htmlFor,      // Template with keys
+        prop,         // Define props
+        slot         // Access slots
+    } = ctx;
+    
+    // Define props
+    const title = prop({ 
+        name: 'title',
+        type: String,
+        default: 'Hello'
+    });
+    
+    // Use slots
+    const headerContent = slot('header');
+    
+    // Create state
+    const count = signal(0);
+    
+    // Create computed
+    const doubleCount = computed(() => count.value * 2);
+    
+    // Create effects
+    effect(() => {
+        console.log('Count changed:', count.value);
+    });
+    
+    // Return render function
+    return () => html`
+        <div>
+            <div>${headerContent}</div>
+            <h1>${title.value}</h1>
+            <p>Count: ${count.value}</p>
+            <p>Double: ${doubleCount.value}</p>
+            <button onclick=${() => count.value++}>
+                Increment
+            </button>
+        </div>
+    `;
 });
 ```
 
-### Service Locator
+### Props Types
 
+Props can be defined with the following types:
 ```typescript
-import { app } from '@signa/core';
-
-// Register service
-app.register('myService', () => new MyService());
-
-// Get service instance
-const service = app.get('myService');
+const myProp = prop({
+    name: 'propName',
+    type: String | Number | Boolean | Array | Object,
+    default: 'default value'
+});
 ```
 
 ### Slots Usage
 
 ```html
 <my-component>
-  <div data-slot="header">Header Content</div>
-  <div>Default Slot Content</div>
-  <div data-slot="footer">Footer Content</div>
+    <div data-slot="header">Header Content</div>
+    <div>Default Slot Content</div>
 </my-component>
 ```
 
-### How to use html engine and signal see documentaion on
-- [ @preact/signals-core](https://www.npmjs.com/package/@preact/signals-core)
-- [ uhtml](https://github.com/WebReflection/uhtml)
+In component:
+```typescript
+const headerSlot = slot('header');     // Get named slot
+const defaultContent = slot.default;    // Get default slot
+```
 
+### Store Usage
 
-## Build Formats
+The framework provides a simple store mechanism for state management across components:
 
-- **ESM**: For modern bundlers and ES modules
-- **IIFE**: For direct browser usage
+```typescript
+import { app, createStore } from '@signa/core';
+
+// Create and register a store
+app.register('userStore', () => {
+    return createStore((ctx) => {
+        const name = ctx.signal('');
+        const age = ctx.signal(0);
+        
+        const displayName = ctx.computed(() => `User: ${name.value}`);
+        
+        return {
+            name,
+            age,
+            displayName
+        };
+    });
+});
+
+// Use store in components
+def('user-profile', (ctx) => {
+    const userStore = app.get('userStore');
+    
+    return () => ctx.html`
+        <div>
+            <input 
+                value=${userStore.name.value} 
+                onInput=${(e) => userStore.name.value = e.target.value}
+            />
+            <div>${userStore.displayName.value}</div>
+        </div>
+    `;
+});
+```
+
+### Service Locator
+
+Simple dependency injection system:
+
+```typescript
+import { app } from '@signa/core';
+
+// Register service
+app.register('myService', () => ({
+    // service implementation
+}));
+
+// Get service instance
+const service = app.get('myService');
+```
+
+### Template Engine
+
+The framework uses uhtml for templating. For detailed templating features see:
+- [uhtml documentation](https://github.com/WebReflection/uhtml)
+
+### Reactivity
+
+Reactivity is based on @preact/signals-core. For detailed signal features see:
+- [@preact/signals-core documentation](https://www.npmjs.com/package/@preact/signals-core)
 
 ## Browser Support
 
