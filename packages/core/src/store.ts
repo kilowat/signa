@@ -8,7 +8,7 @@ export type StoreContext = {
 
 export type StoreFunction = (context: StoreContext) => unknown;
 
-export function createStore(setup: StoreFunction) {
+export function store(setup: StoreFunction) {
     const storeContext: StoreContext = {
         signal,
         effect,

@@ -40,8 +40,8 @@ var signa = (() => {
   var src_exports = {};
   __export(src_exports, {
     app: () => app,
-    createStore: () => createStore,
-    def: () => def
+    def: () => def,
+    store: () => store
   });
 
   // node_modules/udomdiff/esm/index.js
@@ -1190,7 +1190,7 @@ var signa = (() => {
   };
 
   // packages/core/src/store.ts
-  function createStore(setup) {
+  function store(setup) {
     const storeContext = {
       signal: d,
       effect: E,

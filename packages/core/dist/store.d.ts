@@ -5,4 +5,4 @@ export type StoreContext = {
     computed: typeof computed;
 };
 export type StoreFunction = (context: StoreContext) => unknown;
-export declare function createStore(setup: StoreFunction): unknown;
+export declare function store(setup: StoreFunction): unknown;

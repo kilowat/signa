@@ -28,13 +28,13 @@ todo
 <script src="../packages/core/dist/signa.core.min.js"></script>
 ```
 ```javascript
-const { def, app, createStore } = window.signa;
+const { def, app, store } = window.signa;
 ```
 
 ### ESM 
 ```html
 <script>
-    import { def, app, createStore } from '../packages/core/dist/signa.core.esm.min.js'
+    import { def, app, store } from '../packages/core/dist/signa.core.esm.min.js'
 </script>
 ```
 
@@ -140,11 +140,11 @@ const defaultContent = slot.default;    // Get default slot
 The framework provides a simple store mechanism for state management across components:
 
 ```typescript
-import { app, createStore } from '@signa/core';
+import { app, store } from '@signa/core';
 
 // Create and register a store
 app.register('userStore', () => {
-    return createStore((ctx) => {
+    return store((ctx) => {
         const name = ctx.signal('');
         const age = ctx.signal(0);
         

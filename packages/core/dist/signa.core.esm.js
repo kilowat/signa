@@ -1,8 +1,8 @@
 import { def } from "./component";
 import { app } from "./app";
-import { createStore } from "./store";
+import { store } from "./store";
 export {
   app,
-  createStore,
-  def
+  def,
+  store
 };
