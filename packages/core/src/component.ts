@@ -9,7 +9,7 @@ import {
     type HooksContext
 } from './hooks';
 
-import type { StoreContext } from './store';
+
 import { resolveStore } from './store';
 
 type TypeConstructor = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor;
