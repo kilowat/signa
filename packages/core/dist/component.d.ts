@@ -19,11 +19,12 @@ type ComponentContext = {
     htmlFor: typeof htmlFor;
     prop: <T extends TypeConstructor>(config: PropConfig<T>) => Signal<InferPropType<T>>;
     slot: SlotFunction;
+    useStore: <T = any>(key: string) => T;
 };
 type RenderFunction = () => unknown;
 export interface CustomElement extends HTMLElement {
     $<T = any>(key: string): T | undefined;
     emitEvent<T = any>(name: string, detail?: T): void;
 }
-export declare function def(tagName: string, setup: (context: ComponentContext) => RenderFunction): void;
+export declare function defComponent(tagName: string, setup: (context: ComponentContext) => RenderFunction): void;
 export {};

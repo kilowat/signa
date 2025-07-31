@@ -10,7 +10,7 @@
 
 <body>
     <script>
-        const { def, store, app } = window.signa;
+        const { defComponent, defStore, app } = window.signa;
         const _news = [];
         /**
          * @typedef {Object} MyApi
@@ -29,18 +29,17 @@
 
         app.register('api', () => myApi);
         // Store globaly
-        app.register('counterStore', () => {
-            return store(({ signal }) => {
-                const count = signal(0);
-                const inc = () => count.value++;
-                return {
-                    count,
-                    inc,
-                }
-            })
+        defStore('counterStore', ({ signal }) => {
+            const count = signal(0);
+            const inc = () => count.value++;
+            return {
+                count,
+                inc,
+            }
         })
 
-        def('counter-component', (ctx) => {
+
+        defComponent('counter-component', (ctx) => {
             const {
                 signal,
                 effect,
@@ -48,7 +47,8 @@
                 html,
                 prop,
                 slot,
-                render
+                render,
+                useStore
             } = ctx;
             const header = slot('header');
             const footer = slot('footer');
@@ -60,7 +60,7 @@
             });
 
             const count = signal(initialValue.value);
-            const counterStore = app.get('counterStore');
+            const counterStore = useStore('counterStore');
 
             return () => html`
                 <div>
@@ -80,7 +80,7 @@
         });
 
 
-        def('counter-component-extended', (ctx) => {
+        defComponent('counter-component-extended', (ctx) => {
             const {
                 signal,
                 effect,

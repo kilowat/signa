@@ -40,8 +40,10 @@ var signa = (() => {
   var src_exports = {};
   __export(src_exports, {
     app: () => app,
-    def: () => def,
-    store: () => store
+    defComponent: () => defComponent,
+    defStore: () => defStore,
+    resetStore: () => resetStore,
+    resolveStore: () => resolveStore
   });
 
   // node_modules/udomdiff/esm/index.js
@@ -992,8 +994,39 @@ var signa = (() => {
     }
   }
 
+  // packages/core/src/store.ts
+  var storeRegistry = {};
+  function defStore(key, setup) {
+    if (storeRegistry[key]) {
+      throw new Error(`Store "${key}" is already defined`);
+    }
+    storeRegistry[key] = {
+      factory: setup
+    };
+  }
+  function resolveStore(key) {
+    const entry = storeRegistry[key];
+    if (!entry) {
+      throw new Error(`Store "${key}" is not defined`);
+    }
+    if (!entry.instance) {
+      entry.instance = entry.factory({
+        signal: d,
+        effect: E,
+        computed: w
+      });
+    }
+    return entry.instance;
+  }
+  function resetStore(key) {
+    const entry = storeRegistry[key];
+    if (!entry)
+      return;
+    entry.instance = void 0;
+  }
+
   // packages/core/src/component.ts
-  function def(tagName, setup) {
+  function defComponent(tagName, setup) {
     const uRender = attach(E);
     class Component extends HTMLElement {
       constructor() {
@@ -1015,7 +1048,6 @@ var signa = (() => {
         this.dispatchEvent(new CustomEvent(name, { detail: detail2 }));
       }
       createComponentContext() {
-        const self = this;
         const slotFn = Object.assign(
           (name) => this.slots[name] || [],
           { default: this.slots.default }
@@ -1036,7 +1068,8 @@ var signa = (() => {
             this.props.set(name, propSignal);
             return propSignal;
           },
-          slot: slotFn
+          slot: slotFn,
+          useStore: (key) => resolveStore(key)
         };
       }
       getDefaultForType(type) {
@@ -1188,16 +1221,6 @@ var signa = (() => {
   var app = {
     ...createServiceLocator()
   };
-
-  // packages/core/src/store.ts
-  function store(setup) {
-    const storeContext = {
-      signal: d,
-      effect: E,
-      computed: w
-    };
-    return setup(storeContext);
-  }
   return __toCommonJS(src_exports);
 })();
 /*! Bundled license information:

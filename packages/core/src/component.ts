@@ -9,6 +9,9 @@ import {
     type HooksContext
 } from './hooks';
 
+import type { StoreContext } from './store';
+import { resolveStore } from './store';
+
 type TypeConstructor = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor;
 
 type InferPropType<T extends TypeConstructor> =
@@ -38,6 +41,7 @@ type ComponentContext = {
     htmlFor: typeof htmlFor;
     prop: <T extends TypeConstructor>(config: PropConfig<T>) => Signal<InferPropType<T>>;
     slot: SlotFunction;
+    useStore: <T = any>(key: string) => T;
 };
 
 type RenderFunction = () => unknown;
@@ -47,7 +51,7 @@ export interface CustomElement extends HTMLElement {
     emitEvent<T = any>(name: string, detail?: T): void;
 }
 
-export function def(
+export function defComponent(
     tagName: string,
     setup: (context: ComponentContext) => RenderFunction
 ): void {
@@ -79,8 +83,6 @@ export function def(
         }
 
         private createComponentContext(): ComponentContext {
-            const self = this;
-
             const slotFn = Object.assign(
                 (name: string) => this.slots[name] || [],
                 { default: this.slots.default }
@@ -107,6 +109,7 @@ export function def(
                     return propSignal as Signal<InferPropType<T>>;
                 },
                 slot: slotFn,
+                useStore: <T = any>(key: string): T => resolveStore<T>(key)
             };
         }
 

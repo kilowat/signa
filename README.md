@@ -28,21 +28,21 @@ todo
 <script src="../packages/core/dist/signa.core.min.js"></script>
 ```
 ```javascript
-const { def, app, store } = window.signa;
+const { defComponent, defStore, app} = window.signa;
 ```
 
 ### ESM 
 ```html
 <script>
-    import { def, app, store } from '../packages/core/dist/signa.core.esm.min.js'
+    import { defComponent, defStore, app} from '../packages/core/dist/signa.core.esm.min.js'
 </script>
 ```
 
 ### Component Example
 ```typescript
-import { def } from '@signa/core';
+import { defComponent } from '@signa/core';
 
-def('my-counter', (ctx) => {
+defComponent('my-counter', (ctx) => {
     const count = ctx.signal(0);
     
     return () => ctx.html`
@@ -58,10 +58,10 @@ def('my-counter', (ctx) => {
 
 ### Component Definition
 
-Components are defined using the `def` function that takes a tag name and a setup function:
+Components are defined using the `defComponent` function that takes a tag name and a setup function:
 
 ```typescript
-def('my-component', (ctx) => {
+defComponent('my-component', (ctx) => {
     // Component Context provides:
     const {
         signal,       // Create reactive state
@@ -71,6 +71,7 @@ def('my-component', (ctx) => {
         htmlFor,      // Template with keys
         prop,         // Define props
         slot         // Access slots
+        useStore     // Get store instance by key
     } = ctx;
     
     // Define props
@@ -140,27 +141,26 @@ const defaultContent = slot.default;    // Get default slot
 The framework provides a simple store mechanism for state management across components:
 
 ```typescript
-import { app, store } from '@signa/core';
+import { app, defStore } from '@signa/core';
 
 // Create and register a store
-app.register('userStore', () => {
-    return store((ctx) => {
-        const name = ctx.signal('');
-        const age = ctx.signal(0);
-        
-        const displayName = ctx.computed(() => `User: ${name.value}`);
-        
-        return {
-            name,
-            age,
-            displayName
-        };
-    });
+defStore('userStore', (ctx) => {
+    const name = ctx.signal('');
+    const age = ctx.signal(0);
+
+    const displayName = ctx.computed(() => `User: ${name.value}`);
+
+    return {
+        name,
+        age,
+        displayName
+    };
 });
 
+
 // Use store in components
-def('user-profile', (ctx) => {
-    const userStore = app.get('userStore');
+defComponent('user-profile', (ctx) => {
+    const userStore = ctx.useStore('userStore');
     
     return () => ctx.html`
         <div>

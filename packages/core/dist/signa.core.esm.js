@@ -1,8 +1,10 @@
-import { def } from "./component";
+import { defComponent } from "./component";
 import { app } from "./app";
-import { store } from "./store";
+import { defStore, resetStore, resolveStore } from "./store";
 export {
   app,
-  def,
-  store
+  defComponent,
+  defStore,
+  resetStore,
+  resolveStore
 };

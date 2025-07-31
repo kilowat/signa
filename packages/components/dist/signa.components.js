@@ -46,7 +46,7 @@ var signaComponents = (() => {
 
   // packages/components/src/button/button.ts
   var import_core = __toESM(require_core(), 1);
-  (0, import_core.def)("counter-component-t", ({ signal, effect, computed, html, prop, slot }) => {
+  (0, import_core.defComponent)("counter-component-t", ({ signal, effect, computed, html, prop, slot }) => {
     const header = slot("header");
     const footer = slot("footer");
     const initialValue = prop({

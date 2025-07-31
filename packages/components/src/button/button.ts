@@ -1,6 +1,6 @@
-import { def } from "@signa/core";
+import { defComponent } from "@signa/core";
 
-def('counter-component-t', ({ signal, effect, computed, html, prop, slot }) => {
+defComponent('counter-component-t', ({ signal, effect, computed, html, prop, slot }) => {
     const header = slot('header');
     const footer = slot('footer');
 

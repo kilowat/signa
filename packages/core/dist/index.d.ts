@@ -1,3 +1,3 @@
-export { def } from './component';
+export { defComponent } from './component';
 export { app } from './app';
-export { store } from './store';
+export { defStore, resetStore, resolveStore } from './store';
