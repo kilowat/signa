@@ -141,7 +141,7 @@ const defaultContent = slot.default;    // Get default slot
 The framework provides a simple store mechanism for state management across components:
 
 ```typescript
-import { app, defStore } from '@signa/core';
+import { defStore } from '@signa/core';
 
 // Create and register a store
 defStore('userStore', (ctx) => {
