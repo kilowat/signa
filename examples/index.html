@@ -4,31 +4,12 @@
 <head>
     <title>UI Components Demo</title>
     <link href="styles.css" rel="stylesheet" />
-    <script src="../packages/core/dist/signa.core.min.js"></script>
-    <script src="../packages/components/dist/signa.components.min.js"></script>
+    <script src="../dist/signa.min.js"></script>
 </head>
 
 <body>
     <script>
-        const { defComponent, defStore, app } = window.signa;
-        const _news = [];
-        /**
-         * @typedef {Object} MyApi
-         * @property {() => Promise<{ id: number }[]>} fetchNews
-         */
-        /** @type {MyApi} */
-        const myApi = {
-            fetchNews: async () => new Promise((resolve) => {
-                const newItem = { id: _news.length + 1, name: 'name' + _news.length + 1 }
-                setTimeout(() => {
-                    _news.push(newItem)
-                    resolve(_news)
-                }, 100)
-            })
-        }
-
-        app.register('api', () => myApi);
-        // Store globaly
+        const { defComponent, defStore } = window.signa;
         defStore('counterStore', ({ signal }) => {
             const count = signal(0);
             const inc = () => count.value++;
@@ -37,7 +18,6 @@
                 inc,
             }
         })
-
 
         defComponent('counter-component', (ctx) => {
             const {
@@ -134,11 +114,11 @@
                 localStorage.setItem('counter-value', count.value.toString());
             });
 
-            // Async operation
+
             const saveToServer = async () => {
                 isLoading.value = true;
                 try {
-                    await myApi.fetchNews();
+
                 } finally {
                     isLoading.value = false;
                 }

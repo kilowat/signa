@@ -8,7 +8,6 @@ A lightweight lib for building reactive web components with signals and template
 - **Web Components**: Create custom elements with a simple API
 - **Template**: Micro template engine from uhtml
 - **Reactive**: Built-in reactivity using @preact/signals-core
-- **Service Locator**: Simple dependency injection
 - **Store**: Simple state management with signals
 - **Dependencies**:
     - [@preact/signals-core](https://www.npmjs.com/package/@preact/signals-core) for reactivity
@@ -25,22 +24,15 @@ todo
 
 ### IIFE in browsers
 ```html
-<script src="../packages/core/dist/signa.core.min.js"></script>
+<script src="../dist/signa.min.js"></script>
 ```
 ```javascript
-const { defComponent, defStore, app} = window.signa;
+const { defComponent, defStore} = window.signa;
 ```
 
-### ESM 
-```html
-<script>
-    import { defComponent, defStore, app} from '../packages/core/dist/signa.core.esm.min.js'
-</script>
-```
 
 ### Component Example
 ```typescript
-import { defComponent } from '@signa/core';
 
 defComponent('my-counter', (ctx) => {
     const count = ctx.signal(0);
@@ -141,8 +133,6 @@ const defaultContent = slot.default;    // Get default slot
 The framework provides a simple store mechanism for state management across components:
 
 ```typescript
-import { defStore } from '@signa/core';
-
 // Create and register a store
 defStore('userStore', (ctx) => {
     const name = ctx.signal('');
@@ -173,23 +163,6 @@ defComponent('user-profile', (ctx) => {
     `;
 });
 ```
-
-### Service Locator
-
-Simple dependency injection system:
-
-```typescript
-import { app } from '@signa/core';
-
-// Register service
-app.register('myService', () => ({
-    // service implementation
-}));
-
-// Get service instance
-const service = app.get('myService');
-```
-
 ### Template Engine
 
 The framework uses uhtml for templating. For detailed templating features see:

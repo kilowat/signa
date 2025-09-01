@@ -1,90 +1,38 @@
-// component.ts
 import { reactive } from 'uhtml/reactive';
-import { effect, Signal, signal, computed } from '@preact/signals-core';
+import { effect, signal, computed } from '@preact/signals-core';
 import { html, htmlFor } from 'uhtml/reactive';
-import {
-    createHooksContext,
-    pushContext,
-    popContext,
-    type HooksContext
-} from './hooks';
+import { createHooksContext, pushContext, popContext } from './hooks.js';
+import { resolveStore } from './store.js';
 
-
-import { resolveStore } from './store';
-
-type TypeConstructor = StringConstructor | NumberConstructor | BooleanConstructor | ObjectConstructor | ArrayConstructor;
-
-type InferPropType<T extends TypeConstructor> =
-    T extends StringConstructor ? string :
-    T extends NumberConstructor ? number :
-    T extends BooleanConstructor ? boolean :
-    T extends ArrayConstructor ? any[] :
-    T extends ObjectConstructor ? Record<string, unknown> :
-    never;
-
-type PropConfig<T extends TypeConstructor = TypeConstructor> = {
-    name: string;
-    type: T;
-    default?: InferPropType<T>;
-};
-
-type SlotFunction = {
-    (name: string): Node[];
-    default: Node[];
-};
-
-type ComponentContext = {
-    signal: <T>(initialValue: T) => Signal<T>;
-    effect: typeof effect;
-    computed: typeof computed;
-    html: typeof html;
-    htmlFor: typeof htmlFor;
-    prop: <T extends TypeConstructor>(config: PropConfig<T>) => Signal<InferPropType<T>>;
-    slot: SlotFunction;
-    useStore: <T = any>(key: string) => T;
-};
-
-type RenderFunction = () => unknown;
-
-export interface CustomElement extends HTMLElement {
-    $<T = any>(key: string): T | undefined;
-    emitEvent<T = any>(name: string, detail?: T): void;
-}
-
-export function defComponent(
-    tagName: string,
-    setup: (context: ComponentContext) => RenderFunction
-): void {
+export function defComponent(tagName, setup) {
     const uRender = reactive(effect);
 
-    class Component extends HTMLElement implements CustomElement {
-        private hooksContext: HooksContext;
-        private cleanup: (() => void)[] = [];
-        private isMounted: boolean = false;
-        private slots: Record<string, Node[]> = { default: [] };
-        private props: Map<string, Signal<any>> = new Map();
-        private observedProps: Set<string> = new Set();
+    class Component extends HTMLElement {
+        constructor() {
+            super();
+            this.hooksContext = createHooksContext();
+            this.cleanup = [];
+            this.isMounted = false;
+            this.slots = { default: [] };
+            this.props = new Map();
+            this.observedProps = new Set();
+        }
 
         static get observedAttributes() {
             return Array.from(this.prototype.observedProps || []).map(name => `data-${name}`);
         }
 
-        constructor() {
-            super();
-            this.hooksContext = createHooksContext();
+        $(key) {
+            return this[key];
         }
 
-        public $<T = any>(key: string): T | undefined {
-            return (this as any)[key];
-        }
-
-        public emitEvent<T = any>(name: string, detail?: T): void {
+        emitEvent(name, detail) {
             this.dispatchEvent(new CustomEvent(name, { detail }));
         }
 
-        private createComponentContext(): ComponentContext {
+        createComponentContext() {
             const slotFn = Object.assign(
-                (name: string) => this.slots[name] || [],
+                name => this.slots[name] || [],
                 { default: this.slots.default }
             );
 
@@ -94,7 +42,7 @@ export function defComponent(
                 computed,
                 html,
                 htmlFor,
-                prop: <T extends TypeConstructor>(config: PropConfig<T>) => {
+                prop: config => {
                     const { name, type, default: defaultValue } = config;
                     this.observedProps.add(name);
 
@@ -106,14 +54,14 @@ export function defComponent(
 
                     const propSignal = signal(initialValue);
                     this.props.set(name, propSignal);
-                    return propSignal as Signal<InferPropType<T>>;
+                    return propSignal;
                 },
                 slot: slotFn,
-                useStore: <T = any>(key: string): T => resolveStore<T>(key)
+                useStore: key => resolveStore(key)
             };
         }
 
-        private getDefaultForType(type: TypeConstructor): any {
+        getDefaultForType(type) {
             switch (type) {
                 case String: return '';
                 case Number: return 0;
@@ -124,12 +72,10 @@ export function defComponent(
             }
         }
 
-        private parseAttributeValue(value: string, type: TypeConstructor): any {
+        parseAttributeValue(value, type) {
             switch (type) {
-                case Number:
-                    return Number(value);
-                case Boolean:
-                    return value !== null && value !== 'false';
+                case Number: return Number(value);
+                case Boolean: return value !== null && value !== 'false';
                 case Object:
                 case Array:
                     try {
@@ -137,14 +83,12 @@ export function defComponent(
                     } catch {
                         return type === Object ? {} : [];
                     }
-                default:
-                    return value;
+                default: return value;
             }
         }
 
-        private collectSlots() {
-            const slots: Record<string, Node[]> = { default: [] };
-
+        collectSlots() {
+            const slots = { default: [] };
             Array.from(this.childNodes).forEach(node => {
                 if (node instanceof Element) {
                     const slotName = node.getAttribute('data-slot');
@@ -160,11 +104,10 @@ export function defComponent(
                     slots.default.push(node);
                 }
             });
-
             this.slots = slots;
         }
 
-        attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+        attributeChangedCallback(name, oldValue, newValue) {
             const propName = name.replace(/^data-/, '');
             const propSignal = this.props.get(propName);
             if (propSignal) {
@@ -173,13 +116,12 @@ export function defComponent(
             }
         }
 
-        private getTypeFromValue(value: any): TypeConstructor {
+        getTypeFromValue(value) {
             switch (typeof value) {
                 case 'string': return String;
                 case 'number': return Number;
                 case 'boolean': return Boolean;
-                case 'object':
-                    return Array.isArray(value) ? Array : Object;
+                case 'object': return Array.isArray(value) ? Array : Object;
                 default: return String;
             }
         }
@@ -191,7 +133,6 @@ export function defComponent(
 
                 try {
                     this.collectSlots();
-
                     pushContext(this.hooksContext, 'setup');
                     const renderFn = setup(this.createComponentContext());
                     const cleanup = uRender(this, renderFn);
@@ -206,13 +147,13 @@ export function defComponent(
 
         disconnectedCallback() {
             this.isMounted = false;
-            this.cleanup.forEach(cleanup => cleanup());
+            this.cleanup.forEach(fn => fn());
             this.cleanup = [];
-            this.hooksContext.cleanups.forEach(cleanup => cleanup());
+            this.hooksContext.cleanups.forEach(fn => fn());
             this.hooksContext.cleanups = [];
         }
 
-        private handleMountError(error: unknown) {
+        handleMountError(error) {
             const errorContainer = document.createElement('div');
             errorContainer.style.cssText = 'padding: 1rem; border: 1px solid #ff0000; border-radius: 4px; margin: 0.5rem; color: #ff0000;';
             errorContainer.innerHTML = `
