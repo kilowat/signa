@@ -8,6 +8,12 @@ export function defComponent(tagName, setup) {
     const uRender = reactive(effect);
 
     class Component extends HTMLElement {
+        static observedProps = new Set();
+
+        static get observedAttributes() {
+            return Array.from(this.observedProps).map(name => `data-${name}`);
+        }
+
         constructor() {
             super();
             this.hooksContext = createHooksContext();
@@ -15,17 +21,12 @@ export function defComponent(tagName, setup) {
             this.isMounted = false;
             this.slots = { default: [] };
             this.props = new Map();
-            this.observedProps = new Set();
-        }
-
-        static get observedAttributes() {
-            return Array.from(this.prototype.observedProps || []).map(name => `data-${name}`);
         }
 
         $(key) {
             return this[key];
         }
-
+        /**to do */
         emitEvent(name, detail) {
             this.dispatchEvent(new CustomEvent(name, { detail }));
         }
@@ -44,13 +45,14 @@ export function defComponent(tagName, setup) {
                 htmlFor,
                 prop: config => {
                     const { name, type, default: defaultValue } = config;
-                    this.observedProps.add(name);
+                    Component.observedProps.add(name);
 
                     const attrName = `data-${name}`;
                     const attrValue = this.getAttribute(attrName);
+
                     const initialValue = attrValue !== null
                         ? this.parseAttributeValue(attrValue, type)
-                        : (defaultValue ?? this.getDefaultForType(type));
+                        : (defaultValue !== undefined ? defaultValue : this.getDefaultForType(type));
 
                     const propSignal = signal(initialValue);
                     this.props.set(name, propSignal);
@@ -73,6 +75,7 @@ export function defComponent(tagName, setup) {
         }
 
         parseAttributeValue(value, type) {
+            if (value === null) return null;
             switch (type) {
                 case Number: return Number(value);
                 case Boolean: return value !== null && value !== 'false';
@@ -94,9 +97,7 @@ export function defComponent(tagName, setup) {
                     const slotName = node.getAttribute('data-slot');
                     if (slotName) {
                         slots[slotName] = slots[slotName] || [];
-                        Array.from(node.childNodes).forEach(child => {
-                            slots[slotName].push(child);
-                        });
+                        slots[slotName].push(...Array.from(node.childNodes));
                     } else {
                         slots.default.push(node);
                     }
@@ -109,14 +110,21 @@ export function defComponent(tagName, setup) {
 
         attributeChangedCallback(name, oldValue, newValue) {
             const propName = name.replace(/^data-/, '');
-            const propSignal = this.props.get(propName);
-            if (propSignal) {
-                const type = this.getTypeFromValue(propSignal.value);
-                propSignal.value = this.parseAttributeValue(newValue, type);
+            let propSignal = this.props.get(propName);
+
+            if (!propSignal) {
+                const type = String;
+                propSignal = signal(this.parseAttributeValue(newValue, type));
+                this.props.set(propName, propSignal);
+                return;
             }
+
+            const type = this.getTypeFromValue(propSignal.value);
+            propSignal.value = this.parseAttributeValue(newValue, type);
         }
 
         getTypeFromValue(value) {
+            if (value === null) return null;
             switch (typeof value) {
                 case 'string': return String;
                 case 'number': return Number;
@@ -136,7 +144,9 @@ export function defComponent(tagName, setup) {
                     pushContext(this.hooksContext, 'setup');
                     const renderFn = setup(this.createComponentContext());
                     const cleanup = uRender(this, renderFn);
-                    this.cleanup.push(cleanup);
+                    if (typeof cleanup === 'function') {
+                        this.cleanup.push(cleanup);
+                    }
                     popContext();
                 } catch (error) {
                     console.error(`Error mounting component ${this.tagName.toLowerCase()}:`, error);
@@ -147,9 +157,13 @@ export function defComponent(tagName, setup) {
 
         disconnectedCallback() {
             this.isMounted = false;
-            this.cleanup.forEach(fn => fn());
+            this.cleanup.forEach(fn => {
+                try { fn(); } catch { }
+            });
             this.cleanup = [];
-            this.hooksContext.cleanups.forEach(fn => fn());
+            this.hooksContext.cleanups.forEach(fn => {
+                try { fn(); } catch { }
+            });
             this.hooksContext.cleanups = [];
         }
 
@@ -165,7 +179,9 @@ export function defComponent(tagName, setup) {
         }
     }
 
-    if (!customElements.get(tagName)) {
-        customElements.define(tagName, Component);
+    if (customElements.get(tagName)) {
+        throw new Error(`Component "${tagName}" is already defined`);
     }
+
+    customElements.define(tagName, Component);
 }

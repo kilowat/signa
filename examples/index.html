@@ -10,6 +10,8 @@
 <body>
     <script>
         const { defComponent, defStore } = window.signa;
+
+
         defStore('counterStore', ({ signal }) => {
             const count = signal(0);
             const inc = () => count.value++;
@@ -172,8 +174,6 @@
                 </div>
             `;
         });
-
-
     </script>
     <h1>Component Examples</h1>
     <counter-component>
@@ -192,6 +192,7 @@
             <p>Created with TypeScript Web Components</p>
         </div>
     </counter-component-extended>
+    <h2>event</h2>
 </body>
 
 
