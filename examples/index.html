@@ -41,11 +41,33 @@
             const header = slot('header');
             const footer = slot('footer');
 
+            //Current created root dom element
+            console.log($this)
+            // Props
             const initialValue = prop({
                 name: 'initial-value',
                 type: Number,
                 default: 0
             });
+
+            const boolProp = prop({
+                name: 'bool-value',
+                type: Boolean,
+                default: false
+            });
+
+            const arrayProp = prop({
+                name: 'array-value',
+                type: Array,
+                default: []
+            });
+
+            const objectProp = prop({
+                name: 'object-value',
+                type: Object,
+                default: null
+            });
+
 
             const count = signal(initialValue.value);
             const counterStore = useStore('counterStore');
@@ -61,9 +83,14 @@
 
             return () => html`
                 <div>
-                    <header>${header}</header>
-                    <main>${slot.default}</main>
-                    <footer>${footer}</footer>
+                    <div>${header}</div>
+                    <div>${slot.default}</div>
+                    <div>${footer}</div>
+                </div>
+                <div>
+                    <div>bool prop: ${boolProp.value}</div>
+                    <div>array prop: ${JSON.stringify(arrayProp.value)}</div>
+                    <div>object prop: ${JSON.stringify(objectProp.value)}</div>
                 </div>
                 <div>
                     Count: ${count.value}
@@ -77,7 +104,7 @@
         });
     </script>
     <h1>Component Examples</h1>
-    <counter-component data-initial-value="4">
+    <counter-component data-initial-value="4" data-array-value="[1,2,3]" data-object-value='{"a":1}'>
         <div data-slot="header"><b>Header content</b></div>
         <b>default slot</b>
         <div data-slot="footer">Footer content</div>

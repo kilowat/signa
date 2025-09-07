@@ -82,11 +82,17 @@ defComponent('my-component', (ctx) => {
     // Create computed
     const doubleCount = computed(() => count.value * 2);
     
-    // Create effects
+    //Create effect
+    effect(() => {
+        //Mounted
+        console.log('Component connected to dom');
+        //UnMounted
+        return () => { console.log('Component disconnected from dom') }
+    })
+
+    // Watch to count.value changed
     effect(() => {
         console.log('Count changed:', count.value);
-        // Disponse effect
-        return () => console.log('dispose counter')
     });
     
     // Return render function
