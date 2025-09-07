@@ -9,8 +9,13 @@
 
 <body>
     <script>
-        const { defComponent, defStore } = window.signa;
+        const { defComponent, defStore, eventBus } = window.signa;
 
+        eventBus.on('counter:changed', (payload) => {
+            console.log(payload);
+        })
+
+        eventBus.emit('counter:changed', { value: 1 });
 
         defStore('counterStore', ({ signal }) => {
             const count = signal(0);
@@ -23,6 +28,7 @@
 
         defComponent('counter-component', (ctx) => {
             const {
+                $this,
                 signal,
                 effect,
                 computed,
@@ -44,6 +50,15 @@
             const count = signal(initialValue.value);
             const counterStore = useStore('counterStore');
 
+            effect(() => {
+                console.log('mount');
+                return () => console.log('unmount');
+            })
+
+            effect(() => {
+                console.log("Whatch value " + count);
+            })
+
             return () => html`
                 <div>
                     <header>${header}</header>
@@ -60,139 +75,14 @@
                 </div>
             `;
         });
-
-
-        defComponent('counter-component-extended', (ctx) => {
-            const {
-                signal,
-                effect,
-                computed,
-                html,
-                prop,
-                slot
-            } = ctx;
-            // Props
-            const initialValue = prop({
-                name: 'initial-value',
-                type: Number,
-                default: 0
-            });
-
-            const maxValue = prop({
-                name: 'max-value',
-                type: Number,
-                default: 100
-            });
-
-            // State
-            const count = signal(initialValue.value);
-            const isLoading = signal(false);
-
-            // Computed values
-            const isMaxReached = computed(() => count.value >= maxValue.value);
-            const counterClass = computed(() =>
-                isMaxReached.value ? 'counter counter--max' : 'counter'
-            );
-
-            // Methods
-            const increment = () => {
-                if (!isMaxReached.value) {
-                    count.value++;
-                }
-            };
-
-            const reset = () => {
-                count.value = initialValue.value;
-            };
-
-            // Effects
-            effect(() => {
-                if (isMaxReached.value) {
-                    console.log('Maximum value reached!');
-                }
-            });
-
-            effect(() => {
-                localStorage.setItem('counter-value', count.value.toString());
-            });
-
-
-            const saveToServer = async () => {
-                isLoading.value = true;
-                try {
-
-                } finally {
-                    isLoading.value = false;
-                }
-            };
-
-            // Return render function
-            return () => html`
-                <div class=${counterClass.value}>
-                    <header class="counter__header">
-                        ${slot('header')}
-                    </header>
-
-                    <main class="counter__content">
-                        ${slot.default}
-                        
-                        <div class="counter__value">
-                            Count: ${count.value} / ${maxValue.value}
-                        </div>
-
-                        <div class="counter__actions">
-                            <button 
-                                onclick=${increment}
-                                disabled=${isMaxReached.value}
-                            >
-                                Increment
-                            </button>
-
-                            <button 
-                                onclick=${reset}
-                                disabled=${count.value === initialValue.value}
-                            >
-                                Reset
-                            </button>
-
-                            <button 
-                                onclick=${saveToServer}
-                                disabled=${isLoading.value}
-                            >
-                                ${isLoading.value ? 'Saving...' : 'Save'}
-                            </button>
-                        </div>
-
-                        ${isMaxReached.value
-                    ? html`<div class="counter__warning">Maximum value reached!</div>`
-                    : null}
-                    </main>
-
-                    <footer class="counter__footer">
-                        ${slot('footer')}
-                    </footer>
-                </div>
-            `;
-        });
     </script>
     <h1>Component Examples</h1>
-    <counter-component>
+    <counter-component data-initial-value="4">
         <div data-slot="header"><b>Header content</b></div>
         <b>default slot</b>
         <div data-slot="footer">Footer content</div>
     </counter-component>
-    <counter-component-extended data-initial-value="10" data-max-value="50">
-        <div data-slot="header">
-            <h2>Counter Example</h2>
-        </div>
 
-        <p>This is a counter with maximum value restriction</p>
-
-        <div data-slot="footer">
-            <p>Created with TypeScript Web Components</p>
-        </div>
-    </counter-component-extended>
-    <h2>event</h2>
 </body>
 
 

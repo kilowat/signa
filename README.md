@@ -27,7 +27,7 @@ todo
 <script src="../dist/signa.min.js"></script>
 ```
 ```javascript
-const { defComponent, defStore} = window.signa;
+const { defComponent, defStore, eventBus} = window.signa;
 ```
 
 
@@ -56,6 +56,7 @@ Components are defined using the `defComponent` function that takes a tag name a
 defComponent('my-component', (ctx) => {
     // Component Context provides:
     const {
+        $this,        // Created component context
         signal,       // Create reactive state
         effect,       // Create side effects
         computed,     // Create computed values
@@ -85,6 +86,8 @@ defComponent('my-component', (ctx) => {
     // Create effects
     effect(() => {
         console.log('Count changed:', count.value);
+        // Disponse effect
+        return () => console.log('dispose counter')
     });
     
     // Return render function
@@ -163,6 +166,18 @@ defComponent('user-profile', (ctx) => {
     `;
 });
 ```
+
+
+
+### EventBus Usage
+
+Events communication:
+
+```typescript
+eventBus.on('my-event:update', (payload)=>{ console.log(payoload) });
+eventBus.emit('my-event:update', {value: 1});
+
+
 ### Template Engine
 
 The framework uses uhtml for templating. For detailed templating features see:

@@ -26,10 +26,6 @@ export function defComponent(tagName, setup) {
         $(key) {
             return this[key];
         }
-        /**to do */
-        emitEvent(name, detail) {
-            this.dispatchEvent(new CustomEvent(name, { detail }));
-        }
 
         createComponentContext() {
             const slotFn = Object.assign(
@@ -38,8 +34,17 @@ export function defComponent(tagName, setup) {
             );
 
             return {
+                $this: this,
                 signal,
-                effect,
+                effect: fn => {
+                    const stop = effect(() => {
+                        const cleanup = fn();
+                        if (typeof cleanup === 'function') {
+                            this.hooksContext.cleanups.push(cleanup);
+                        }
+                    });
+                    this.hooksContext.cleanups.push(() => stop());
+                },
                 computed,
                 html,
                 htmlFor,
