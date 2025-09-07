@@ -4,7 +4,6 @@ A lightweight lib for building reactive web components with signals and template
 
 ## Features
 
-- **TypeScript First**: Full type safety with generics support
 - **Web Components**: Create custom elements with a simple API
 - **Template**: Micro template engine from uhtml
 - **Reactive**: Built-in reactivity using @preact/signals-core
