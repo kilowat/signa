@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.input-base {
+    @apply flex-grow border rounded-l-md px-3 py-2 focus:outline-none focus:ring focus:border-blue-400;
+}

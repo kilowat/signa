@@ -1,6 +1,5 @@
-import { reactive } from 'uhtml/reactive';
+import { reactive, html, htmlFor } from 'uhtml/reactive';
 import { effect, signal, computed } from '@preact/signals-core';
-import { html, htmlFor } from 'uhtml/reactive';
 import { createHooksContext, pushContext, popContext } from './hooks.js';
 import { resolveStore } from './store.js';
 
