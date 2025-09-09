@@ -108,13 +108,14 @@
         <div>
             <div>Parent: ${count.value}</div>
             <button onclick=${() => count.value++}>+</button>
-            <child-component .count=${count}></child-component>
+            <child-component .count=${count} .myClick=${() => count.value++}></child-component>
         </div>`;
         });
 
         defComponent('child-component', ({ prop, html }) => {
             const count = prop({ name: 'count', type: Array, default: 0 });
-            return () => html`<div>Child: ${count.value}</div>`;
+            const myClick = prop({ name: 'myClick', type: Function });
+            return () => html`<div>Child: ${count.value} <button onclick=${myClick}>click to parrent</button></div>`;
         });
     </script>
     <h1>Component Examples</h1>

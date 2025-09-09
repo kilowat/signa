@@ -39,26 +39,31 @@ export function defComponent(tagName, setup) {
                 html,
                 htmlFor,
                 prop: ({ name, type, default: defaultValue }) => {
+                    if (this[name] !== undefined) {
+                        const val = this[name];
+                        if (type === Function) {
+                            return val;
+                        }
+
+                        if (typeof val.peek === 'function') {
+                            this.props.set(name, val);
+                            return { get value() { return val.value; } };
+                        }
+                    }
+
                     const attrValue = this.getAttribute(`data-${name}`);
                     const initialValue = attrValue !== null
                         ? this.parseAttributeValue(attrValue, type)
                         : (defaultValue !== undefined ? defaultValue : this.getDefaultForType(type));
 
-                    let sig;
-
-                    if (this[name] && typeof this[name].peek === 'function') {
-                        sig = this[name];
-                    } else {
-                        sig = signal(initialValue);
+                    if (type === Function) {
+                        this.props.set(name, initialValue);
+                        return initialValue;
                     }
 
+                    const sig = signal(initialValue);
                     this.props.set(name, sig);
-
-                    return {
-                        get value() {
-                            return sig.value;
-                        }
-                    };
+                    return { get value() { return sig.value; } };
                 },
                 slot: slotFn,
                 store: key => resolveStore(key)

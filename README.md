@@ -118,7 +118,7 @@ Props can be defined with the following types.
 ```typescript
 const myProp = prop({
     name: 'count',
-    type: String | Number | Boolean | Array | Object,
+    type: String | Number | Boolean | Array | Object | Function,
     default: 'default value'
 });
 
