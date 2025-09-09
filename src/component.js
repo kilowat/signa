@@ -8,12 +8,6 @@ export function defComponent(tagName, setup) {
     const uRender = reactive(effect);
 
     class Component extends HTMLElement {
-        static observedProps = new Set();
-
-        static get observedAttributes() {
-            return Array.from(this.observedProps).map(name => `data-${name}`);
-        }
-
         constructor() {
             super();
             this.hooksContext = createHooksContext();
@@ -21,10 +15,6 @@ export function defComponent(tagName, setup) {
             this.isMounted = false;
             this.slots = { default: [] };
             this.props = new Map();
-        }
-
-        $(key) {
-            return this[key];
         }
 
         createComponentContext() {
@@ -48,23 +38,30 @@ export function defComponent(tagName, setup) {
                 computed,
                 html,
                 htmlFor,
-                prop: config => {
-                    const { name, type, default: defaultValue } = config;
-                    Component.observedProps.add(name);
-
-                    const attrName = `data-${name}`;
-                    const attrValue = this.getAttribute(attrName);
-
+                prop: ({ name, type, default: defaultValue }) => {
+                    const attrValue = this.getAttribute(`data-${name}`);
                     const initialValue = attrValue !== null
                         ? this.parseAttributeValue(attrValue, type)
                         : (defaultValue !== undefined ? defaultValue : this.getDefaultForType(type));
 
-                    const propSignal = signal(initialValue);
-                    this.props.set(name, propSignal);
-                    return propSignal;
+                    let sig;
+
+                    if (this[name] && typeof this[name].peek === 'function') {
+                        sig = this[name];
+                    } else {
+                        sig = signal(initialValue);
+                    }
+
+                    this.props.set(name, sig);
+
+                    return {
+                        get value() {
+                            return sig.value;
+                        }
+                    };
                 },
                 slot: slotFn,
-                useStore: key => resolveStore(key)
+                store: key => resolveStore(key)
             };
         }
 
@@ -83,14 +80,10 @@ export function defComponent(tagName, setup) {
             if (value === null) return null;
             switch (type) {
                 case Number: return Number(value);
-                case Boolean: return value !== null && value !== 'false';
+                case Boolean: return value !== 'false';
                 case Object:
                 case Array:
-                    try {
-                        return JSON.parse(value);
-                    } catch {
-                        return type === Object ? {} : [];
-                    }
+                    try { return JSON.parse(value); } catch { return type === Object ? {} : []; }
                 default: return value;
             }
         }
@@ -113,45 +106,16 @@ export function defComponent(tagName, setup) {
             this.slots = slots;
         }
 
-        attributeChangedCallback(name, oldValue, newValue) {
-            const propName = name.replace(/^data-/, '');
-            let propSignal = this.props.get(propName);
-
-            if (!propSignal) {
-                const type = String;
-                propSignal = signal(this.parseAttributeValue(newValue, type));
-                this.props.set(propName, propSignal);
-                return;
-            }
-
-            const type = this.getTypeFromValue(propSignal.value);
-            propSignal.value = this.parseAttributeValue(newValue, type);
-        }
-
-        getTypeFromValue(value) {
-            if (value === null) return null;
-            switch (typeof value) {
-                case 'string': return String;
-                case 'number': return Number;
-                case 'boolean': return Boolean;
-                case 'object': return Array.isArray(value) ? Array : Object;
-                default: return String;
-            }
-        }
-
         connectedCallback() {
             this.isMounted = true;
             requestAnimationFrame(() => {
                 if (!this.isMounted) return;
-
                 try {
                     this.collectSlots();
                     pushContext(this.hooksContext, 'setup');
                     const renderFn = setup(this.createComponentContext());
                     const cleanup = uRender(this, renderFn);
-                    if (typeof cleanup === 'function') {
-                        this.cleanup.push(cleanup);
-                    }
+                    if (typeof cleanup === 'function') this.cleanup.push(cleanup);
                     popContext();
                 } catch (error) {
                     console.error(`Error mounting component ${this.tagName.toLowerCase()}:`, error);
@@ -159,16 +123,16 @@ export function defComponent(tagName, setup) {
                 }
             });
         }
-
+        attributeChangedCallback(name, oldValue, newValue) {
+            console.log(
+                `Attribute ${name} has changed from ${oldValue} to ${newValue}.`,
+            );
+        }
         disconnectedCallback() {
             this.isMounted = false;
-            this.cleanup.forEach(fn => {
-                try { fn(); } catch { }
-            });
+            this.cleanup.forEach(fn => { try { fn(); } catch { } });
             this.cleanup = [];
-            this.hooksContext.cleanups.forEach(fn => {
-                try { fn(); } catch { }
-            });
+            this.hooksContext.cleanups.forEach(fn => { try { fn(); } catch { } });
             this.hooksContext.cleanups = [];
         }
 
@@ -184,9 +148,6 @@ export function defComponent(tagName, setup) {
         }
     }
 
-    if (customElements.get(tagName)) {
-        throw new Error(`Component "${tagName}" is already defined`);
-    }
-
+    if (customElements.get(tagName)) throw new Error(`Component "${tagName}" is already defined`);
     customElements.define(tagName, Component);
 }

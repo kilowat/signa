@@ -63,7 +63,7 @@ defComponent('my-component', (ctx) => {
         htmlFor,      // Template with keys
         prop,         // Define props
         slot         // Access slots
-        useStore     // Get store instance by key
+        store     // Get store instance by key
     } = ctx;
     
     // Define props
@@ -108,19 +108,31 @@ defComponent('my-component', (ctx) => {
         </div>
     `;
 });
+
 ```
 
 ### Props Types
 
-Props can be defined with the following types:
+Props can be defined with the following types.
+✖ Props only readable value!
+
 ```typescript
 const myProp = prop({
-    name: 'propName',
+    name: 'count',
     type: String | Number | Boolean | Array | Object,
     default: 'default value'
 });
-```
 
+myProp.value++ 
+// Don't do like this. This is bad practice, in this library it doesn't work for protection reason.
+
+//in component pass signal as prop value to child
+return html`<my-component .count="${count}"></my-component>`
+
+```
+#### In html use as initional value from php render
+<my-component data-count="10"></my-component>
+<my-component data-array="[1,2,3]"></my-component>
 ### Slots Usage
 
 ```html
@@ -158,7 +170,7 @@ defStore('userStore', (ctx) => {
 
 // Use store in components
 defComponent('user-profile', (ctx) => {
-    const userStore = ctx.useStore('userStore');
+    const userStore = ctx.store('userStore');
     
     return () => ctx.html`
         <div>

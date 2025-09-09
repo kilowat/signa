@@ -36,7 +36,7 @@
                 prop,
                 slot,
                 render,
-                useStore
+                store
             } = ctx;
             const header = slot('header');
             const footer = slot('footer');
@@ -70,7 +70,7 @@
 
 
             const count = signal(initialValue.value);
-            const counterStore = useStore('counterStore');
+            const counterStore = store('counterStore');
 
             effect(() => {
                 console.log('mount');
@@ -102,6 +102,21 @@
                 </div>
             `;
         });
+
+        defComponent('parent-component', ({ signal, html }) => {
+            const count = signal(10);
+            return () => html`
+        <div>
+            <div>Parent: ${count.value}</div>
+            <button onclick=${() => count.value++}>+</button>
+            <child-component .count=${count}></child-component>
+        </div>`;
+        });
+
+        defComponent('child-component', ({ prop, html }) => {
+            const count = prop({ name: 'count', type: Array, default: 0 });
+            return () => html`<div>Child: ${count.value}  <button onclick=${() => count.value++}>Increment</button> </div>`;
+        });
     </script>
     <h1>Component Examples</h1>
     <counter-component data-initial-value="4" data-array-value="[1,2,3]" data-object-value='{"a":1}'>
@@ -109,7 +124,7 @@
         <b>default slot</b>
         <div data-slot="footer">Footer content</div>
     </counter-component>
-
+    <parent-component></parent-component>
 </body>
 
 
