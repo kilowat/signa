@@ -65,7 +65,7 @@ defComponent('my-component', (ctx) => {
         slot         // Access slots
         store     // Get store instance by key
     } = ctx;
-    
+
     // Define props
     const title = prop({ 
         name: 'title',
@@ -83,18 +83,17 @@ defComponent('my-component', (ctx) => {
     const doubleCount = computed(() => count.value * 2);
     
     //Create effect
-    effect(() => {
-        //Mounted
-        console.log('Component connected to dom');
-        //UnMounted
-        return () => { console.log('Component disconnected from dom') }
-    })
 
     // Watch to count.value changed
     effect(() => {
         console.log('Count changed:', count.value);
     });
-    
+
+    effect(() => {
+        //UnMounted
+        return () => { console.log('Component disconnected from dom') }
+    })
+
     // Return render function
     return () => html`
         <div>

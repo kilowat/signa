@@ -73,7 +73,6 @@
             const counterStore = store('counterStore');
 
             effect(() => {
-                console.log('mount');
                 return () => console.log('unmount');
             })
 
