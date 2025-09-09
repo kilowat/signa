@@ -65,7 +65,7 @@ export function defComponent(tagName, setup) {
                     return { get value() { return sig.value; } };
                 },
                 slot: slotFn,
-                store: key => resolveStore(key)
+                store: key => resolveStore(key),
             };
         }
 
