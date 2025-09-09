@@ -191,9 +191,10 @@ defComponent('user-profile', (ctx) => {
 Events communication:
 
 ```typescript
+const { eventBus } = window.signa;
 eventBus.on('my-event:update', (payload)=>{ console.log(payoload) });
 eventBus.emit('my-event:update', {value: 1});
-
+```
 
 ### Template Engine
 
