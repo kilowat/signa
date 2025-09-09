@@ -114,7 +114,7 @@
 
         defComponent('child-component', ({ prop, html }) => {
             const count = prop({ name: 'count', type: Array, default: 0 });
-            return () => html`<div>Child: ${count.value}  <button onclick=${() => count.value++}>Increment</button> </div>`;
+            return () => html`<div>Child: ${count.value}</div>`;
         });
     </script>
     <h1>Component Examples</h1>
