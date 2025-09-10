@@ -127,11 +127,6 @@ export function defComponent(tagName, setup) {
                 }
             });
         }
-        attributeChangedCallback(name, oldValue, newValue) {
-            console.log(
-                `Attribute ${name} has changed from ${oldValue} to ${newValue}.`,
-            );
-        }
         disconnectedCallback() {
             this.isMounted = false;
             this.cleanup.forEach(fn => { try { fn(); } catch { } });

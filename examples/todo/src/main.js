@@ -1,49 +1,57 @@
 const { defComponent, defStore, eventBus } = signa;
 
-defStore('todo', (ctx) => {
-  const { signal } = ctx;
+defStore('todo', ({ signal }) => {
   const items = signal([]);
-  const add = (todo) => {
-    items.value = [...items.value, todo]
+
+  const add = ({ id, name } = todo) => {
+    items.value = [...items.value, todo];
   };
 
-  return {
-    items,
-    add,
-  }
+  return { items, add };
 });
 
 defComponent('task-input', (ctx) => {
   const { html, signal, store } = ctx;
+
   const todoStore = store('todo');
   const inputValue = signal('');
 
   const addItem = () => {
-    todoStore.add(inputValue.value);
-  }
+    const newTodo = {
+      id: Date.now(),
+      title: inputValue.value,
+      completed: false,
+    };
+    todoStore.add(newTodo);
+    inputValue.value = '';
+  };
 
   const onInputChange = (event) => {
     inputValue.value = event.target.value;
-  }
+  };
 
   return () => html`
+    <div style="display:flex; gap: 4px;">
       <input
         .value=${inputValue}
-        oninput="${onInputChange}" 
-        type="text" 
+        oninput=${onInputChange}
+        type="text"
         placeholder="Новая задача..."
-        class="flex-grow border rounded-l-md px-3 py-2 focus:outline-none focus:ring focus:border-blue-400">
-      <button
-        onclick='${addItem}'
-        class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600">
-        Добавить
-      </button>`
-})
+        style="flex-grow:1; padding:4px;">
+      <button onclick=${addItem}>Добавить</button>
+    </div>
+  `;
+});
 
 defComponent('todo-list', (ctx) => {
-  const { html, computed, store } = ctx;
+  const { html, store } = ctx;
   const todoStore = store('todo');
-  const itemsJson = computed(() => JSON.stringify(todoStore.items));
 
-  return () => html`<div>${itemsJson.value}</div>`
-})
+  return () => html`
+    <ul>
+      ${todoStore.items.value.map(
+    (todo) => html`<li>${todo.title} ${todo.completed ? '✓' : ''}</li>`
+  )}
+    </ul>
+  `;
+});
