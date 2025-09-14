@@ -160,7 +160,6 @@ The framework provides a simple store mechanism for state management across comp
 defStore('userStore', (ctx) => {
     const name = ctx.signal('');
     const age = ctx.signal(0);
-
     const displayName = ctx.computed(() => `User: ${name.value}`);
 
     return {
