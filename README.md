@@ -111,7 +111,7 @@ defComponent('my-component', (ctx) => {
 
 ```
 
-### Usege props
+### Usage props
 
 Props can be defined with the following types.
 
