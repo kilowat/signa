@@ -44,32 +44,30 @@
             //Current created root dom element
             console.log($this)
             // Props
-            const initialValue = prop({
-                name: 'initial-value',
+            const count = prop({
+                name: 'count',
                 type: Number,
                 default: 0
             });
 
             const boolProp = prop({
-                name: 'bool-value',
+                name: 'boolValue',
                 type: Boolean,
                 default: false
             });
 
             const arrayProp = prop({
-                name: 'array-value',
+                name: 'arrayValue',
                 type: Array,
                 default: []
             });
 
             const objectProp = prop({
-                name: 'object-value',
+                name: 'objectProp',
                 type: Object,
                 default: null
             });
 
-
-            const count = signal(initialValue.value);
             const counterStore = store('counterStore');
 
             effect(() => {
@@ -129,7 +127,7 @@
         });
     </script>
     <h1>Component Examples</h1>
-    <counter-component data-initial-value="4" data-array-value="[1,2,3]" data-object-value='{"a":1}'>
+    <counter-component data-count="4" data-arrayValue="[1,2,3]" data-objectValue='{"a":1}'>
         <div data-slot="header"><b>Header content</b></div>
         <b>default slot</b>
         <div data-slot="footer">Footer content</div>
