@@ -70,7 +70,8 @@ defComponent('my-component', (ctx) => {
     const title = prop({ 
         name: 'title',
         type: String,
-        default: 'Hello'
+        default: 'Hello',
+        readonly: false,
     });
     
     // Use slots

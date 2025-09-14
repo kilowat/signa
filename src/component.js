@@ -37,32 +37,46 @@ export function defComponent(tagName, setup) {
                 computed,
                 html,
                 htmlFor,
-                prop: ({ name, type, default: defaultValue }) => {
-                    if (this[name] !== undefined) {
-                        const val = this[name];
-                        if (type === Function) {
-                            return val;
-                        }
+                prop: ({ name, type, default: defaultValue, readonly = false }) => {
+                    const val = this[name];
 
-                        if (typeof val.peek === 'function') {
-                            this.props.set(name, val);
-                            return { get value() { return val.value; } };
-                        }
+                    // 1. Колбэки всегда возвращаем напрямую
+                    if (type === Function && typeof val === 'function') {
+                        this.props.set(name, val);
+                        return val;
                     }
 
+                    // 2. Если передан сигнал — используем его
+                    if (val && typeof val.peek === 'function') {
+                        // если readonly, оборачиваем сигнал в прокси только для чтения
+                        if (readonly) {
+                            const readOnlySignal = {
+                                get value() { return val.value; },
+                                peek: val.peek.bind(val)
+                            };
+                            this.props.set(name, readOnlySignal);
+                            return readOnlySignal;
+                        }
+                        this.props.set(name, val);
+                        return val;
+                    }
+
+                    // 3. Если передан простой value — оборачиваем в сигнал
+                    if (val !== undefined) {
+                        const sig = signal(val);
+                        this.props.set(name, sig);
+                        return sig;
+                    }
+
+                    // 4. Берём значение из атрибута или дефолт
                     const attrValue = this.getAttribute(`data-${name}`);
                     const initialValue = attrValue !== null
                         ? this.parseAttributeValue(attrValue, type)
                         : (defaultValue !== undefined ? defaultValue : this.getDefaultForType(type));
 
-                    if (type === Function) {
-                        this.props.set(name, initialValue);
-                        return initialValue;
-                    }
-
                     const sig = signal(initialValue);
                     this.props.set(name, sig);
-                    return { get value() { return sig.value; } };
+                    return sig;
                 },
                 slot: slotFn,
                 store: key => resolveStore(key),

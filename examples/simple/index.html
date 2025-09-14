@@ -108,14 +108,24 @@
         <div>
             <div>Parent: ${count.value}</div>
             <button onclick=${() => count.value++}>+</button>
-            <child-component .count=${count} .myClick=${() => count.value++}></child-component>
+            <child-component .count=${count.value} .refCount=${count} .myClick=${() => count.value++}></child-component>
         </div>`;
         });
 
         defComponent('child-component', ({ prop, html }) => {
-            const count = prop({ name: 'count', type: Array, default: 0 });
+            const count = prop({ name: 'count', type: Number });
+            const refCount = prop({ name: 'refCount', type: Object });
             const myClick = prop({ name: 'myClick', type: Function });
-            return () => html`<div>Child: ${count.value} <button onclick=${myClick}>click to parrent</button></div>`;
+            return () => html`
+            <div>
+                Click: ${refCount.value} <button onclick=${myClick}>Change</button>
+            </div>
+            <div>
+                Parent signal: ${refCount.value} <button onclick=${() => refCount.value++}>Change</button> 
+            </div>
+            <div>
+                Local count: ${count.value} <button onclick=${() => count.value++}>Change</button>
+            </div>`
         });
     </script>
     <h1>Component Examples</h1>
