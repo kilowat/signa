@@ -114,22 +114,25 @@ defComponent('my-component', (ctx) => {
 ### Props Types
 
 Props can be defined with the following types.
-✖ Props only readable value!
 
 ```typescript
 const myProp = prop({
-    name: 'count',
+    name: 'myProp', // this name in html data-myProp
     type: String | Number | Boolean | Array | Object | Function,
     default: 'default value',
     readonly: false,
 });
-
-myProp.value++ 
-// Don't do like this. This is bad practice, in this library it doesn't work for protection reason.
-
+return html`<div>${myProp.value}</div>`
 //in component pass signal as prop value to child
 return html`<my-component .count="${count}"></my-component>`
+// as function
+const onPressButton = prop({
+    name: 'onPressButon',
+    type: Function,
+    default: 'default value',
+});
 
+return html`<my-component .onPressButton="${() => console.log('onPress')}"></my-component>`
 ```
 #### In html use as initional value from php render
 <my-component data-count="10"></my-component>
