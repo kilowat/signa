@@ -120,7 +120,8 @@ Props can be defined with the following types.
 const myProp = prop({
     name: 'count',
     type: String | Number | Boolean | Array | Object | Function,
-    default: 'default value'
+    default: 'default value',
+    readonly: false,
 });
 
 myProp.value++ 
