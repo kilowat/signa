@@ -91,7 +91,6 @@
                 </div>
                 <div>
                     Count: ${count.value}
-                    <button onclick=${() => count.value++}>Increment</button>
                 </div>
                 <div>
                     CountStore: ${counterStore.count.value}
@@ -112,7 +111,7 @@
 
         defComponent('child-component', ({ prop, html }) => {
             const count = prop({ name: 'count', type: Number });
-            const refCount = prop({ name: 'refCount', type: Object });
+            const refCount = prop({ name: 'refCount', type: Object, readonly: false });
             const myClick = prop({ name: 'myClick', type: Function });
             return () => html`
             <div>
@@ -127,7 +126,7 @@
         });
     </script>
     <h1>Component Examples</h1>
-    <counter-component data-count="4" data-arrayValue="[1,2,3]" data-objectValue='{"a":1}'>
+    <counter-component data-count="4" data-arrayValue="[1,2,3]" data-objectProp='{"a":1}'>
         <div data-slot="header"><b>Header content</b></div>
         <b>default slot</b>
         <div data-slot="footer">Footer content</div>

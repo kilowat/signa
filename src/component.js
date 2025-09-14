@@ -37,7 +37,7 @@ export function defComponent(tagName, setup) {
                 computed,
                 html,
                 htmlFor,
-                prop: ({ name, type, default: defaultValue, readonly = false }) => {
+                prop: ({ name, type, default: defaultValue, readonly = true }) => {
                     const val = this[name];
 
                     // 1. Колбэки всегда возвращаем напрямую
@@ -52,6 +52,7 @@ export function defComponent(tagName, setup) {
                         if (readonly) {
                             const readOnlySignal = {
                                 get value() { return val.value; },
+                                set value(value) { console.warn('prop ' + name + ' is readonly'); },
                                 peek: val.peek.bind(val)
                             };
                             this.props.set(name, readOnlySignal);
