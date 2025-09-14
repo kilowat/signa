@@ -111,13 +111,13 @@ defComponent('my-component', (ctx) => {
 
 ```
 
-### Props Types
+### Usege props
 
 Props can be defined with the following types.
 
 ```typescript
 const myProp = prop({
-    name: 'myProp', // this name in html data-myProp
+    name: 'myPropName', // this name in html data-myPropName or direct pass .myPropName="{$somValue}"
     type: String | Number | Boolean | Array | Object | Function,
     default: 'default value',
     readonly: false,
@@ -129,7 +129,6 @@ return html`<my-component .count="${count}"></my-component>`
 const onPressButton = prop({
     name: 'onPressButon',
     type: Function,
-    default: 'default value',
 });
 
 return html`<my-component .onPressButton="${() => console.log('onPress')}"></my-component>`
