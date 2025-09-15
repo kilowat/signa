@@ -48,11 +48,8 @@
             const filterState = signal(null);
 
             const getFilteredTodos = () => {
-                switch (filterState.value) {
-                    case true: return todoList.value.filter(item => item.status);
-                    case false: return todoList.value.filter(item => !item.status);
-                    default: return todoList.value;
-                }
+                if (filterState.value == null) return filterState.value;
+                return todoList.value.filter(item => item.status == filterState.value);
             };
 
             const filterLabels = [
