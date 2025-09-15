@@ -1,5 +1,5 @@
 import * as esbuild from 'esbuild'
-import { copyFileSync } from "fs";
+
 
 await esbuild.build({
     entryPoints: ["src/index.js"],
@@ -10,6 +10,5 @@ await esbuild.build({
     minify: true,
     sourcemap: false,
 })
-copyFileSync("src/signa.d.ts", "dist/signa.d.ts");
 
 console.log("✅ Build success");

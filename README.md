@@ -26,9 +26,8 @@ todo
 <script src="../dist/signa.min.js"></script>
 ```
 ```javascript
-const { defComponent, defStore, eventBus} = window.signa;
+const { defComponent, defStore, eventBus, provide, inject, getContext} = window.signa;
 ```
-
 
 ### Component Example
 ```typescript
@@ -185,9 +184,6 @@ defComponent('user-profile', (ctx) => {
     `;
 });
 ```
-
-
-
 ### EventBus Usage
 
 Events communication:
@@ -197,6 +193,24 @@ const { eventBus } = window.signa;
 eventBus.on('my-event:update', (payload)=>{ console.log(payoload) });
 eventBus.emit('my-event:update', {value: 1});
 ```
+
+### Provide/Inject Usage
+
+Dependency passing:
+```typescript
+const { provide, inject, getAppContext } = window.signa;
+provide('myApi', {
+    getItems: () => [1,2,3]
+})
+
+const myApi = inject('myApi');
+myApi.getItems();
+
+const context = getAppContext();
+console.log(context);
+// all registered dependecies
+```
+
 
 ### Template Engine
 

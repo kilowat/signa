@@ -9,7 +9,13 @@
 
 <body>
     <script>
-        const { defComponent, defStore, eventBus } = window.signa;
+        const { defComponent, defStore, eventBus, provide, inject, getAppContext } = window.signa;
+
+        provide('api', {
+            getDate: () => new Date().toDateString(),
+        });
+
+        console.log(inject('api').getDate());
 
         eventBus.on('counter:changed', (payload) => {
             console.log(payload);
@@ -36,8 +42,9 @@
                 prop,
                 slot,
                 render,
-                store
+                store,
             } = ctx;
+
             const header = slot('header');
             const footer = slot('footer');
 
