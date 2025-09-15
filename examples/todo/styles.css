@@ -112,9 +112,6 @@ li.completed label {
     color: #9ca3af;
 }
 
-li.completed {
-    order: 2;
-}
 
 #filter-active:checked~ul li.completed {
     display: none;

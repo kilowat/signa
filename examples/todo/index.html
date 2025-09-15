@@ -43,9 +43,9 @@
                 todoList.value = todoList.value.map(item =>
                     item.id === id ? { ...item, ...{ status } } : item
                 );
-            }
+            };
 
-            const filterState = signal(null)
+            const filterState = signal(null);
 
             const getFilteredTodos = () => {
                 switch (filterState.value) {
@@ -80,8 +80,9 @@
                         type="text" 
                         placeholder="Новая задача..." 
                         required>
-                    <button type="button" onclick=${create}>Добавить</button>
-                </form>`
+                    <button type="button" onclick=${create}>Add</button>
+                </form>
+            `;
 
             const buildFilters = () => html`
                 <div class="filters">
@@ -96,7 +97,7 @@
                     `)}
 
                 </div>
-            `
+            `;
 
             const buildList = () => html`
                 <ul>
