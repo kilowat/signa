@@ -43,7 +43,6 @@
                 todoList.value = todoList.value.map(item =>
                     item.id === id ? { ...item, ...{ status } } : item
                 );
-                console.log(todoList.value)
             }
 
             const filterState = signal({ status: null })
