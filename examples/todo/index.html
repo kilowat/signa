@@ -45,15 +45,33 @@
                 );
             }
 
-            const filterState = signal({ status: null })
+            const filterState = signal(null)
 
             const getFilteredTodos = () => {
-                switch (filterState.value.status) {
+                switch (filterState.value) {
                     case true: return todoList.value.filter(item => item.status);
                     case false: return todoList.value.filter(item => !item.status);
                     default: return todoList.value;
                 }
             };
+
+            const filterLabels = [
+                {
+                    id: 'all',
+                    name: 'All',
+                    value: null,
+                },
+                {
+                    id: 'active',
+                    name: 'Active',
+                    value: false,
+                },
+                {
+                    id: 'complete',
+                    name: 'Complete',
+                    value: true,
+                }
+            ];
 
             const buildForm = () => html`
                 <form action="#">
@@ -67,14 +85,16 @@
 
             const buildFilters = () => html`
                 <div class="filters">
-                    <input type="radio" name="filter" id="filter-all" checked>
-                    <label for="filter-all">Все</label>
+                    ${filterLabels.map((item) => html`
+                        <input 
+                            type="radio" 
+                            name="filter" 
+                            id=${'filter-' + item.id}  
+                            onchange=${(el) => filterState.value = item.value}
+                            .checked=${item.value === filterState.value}>
+                        <label  for=${'filter-' + item.id}>${item.name}</label>
+                    `)}
 
-                    <input type="radio" name="filter" id="filter-active">
-                    <label for="filter-active">Активные</label>
-
-                    <input type="radio" name="filter" id="filter-completed">
-                    <label for="filter-completed">Выполненные</label>
                 </div>
             `
 
