@@ -48,7 +48,7 @@
             const filterState = signal(null);
 
             const getFilteredTodos = () => {
-                if (filterState.value == null) return filterState.value;
+                if (filterState.value == null) return todoList.value;
                 return todoList.value.filter(item => item.status == filterState.value);
             };
 
