@@ -3,6 +3,12 @@ import { effect, signal, computed } from '@preact/signals-core';
 import { createHooksContext, pushContext, popContext } from './hooks.js';
 import { resolveStore } from './store.js';
 
+function camelCaseToKebabCase(camelCaseString) {
+    return camelCaseString
+        .replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2')
+        .toLowerCase();
+}
+
 export function defComponent(tagName, setup) {
     const uRender = reactive(effect);
 
@@ -69,8 +75,8 @@ export function defComponent(tagName, setup) {
                         return sig;
                     }
 
-                    // 4. Берём значение из атрибута или дефолт
-                    const attrValue = this.getAttribute(`data-${name}`);
+                    const attrData = this.getAttribute(`data-${name}`);
+                    const attrValue = attrData === null ? this.getAttribute(`data-${camelCaseToKebabCase(name)}`) : attrData;
                     const initialValue = attrValue !== null
                         ? this.parseAttributeValue(attrValue, type)
                         : (defaultValue !== undefined ? defaultValue : this.getDefaultForType(type));

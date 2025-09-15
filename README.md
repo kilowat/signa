@@ -132,9 +132,10 @@ const onPressButton = prop({
 
 return html`<my-component .onPressButton="${() => console.log('onPress')}"></my-component>`
 ```
-#### In html use as initional value from php render
+In html use as initional value from php render
 <my-component data-count="10"></my-component>
 <my-component data-array="[1,2,3]"></my-component>
+Also can use KebabCase notation, example data-my-prop is convert to myProp in defComponent
 ### Slots Usage
 
 ```html
