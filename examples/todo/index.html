@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Todo List</title>
+    <link href="styles.css" rel="stylesheet" />
+    <script src="../../dist/signa.min.js"></script>
+</head>
+
+<body>
+    <script>
+        const { defComponent } = signa;
+
+        defComponent('todo-list', (ctx) => {
+            const { html, signal } = ctx;
+
+            const todoList = signal([
+                { id: 0, name: 'Check email', status: false },
+                { id: 1, name: 'Do morning exercise', status: true },
+                { id: 2, name: 'Make breakfast', status: false },
+                { id: 3, name: 'Read news', status: false },
+                { id: 4, name: 'Call colleague', status: true },
+                { id: 5, name: 'Write code', status: false },
+                { id: 6, name: 'Attend meeting', status: false }
+            ])
+
+            let counter = todoList.value.length;
+
+            const inputName = signal('');
+
+            const create = () => {
+                const newItem = {
+                    id: ++counter,
+                    name: inputName.value.length == 0 ? 'Unamed' : inputName.value,
+                    status: false
+                };
+                todoList.value = [...todoList.value, newItem];
+                inputName.value = '';
+            };
+
+            const changeStatus = (id, status) => {
+                todoList.value = todoList.value.map(item =>
+                    item.id === id ? { ...item, ...{ status } } : item
+                );
+                console.log(todoList.value)
+            }
+
+            const filterState = signal({ status: null })
+
+            const getFilteredTodos = () => {
+                switch (filterState.value.status) {
+                    case true: return todoList.value.filter(item => item.status);
+                    case false: return todoList.value.filter(item => !item.status);
+                    default: return todoList.value;
+                }
+            };
+
+            const buildForm = () => html`
+                <form action="#">
+                    <input 
+                        oninput="${(el) => inputName.value = el.target.value}" 
+                        type="text" 
+                        placeholder="Новая задача..." 
+                        required>
+                    <button type="button" onclick=${create}>Добавить</button>
+                </form>`
+
+            const buildFilters = () => html`
+                <div class="filters">
+                    <input type="radio" name="filter" id="filter-all" checked>
+                    <label for="filter-all">Все</label>
+
+                    <input type="radio" name="filter" id="filter-active">
+                    <label for="filter-active">Активные</label>
+
+                    <input type="radio" name="filter" id="filter-completed">
+                    <label for="filter-completed">Выполненные</label>
+                </div>
+            `
+
+            const buildList = () => html`
+                <ul>
+                    ${getFilteredTodos().map((item) => html`
+                        <li class=${item.status ? 'completed' : ''}>
+                            <input 
+                                type="checkbox" 
+                                onchange=${(el) => changeStatus(item.id, el.target.checked)} 
+                                .checked=${item.status}
+                                id=${'task-' + item.id}>
+                            <label for=${'task-' + item.id}>${item.name}</label>
+                        </li>
+                    `)}
+                </ul>
+            `
+            return () => html`
+                ${buildForm()}
+                ${buildFilters()}
+                ${buildList()}
+            `;
+        });
+
+    </script>
+    <div class="todo-app">
+        <h1>Мой Todo List</h1>
+        <todo-list></todo-list>
+    </div>
+</body>
+
+</html>
