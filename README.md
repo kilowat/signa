@@ -26,7 +26,7 @@ todo
 <script src="../dist/signa.min.js"></script>
 ```
 ```javascript
-const { defComponent, defStore, eventBus, provide, inject, getContext} = window.signa;
+const { defComponent, defStore} = signa;
 ```
 
 ### Component Example
@@ -190,7 +190,7 @@ defComponent('user-profile', (ctx) => {
 Events communication:
 
 ```typescript
-const { eventBus } = window.signa;
+const { eventBus } = signa;
 eventBus.on('my-event:update', (payload)=>{ console.log(payoload) });
 eventBus.emit('my-event:update', {value: 1});
 ```
@@ -199,7 +199,7 @@ eventBus.emit('my-event:update', {value: 1});
 
 Dependency passing:
 ```typescript
-const { provide, inject, getAppContext } = window.signa;
+const { provide, inject, getAppContext } = signa;
 provide('myApi', {
     getItems: () => [1,2,3]
 })

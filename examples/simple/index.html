@@ -9,7 +9,7 @@
 
 <body>
     <script>
-        const { defComponent, defStore, eventBus, provide, inject, getAppContext } = window.signa;
+        const { defComponent, defStore, eventBus, provide, inject, getAppContext } = window;
 
         provide('api', {
             getDate: () => new Date().toDateString(),
