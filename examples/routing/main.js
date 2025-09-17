@@ -1,43 +1,29 @@
-const { defComponent, createRouter } = signa;
-
-// --- Router ---
-const router = createRouter(({ html }) => [
-    {
-        name: "home",
-        path: "/",
-        render: () => html`<h1>Home</h1>`
-    },
-    {
-        name: "user",
-        path: "/users/:id",
-        render: ({ id, html }) => html`<h1>User ${id}</h1>`
-    },
-    {
-        name: "about",
-        path: "/about",
-        render: ({ html }) => html`<h1> About</h1>`
-    },
-    {
-        name: "notfound",
-        path: "*",
-        render: ({ html }) => html`<h1>404 Not Found</h1>`
-    }
-]);
-
-defComponent("route-link", ({ prop, html, slot, $this }) => {
-    const to = prop({ name: "to", type: String });
-    const params = prop({ name: "params", type: Object, default: {} });
-
-    $this.onclick = (e) => {
-        if (to.value) {
-            router.navigate(to.value, params.value);
+signa.defComponent("app-root", ({ html }) => {
+    const router = signa.createRouter([
+        {
+            name: "home",
+            path: "/",
+            render: () => html`<h1>Home</h1>`
+        },
+        {
+            name: "user",
+            path: "/users/:id",
+            render: ({ id }) => html`<h1>User ${id}</h1>`
+        },
+        {
+            name: "about",
+            path: "/about",
+            render: () => html`<h1> About</h1>`
+        },
+        {
+            name: "notfound",
+            path: "*",
+            render: () => html`<h1>404 Not Found</h1>`
         }
-    }
+    ]);
 
-    return () => html`${slot.default}`;
-});
+    signa.provide('router', router);
 
-defComponent("app-root", ({ html }) => {
     return () => html`
         <header>
             <h2>My App</h2>
@@ -54,6 +40,22 @@ defComponent("app-root", ({ html }) => {
         </main>
     `;
 });
+
+
+signa.defComponent("route-link", ({ prop, html, slot, $this }) => {
+    const to = prop({ name: "to", type: String });
+    const params = prop({ name: "params", type: Object, default: {} });
+    const router = signa.inject('router');
+
+    $this.onclick = (e) => {
+        if (to.value) {
+            router.navigate(to.value, params.value);
+        }
+    }
+
+    return () => html`${slot.default}`;
+});
+
 
 
 

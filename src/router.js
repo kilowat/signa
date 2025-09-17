@@ -1,20 +1,7 @@
-import { signal, computed } from '@preact/signals-core';
-import { html, htmlFor } from 'uhtml/reactive';
-import { resolveStore } from './store.js'; // если у тебя есть
+import { signal } from '@preact/signals-core';
+import { html } from 'uhtml/reactive';
 
-export function createRouter(setup) {
-    // Собираем ctx, похожий на defComponent
-    const ctx = {
-        signal,
-        computed,
-        html,
-        htmlFor,
-        store: key => resolveStore(key),
-    };
-
-    // routes описываются внутри setup, с доступом к ctx
-    const routes = setup(ctx);
-
+export function createRouter(routes) {
     const routeMap = {};
     const compiledRoutes = routes.map(r => {
         if (r.path === "*") {
@@ -55,7 +42,7 @@ export function createRouter(setup) {
         const notFound = compiledRoutes.find(r => r.catchAll);
         return {
             path,
-            route: notFound || { render: () => ctx.html`404` },
+            route: notFound || { render: () => html`404` },
             params: {}
         };
     }
@@ -81,7 +68,7 @@ export function createRouter(setup) {
 
     function View() {
         const { route, params } = current.value;
-        return route.render({ ...ctx, ...params });
+        return route.render(params);
     }
 
     return { current, navigate, View, route };
