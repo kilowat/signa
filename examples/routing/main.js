@@ -28,10 +28,10 @@ signa.defComponent("app-root", ({ html }) => {
         <header>
             <h2>My App</h2>
             <nav>
-                <route-link data-to="home"><button>Home</button></route-link>
-                <route-link data-to="about"><button>About</button></route-link>
-                <route-link data-to="user" .params=${{ id: 123 }}><button>User 123</button></route-link>
-                <route-link data-to="user" .params=${{ id: 42 }}><button>User 42</button></route-link>
+                <route-link .to=${`home`}><button>Home</button></route-link>
+                <route-link .to=${`about`}><button>About</button></route-link>
+                <route-link .to=${`user`} .params=${{ id: 123 }}><button>User 123</button></route-link>
+                <route-link .to=${`user`} .params=${{ id: 42 }}><button>User 42</button></route-link>
             </nav>
         </header>
 
@@ -46,6 +46,9 @@ signa.defComponent("route-link", ({ prop, html, slot, $this }) => {
     const to = prop({ name: "to", type: String });
     const params = prop({ name: "params", type: Object, default: {} });
     const router = signa.inject('router');
+    const route = router.route(to.value, params.value);
+
+    $this.setAttribute('href', route ?? '#');
 
     $this.onclick = (e) => {
         if (to.value) {
