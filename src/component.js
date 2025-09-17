@@ -2,6 +2,19 @@ import { reactive, html, htmlFor } from 'uhtml/reactive';
 import { effect, signal, computed } from '@preact/signals-core';
 import { createHooksContext, pushContext, popContext } from './hooks.js';
 import { resolveStore } from './store.js';
+import { componentStart, componentRendered } from './lifecycle.js';
+
+let activeComponents = 0;
+let scheduledCheck = null;
+
+function notifyIfAllReady() {
+    if (scheduledCheck) clearTimeout(scheduledCheck);
+    scheduledCheck = setTimeout(() => {
+        if (activeComponents > 0) {
+            document.dispatchEvent(new CustomEvent("signa:ready"));
+        }
+    });
+}
 
 function camelCaseToKebabCase(camelCaseString) {
     return camelCaseString
@@ -46,13 +59,12 @@ export function defComponent(tagName, setup) {
                 prop: ({ name, type, default: defaultValue, readonly = true }) => {
                     const val = this[name];
 
-                    // 1. Колбэки всегда возвращаем напрямую
+                    //Колбэки всегда возвращаем напрямую
                     if (type === Function && typeof val === 'function') {
                         this.props.set(name, val);
                         return val;
                     }
 
-                    // 2. Если передан сигнал — используем его
                     if (val && typeof val.peek === 'function') {
                         // если readonly, оборачиваем сигнал в прокси только для чтения
                         if (readonly) {
@@ -68,7 +80,6 @@ export function defComponent(tagName, setup) {
                         return val;
                     }
 
-                    // 3. Если передан простой value — оборачиваем в сигнал
                     if (val !== undefined) {
                         const sig = signal(val);
                         this.props.set(name, sig);
@@ -133,21 +144,30 @@ export function defComponent(tagName, setup) {
 
         connectedCallback() {
             this.isMounted = true;
+            componentStart();
+
             requestAnimationFrame(() => {
                 if (!this.isMounted) return;
                 try {
                     this.collectSlots();
+
                     pushContext(this.hooksContext, 'setup');
                     const renderFn = setup(this.createComponentContext());
-                    const cleanup = uRender(this, renderFn);
-                    if (typeof cleanup === 'function') this.cleanup.push(cleanup);
+                    if (renderFn !== undefined) {
+                        const cleanup = uRender(this, renderFn);
+                        if (typeof cleanup === 'function') this.cleanup.push(cleanup);
+                    }
                     popContext();
+                    queueMicrotask(() => componentRendered());
                 } catch (error) {
                     console.error(`Error mounting component ${this.tagName.toLowerCase()}:`, error);
                     this.handleMountError(error);
+                    componentRendered();
                 }
             });
         }
+
+
         disconnectedCallback() {
             this.isMounted = false;
             this.cleanup.forEach(fn => { try { fn(); } catch { } });
