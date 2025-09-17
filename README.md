@@ -264,7 +264,7 @@ defComponent("app-root", ({ html }) => {
 defComponent("route-link", ({ prop, html, slot, $this }) => {
     const to = prop({ name: "to", type: String });
     const params = prop({ name: "params", type: Object, default: {} });
-    const router = signa.inject('router');
+    const router = inject('router');
     const route = router.route(to.value, params.value);
 
     $this.setAttribute('href', route ?? '#');
