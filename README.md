@@ -193,7 +193,7 @@ Events communication:
 const { eventBus } = signa;
 eventBus.on('my-event:update', (payload)=>{ console.log(payoload) });
 eventBus.emit('my-event:update', {value: 1});
-
+// Global event
 const { onSignaReady } = signa;
 onSignaReady(()=>{
     console.log('all components mounted end render html ready')

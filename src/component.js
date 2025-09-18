@@ -4,17 +4,6 @@ import { createHooksContext, pushContext, popContext } from './hooks.js';
 import { resolveStore } from './store.js';
 import { componentStart, componentRendered } from './lifecycle.js';
 
-let activeComponents = 0;
-let scheduledCheck = null;
-
-function notifyIfAllReady() {
-    if (scheduledCheck) clearTimeout(scheduledCheck);
-    scheduledCheck = setTimeout(() => {
-        if (activeComponents > 0) {
-            document.dispatchEvent(new CustomEvent("signa:ready"));
-        }
-    });
-}
 
 function camelCaseToKebabCase(camelCaseString) {
     return camelCaseString
