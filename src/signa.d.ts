@@ -2,7 +2,6 @@
 import type {
     Signal as PreactSignal,
     ReadonlySignal as PreactReadonlySignal,
-    Signal,
 } from '@preact/signals-core';
 
 declare global {
@@ -48,9 +47,13 @@ declare global {
         computed: <T = any>(fn: () => T) => ReadonlySignal<T>;
         effect: (fn: () => any) => void;
 
+        prop<T extends Function>(options: PropOptions<T> & { readonly?: false }): T;
+        prop<T extends Function>(options: PropOptions<T> & { readonly: true }): T;
+
         prop<T, R extends boolean | undefined = false>(
             options: PropOptions<T> & { readonly?: R }
         ): PropReturn<T, R>;
+
         prop<T>(opt: PropOptions<T>): Signal<T>;
 
         slot: SlotFn;
@@ -75,7 +78,11 @@ declare global {
     };
 
     type PropReturn<T, R extends boolean | undefined> =
-        R extends true ? ReadonlySignal<T> : Signal<T>;
+        T extends Function
+        ? T
+        : R extends true
+        ? ReadonlySignal<T>
+        : Signal<T>;
 
     type SlotFn = ((name?: string) => any[]) & { default: any[] };
 

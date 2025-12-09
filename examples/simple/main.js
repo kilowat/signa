@@ -65,64 +65,63 @@ defComponent('counter-component', (ctx) => {
     });
 
     const counterStore = store('counterStore');
-    //Копия чтобы не изменять prop
-    const count = signal(countProp.value);
+
 
     effect(() => {
         return () => console.log('unmount');
     })
 
     effect(() => {
-        console.log("Whatch value " + count);
+        console.log("Whatch value " + countProp.value);
     })
 
     return () => html`
-                <div>
-                    <div>${header}</div>
-                    <div>${slot.default}</div>
-                    <div>${footer}</div>
-                </div>
-                <div>
-                    <div>bool prop: ${boolProp.value}</div>
-                    <div>array prop: ${JSON.stringify(arrayProp.value)}</div>
-                    <div>object prop: ${JSON.stringify(objectProp.value)}</div>
-                </div>
-                <div>
-                    CountProp: ${countProp.value}
-                </div>
-                <div>
-                    Count: ${count.value}
-                </div>
-                <div>
-                    CountStore: ${counterStore.count.value}
-                    <button onclick=${() => counterStore.inc()}>Increment store</button>
-                    <button onclick=${() => count.value++}>Increment local count</button>
-                </div>
-            `;
+        <div>
+            <div>${header}</div>
+            <div>${slot.default}</div>
+            <div>${footer}</div>
+        </div>
+        <div>
+            <div>bool prop: ${boolProp.value}</div>
+            <div>array prop: ${JSON.stringify(arrayProp.value)}</div>
+            <div>object prop: ${JSON.stringify(objectProp.value)}</div>
+        </div>
+        <div>
+            CountProp: ${countProp.value}
+        </div>
+        <div>
+            CountStore: ${counterStore.count.value}
+            <button onclick=${() => counterStore.inc()}>Increment store</button>
+            <button onclick=${() => countProp.value++}>Increment local count</button>
+        </div>
+    `;
 });
 
 defComponent('parent-component', ({ signal, html }) => {
     const count = signal(10);
     return () => html`
-                <div>
-                    <div>Parent: ${count.value}</div>
-                    <button onclick=${() => count.value++}>+</button>
-                    <child-component .count=${count.value} .refCount=${count} .myClick=${() => count.value++}></child-component>
-                </div>`;
+        <div>
+            <div>Parent: ${count.value}</div>
+            <button onclick=${() => count.value++}>+</button>
+            <child-component .count=${count.value} .refCount=${count} .myClick=${() => count.value++}></child-component>
+        </div>
+    `;
 });
 
 defComponent('child-component', ({ prop, html }) => {
     const count = prop({ name: 'count', type: Number });
-    const refCount = prop({ name: 'refCount', type: Object, readonly: false });
+    const refCount = prop({ name: 'refCount', type: Object, });
     const myClick = prop({ name: 'myClick', type: Function });
+
     return () => html`
-            <div>
-                Click: ${refCount.value} <button onclick=${myClick}>Change</button>
-            </div>
-            <div>
-                Parent signal: ${refCount.value} <button onclick=${() => refCount.value++}>Change</button> 
-            </div>
-            <div>
-                Local count: ${count.value} <button onclick=${() => count.value++}>Change</button>
-            </div>`
+        <div>
+            Click: ${refCount.value} <button onclick=${myClick}>Change</button>
+        </div>
+        <div>
+            Parent signal: ${refCount.value} <button onclick=${() => refCount.value++}>Change</button> 
+        </div>
+        <div>
+            Local count: ${count.value} <button onclick=${() => count.value++}>Change</button>
+        </div>
+    `
 });
