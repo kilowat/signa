@@ -110,6 +110,25 @@ defComponent('my-component', (ctx) => {
 
 ```
 
+### Private template builder
+Some component with template you don't need define in window, you can do this
+
+```typescript
+const { html } = signa;
+
+/**
+ * @param {Signal<string>}
+ */
+const buildSomeTemplte = (title) => html`<h4>${title.value}</h4>`
+
+defComponent('my-component', ({ html, prop, signal }) => {
+    //Caution all signal prop are read only
+    const title = signal('my title');
+    return html `${buildSomeTemplte(title)}`
+})
+
+
+```
 ### Usage props
 
 Props can be defined with the following types.

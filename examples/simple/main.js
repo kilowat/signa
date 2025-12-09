@@ -1,4 +1,4 @@
-const { defComponent, defStore, eventBus, provide, inject, getAppContext } = signa;
+const { defComponent, defStore, eventBus, provide, inject, getAppContext, html } = signa;
 
 provide('api', {
     getDate: () => new Date().toDateString(),
@@ -20,6 +20,12 @@ defStore('counterStore', ({ signal }) => {
         inc,
     }
 })
+
+/**
+ * 
+ * @param {Signal<string>} title 
+ */
+const buildSomePartTempltate = (title) => html`<h3>${title.value}</h3>`
 
 defComponent('counter-component', (ctx) => {
     const {
@@ -66,6 +72,7 @@ defComponent('counter-component', (ctx) => {
 
     const counterStore = store('counterStore');
     const count = signal(countProp);
+    const title = signal('My title');
 
     effect(() => {
         return () => console.log('unmount');
@@ -78,6 +85,7 @@ defComponent('counter-component', (ctx) => {
             <div>${slot.default}</div>
             <div>${footer}</div>
         </div>
+        <div>Part template:${buildSomePartTempltate(title)}</div>
         <div>
             <div>bool prop: ${boolProp}</div>
             <div>array prop: ${JSON.stringify(arrayProp)}</div>
