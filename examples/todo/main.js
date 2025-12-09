@@ -67,7 +67,8 @@ defComponent('todo-list', (ctx) => {
             <input 
                 oninput="${(el) => inputName.value = el.target.value}" 
                 type="text" 
-                placeholder="Новая задача..." 
+                placeholder="Новая задача..."
+                .value=${inputName.value} 
                 required>
             <button type="button" onclick=${create}>Add</button>
         </form>
