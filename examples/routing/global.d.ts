@@ -14,21 +14,21 @@ declare global {
         userId: string;
     }
     interface CounterStore {
-        count: Signa.Signal<number>;
+        count: Signal<number>;
         inc: () => void;
         dec: () => void;
     }
 
     interface UserStore {
-        name: Signa.Signal<string>;
-        email: Signa.Signal<string>;
+        name: Signal<string>;
+        email: Signal<string>;
         login: (email: string, password: string) => Promise<void>;
         logout: () => void;
     }
 
     interface CartStore {
-        items: Signa.Signal<Array<{ id: string; name: string; price: number }>>;
-        total: Signa.ReadonlySignal<number>;
+        items: Signal<Array<{ id: string; name: string; price: number }>>;
+        total: ReadonlySignal<number>;
         addItem: (item: any) => void;
         removeItem: (id: string) => void;
         clear: () => void;

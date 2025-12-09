@@ -45,7 +45,7 @@ export function defComponent(tagName, setup) {
                 computed,
                 html,
                 htmlFor,
-                prop: ({ name, type, default: defaultValue, readonly = true }) => {
+                prop: ({ name, type, default: defaultValue, readonly = false }) => {
                     const val = this[name];
 
                     //Колбэки всегда возвращаем напрямую

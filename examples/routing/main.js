@@ -1,10 +1,4 @@
 
-/**
- * @type {User|null}
- */
-const user = null
-user.name
-
 signa.defComponent("app-root", ({ html }) => {
     const router = signa.createRouter([
         {
@@ -49,10 +43,13 @@ signa.defComponent("app-root", ({ html }) => {
 });
 
 
-signa.defComponent("route-link", ({ prop, html, slot, $this }) => {
+signa.defComponent("route-link", ({ prop, html, slot, $this, }) => {
     const to = prop({ name: "to", type: String });
 
     const params = prop({ name: "params", type: Object, default: {} });
+    /**
+     * @type {Router}
+     */
     const router = signa.inject('router');
     const route = router.route(to.value, params.value);
 
