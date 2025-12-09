@@ -47,14 +47,19 @@ declare global {
         computed: <T = any>(fn: () => T) => ReadonlySignal<T>;
         effect: (fn: () => any) => void;
 
-        prop<T extends Function>(options: PropOptions<T> & { readonly?: false }): T;
-        prop<T extends Function>(options: PropOptions<T> & { readonly: true }): T;
+        prop(options: { name: string; type: FunctionConstructor; default?: Function }): Function;
 
-        prop<T, R extends boolean | undefined = false>(
-            options: PropOptions<T> & { readonly?: R }
-        ): PropReturn<T, R>;
+        prop(options: { name: string; type: 'Signal'; default?: never }): ReadonlySignal<any>;
 
-        prop<T>(opt: PropOptions<T>): Signal<T>;
+        prop(options: { name: string; type: StringConstructor; default?: string }): string;
+
+        prop(options: { name: string; type: NumberConstructor; default?: number }): number;
+
+        prop(options: { name: string; type: BooleanConstructor; default?: boolean }): boolean;
+
+        prop(options: { name: string; type: ObjectConstructor; default?: object }): object;
+
+        prop(options: { name: string; type: ArrayConstructor; default?: any[] }): any[];
 
         slot: SlotFn;
 
@@ -70,19 +75,7 @@ declare global {
         effect: (fn: () => any) => void;
     }
 
-    type PropOptions<T> = {
-        name: string;
-        type: new (...args: any[]) => T;
-        default?: T;
-        readonly?: boolean;
-    };
 
-    type PropReturn<T, R extends boolean | undefined> =
-        T extends Function
-        ? T
-        : R extends true
-        ? ReadonlySignal<T>
-        : Signal<T>;
 
     type SlotFn = ((name?: string) => any[]) & { default: any[] };
 

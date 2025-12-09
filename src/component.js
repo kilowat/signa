@@ -11,6 +11,10 @@ function camelCaseToKebabCase(camelCaseString) {
         .toLowerCase();
 }
 
+function isSignal(obj) {
+    return obj && typeof obj === 'object' && typeof obj.peek === 'function' && 'value' in obj;
+}
+
 export function defComponent(tagName, setup) {
     const uRender = reactive(effect);
 
@@ -45,45 +49,55 @@ export function defComponent(tagName, setup) {
                 computed,
                 html,
                 htmlFor,
-                prop: ({ name, type, default: defaultValue, readonly = false }) => {
+                prop: ({ name, type, default: defaultValue }) => {
                     const val = this[name];
 
-                    //Колбэки всегда возвращаем напрямую
-                    if (type === Function && typeof val === 'function') {
-                        this.props.set(name, val);
-                        return val;
-                    }
-
-                    if (val && typeof val.peek === 'function') {
-                        // если readonly, оборачиваем сигнал в прокси только для чтения
-                        if (readonly) {
+                    // Если тип указан как 'Signal'
+                    if (type === 'Signal' || type === signal) {
+                        if (val !== undefined) {
+                            if (!isSignal(val)) {
+                                throw new Error(`Property "${name}" must be a Signal, but received ${typeof val}`);
+                            }
+                            // Делаем Signal readonly
                             const readOnlySignal = {
                                 get value() { return val.value; },
-                                set value(value) { console.warn('prop ' + name + ' is readonly'); },
+                                set value(v) { console.warn(`Property "${name}" is readonly`); },
                                 peek: val.peek.bind(val)
                             };
                             this.props.set(name, readOnlySignal);
                             return readOnlySignal;
                         }
+                        throw new Error(`Property "${name}" with type Signal is required but not provided`);
+                    }
+
+                    // Колбэки всегда возвращаем напрямую
+                    if (type === Function && typeof val === 'function') {
                         this.props.set(name, val);
                         return val;
                     }
 
-                    if (val !== undefined) {
-                        const sig = signal(val);
-                        this.props.set(name, sig);
-                        return sig;
+                    // Если передан Signal, но ожидается примитивный тип - берем value
+                    if (isSignal(val) && (type === String || type === Number || type === Boolean || type === Object || type === Array)) {
+                        const extractedValue = val.value;
+                        this.props.set(name, extractedValue);
+                        return extractedValue;
                     }
 
+                    // Если передано обычное значение
+                    if (val !== undefined) {
+                        this.props.set(name, val);
+                        return val;
+                    }
+
+                    // Чтение из атрибутов
                     const attrData = this.getAttribute(`data-${name}`);
                     const attrValue = attrData === null ? this.getAttribute(`data-${camelCaseToKebabCase(name)}`) : attrData;
                     const initialValue = attrValue !== null
                         ? this.parseAttributeValue(attrValue, type)
                         : (defaultValue !== undefined ? defaultValue : this.getDefaultForType(type));
 
-                    const sig = signal(initialValue);
-                    this.props.set(name, sig);
-                    return sig;
+                    this.props.set(name, initialValue);
+                    return initialValue;
                 },
                 slot: slotFn,
                 store: key => resolveStore(key),

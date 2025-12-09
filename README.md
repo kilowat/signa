@@ -65,14 +65,14 @@ defComponent('my-component', (ctx) => {
         store     // Get store instance by key
     } = ctx;
 
-    // Define props
-    const title = prop({ 
+    // Define props primitave value not reactive
+    const titleProp = prop({ 
         name: 'title',
         type: String,
         default: 'Hello',
-        readonly: false,
     });
     
+    const title = signal(titleProp);
     // Use slots
     const headerContent = slot('header');
     
@@ -115,15 +115,32 @@ defComponent('my-component', (ctx) => {
 Props can be defined with the following types.
 
 ```typescript
-const myProp = prop({
+const myPropInitValue = prop({
     name: 'myPropName', // this name in html data-myPropName or direct pass .myPropName="{$somValue}"
-    type: String | Number | Boolean | Array | Object | Function,
+    type: String | Number | Boolean | Array | Object | Function | 'Signal',
     default: 'default value',
-    readonly: false,
 });
-return html`<div>${myProp.value}</div>`
+
+const myReactiveValue = signal(myPropInitValue);
+
+return html`<div>${myReactiveValue.value}</div>`
 //in component pass signal as prop value to child
-return html`<my-component .count="${count}"></my-component>`
+defComponent('my-component', ({ html, prop }) => {
+    //Caution all signal prop are ready only
+    const countReactiveNow = prop({
+        name: 'count',  
+        type: 'Signal', // pass reactive value
+    });
+
+    return html `${countReactiveNow.value}`
+})
+
+//in parent
+defComponent('my-component', ({ html, prop }) => {
+    const count = signal(0);
+    return html`<my-component .count="${count}"></my-component>`
+})
+
 // as function
 const onPressButton = prop({
     name: 'onPressButon',

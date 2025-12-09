@@ -65,15 +65,12 @@ defComponent('counter-component', (ctx) => {
     });
 
     const counterStore = store('counterStore');
-
+    const count = signal(countProp);
 
     effect(() => {
         return () => console.log('unmount');
     })
 
-    effect(() => {
-        console.log("Whatch value " + countProp.value);
-    })
 
     return () => html`
         <div>
@@ -82,17 +79,18 @@ defComponent('counter-component', (ctx) => {
             <div>${footer}</div>
         </div>
         <div>
-            <div>bool prop: ${boolProp.value}</div>
-            <div>array prop: ${JSON.stringify(arrayProp.value)}</div>
-            <div>object prop: ${JSON.stringify(objectProp.value)}</div>
+            <div>bool prop: ${boolProp}</div>
+            <div>array prop: ${JSON.stringify(arrayProp)}</div>
+            <div>object prop: ${JSON.stringify(objectProp)}</div>
         </div>
         <div>
-            CountProp: ${countProp.value}
+            CountProp: ${countProp}
         </div>
+        <div>Local counter: ${count.value}</div>
         <div>
             CountStore: ${counterStore.count.value}
             <button onclick=${() => counterStore.inc()}>Increment store</button>
-            <button onclick=${() => countProp.value++}>Increment local count</button>
+            <button onclick=${() => count.value++}>Increment local count</button>
         </div>
     `;
 });
@@ -108,9 +106,10 @@ defComponent('parent-component', ({ signal, html }) => {
     `;
 });
 
-defComponent('child-component', ({ prop, html }) => {
-    const count = prop({ name: 'count', type: Number });
-    const refCount = prop({ name: 'refCount', type: Object, });
+defComponent('child-component', ({ prop, html, signal }) => {
+    const countInitValue = prop({ name: 'count', type: Number });
+    const count = signal(countInitValue);
+    const refCount = prop({ name: 'refCount', type: 'Signal', });
     const myClick = prop({ name: 'myClick', type: Function });
 
     return () => html`
@@ -118,7 +117,7 @@ defComponent('child-component', ({ prop, html }) => {
             Click: ${refCount.value} <button onclick=${myClick}>Change</button>
         </div>
         <div>
-            Parent signal: ${refCount.value} <button onclick=${() => refCount.value++}>Change</button> 
+            Parent signal: ${refCount.value}
         </div>
         <div>
             Local count: ${count.value} <button onclick=${() => count.value++}>Change</button>

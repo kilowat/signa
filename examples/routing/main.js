@@ -47,17 +47,16 @@ signa.defComponent("route-link", ({ prop, html, slot, $this, }) => {
     const to = prop({ name: "to", type: String });
 
     const params = prop({ name: "params", type: Object, default: {} });
-    /**
-     * @type {Router}
-     */
+
+
     const router = signa.inject('router');
-    const route = router.route(to.value, params.value);
+    const route = router.route(to, params);
 
     $this.setAttribute('href', route ?? '#');
 
     $this.onclick = (e) => {
-        if (to.value) {
-            router.navigate(to.value, params.value);
+        if (to) {
+            router.navigate(to, params);
         }
     }
 
