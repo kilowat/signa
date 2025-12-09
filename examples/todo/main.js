@@ -1,0 +1,110 @@
+const { defComponent } = signa;
+
+defComponent('todo-list', (ctx) => {
+    const { html, signal } = ctx;
+
+    const todoList = signal([
+        { id: 0, name: 'Check email', status: false },
+        { id: 1, name: 'Do morning exercise', status: true },
+        { id: 2, name: 'Make breakfast', status: false },
+        { id: 3, name: 'Read news', status: false },
+        { id: 4, name: 'Call colleague', status: true },
+        { id: 5, name: 'Write code', status: false },
+        { id: 6, name: 'Attend meeting', status: false }
+    ])
+
+    let counter = todoList.value.length;
+
+    const inputName = signal('');
+
+    const create = () => {
+        const newItem = {
+            id: ++counter,
+            name: inputName.value.length == 0 ? 'Unamed' : inputName.value,
+            status: false
+        };
+        todoList.value = [...todoList.value, newItem];
+        inputName.value = '';
+    };
+    /**
+     * 
+     * @param {string} id 
+     * @param {boolean} status 
+     */
+    const changeStatus = (id, status) => {
+        todoList.value = todoList.value.map(item =>
+            item.id === id ? { ...item, ...{ status } } : item
+        );
+    };
+
+    const filterState = signal(null);
+
+    const getFilteredTodos = () => {
+        if (filterState.value == null) return todoList.value;
+        return todoList.value.filter(item => item.status == filterState.value);
+    };
+
+    const filterLabels = [
+        {
+            id: 'all',
+            name: 'All',
+            value: null,
+        },
+        {
+            id: 'active',
+            name: 'Active',
+            value: false,
+        },
+        {
+            id: 'complete',
+            name: 'Complete',
+            value: true,
+        }
+    ];
+
+    const buildForm = () => html`
+        <form action="#">
+            <input 
+                oninput="${(el) => inputName.value = el.target.value}" 
+                type="text" 
+                placeholder="Новая задача..." 
+                required>
+            <button type="button" onclick=${create}>Add</button>
+        </form>
+    `;
+
+    const buildFilters = () => html`
+        <div class="filters">
+            ${filterLabels.map((item) => html`
+                <input 
+                    type="radio" 
+                    name="filter" 
+                    id=${'filter-' + item.id}  
+                    onchange=${(el) => filterState.value = item.value}
+                    .checked=${item.value === filterState.value}>
+                <label  for=${'filter-' + item.id}>${item.name}</label>
+            `)}
+
+        </div>
+    `;
+
+    const buildList = () => html`
+        <ul>
+            ${getFilteredTodos().map((item) => html`
+                <li class=${item.status ? 'completed' : ''}>
+                    <input 
+                        type="checkbox" 
+                        onchange=${(el) => changeStatus(item.id, el.target.checked)} 
+                        .checked=${item.status}
+                        id=${'task-' + item.id}>
+                    <label for=${'task-' + item.id}>${item.name}</label>
+                </li>
+            `)}
+        </ul>
+    `
+    return () => html`
+        ${buildForm()}
+        ${buildFilters()}
+        ${buildList()}
+    `;
+});
