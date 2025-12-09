@@ -100,7 +100,7 @@ declare global {
         current: ReadonlySignal<ParsedRoute>;
         route(name: string, params?: Record<string, any>): string;
         navigate(nameOrPath: string, params?: Record<string, any>): void;
-        View(): any;
+        view(): any;
     }
 }
 

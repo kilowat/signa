@@ -66,10 +66,10 @@ export function createRouter(routes) {
         }
     }
 
-    function View() {
+    function view() {
         const { route, params } = current.value;
         return route.render(params);
     }
 
-    return { current, navigate, View, route };
+    return { current, navigate, view, route };
 }

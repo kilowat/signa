@@ -261,7 +261,7 @@ defComponent("app-root", ({ html }) => {
         </header>
 
         <main>
-            ${router.View()}
+            ${router.view()}
         </main>
     `;
 });
