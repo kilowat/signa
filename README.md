@@ -126,7 +126,7 @@ const myReactiveValue = signal(myPropInitValue);
 return html`<div>${myReactiveValue.value}</div>`
 //in component pass signal as prop value to child
 defComponent('my-component', ({ html, prop }) => {
-    //Caution all signal prop are ready only
+    //Caution all signal prop are read only
     const countReactiveNow = prop({
         name: 'count',  
         type: 'Signal', // pass reactive value
