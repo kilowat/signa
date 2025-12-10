@@ -37,27 +37,23 @@ defComponent('counter-component', (ctx) => {
     }, 2000)
 
     // Props
-    const countProp = prop({
-        name: 'count',
+    const countProp = prop('count', {
         type: Number,
         attribute: true,
         default: 0
     });
 
-    const boolProp = prop({
-        name: 'boolValue',
+    const boolProp = prop('boolValue', {
         type: Boolean,
         default: false
     });
 
-    const arrayProp = prop({
-        name: 'arrayValue',
+    const arrayProp = prop('arrayValue', {
         type: Array,
         default: []
     });
 
-    const objectProp = prop({
-        name: 'objectProp',
+    const objectProp = prop('objectProp', {
         type: Object,
         default: null
     });
@@ -106,10 +102,9 @@ defComponent('parent-component', ({ signal, html }) => {
 });
 
 defComponent('child-component', ({ prop, html, signal }) => {
-    const propCount = prop({ name: 'count', type: Number });
+    const propCount = prop('count', { type: Number });
     const count = signal(propCount.value);
-
-    const myClick = prop({ name: 'myClick', type: Function });
+    const myClick = prop('myClick', { type: Function });
 
     return () => html`
     <div>

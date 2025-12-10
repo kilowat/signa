@@ -44,9 +44,9 @@ defComponent("app-root", ({ html, createRouter, provide }) => {
 
 
 defComponent("route-link", ({ prop, html, slot, $this, inject }) => {
-    const to = prop({ name: "to", type: String }).value;
+    const to = prop("to", { type: String }).value;
 
-    const params = prop({ name: "params", type: Object, default: {} }).value;
+    const params = prop("params", { type: Object, default: {} }).value;
 
 
     const router = inject('router');

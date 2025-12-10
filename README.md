@@ -116,21 +116,18 @@ defComponent('my-component', (ctx) => {
 Props can be defined with the following types.
 
 ```typescript
-const myProp = prop({
-    name: 'myPropName', // this name in html data-myPropName or direct pass .myPropName="{$somValue}"
+const myProp = prop( 'myPropName', { // this name in html data-myPropName or direct pass .myPropName="{$somValue}"
     type: String | Number | Boolean | Array | Object | Function
     default: 'default value',
 });
-
+//or
+const shortProp = prop('myProp');
 
 return html`<div>${myProp.value}</div>`
 //in component pass signal as prop value to child
 defComponent('my-component', ({ html, prop }) => {
     //Caution all signal prop are read only
-    const count = prop({
-        name: 'count',  
-        type: 'Number',
-    });
+    const count = prop('count');
 
     return html `${count.value}`
 })
@@ -142,10 +139,7 @@ defComponent('my-component', ({ html, prop }) => {
 })
 
 // as function
-const onPressButton = prop({
-    name: 'onPressButon',
-    type: Function,
-});
+const onPressButton = prop('onPressButon');
 
 return html`<my-component .onPressButton="${() => console.log('onPress')}"></my-component>`
 ```

@@ -63,7 +63,7 @@ declare global {
     // Component context
     // --------------------------------
 
-    // Маппинг типа → тип сигнала
+    // Соответствие type → возвращаемый сигнал
     type PropTypeMap<T> =
         T extends typeof String ? ReadonlySignal<string> :
         T extends typeof Number ? ReadonlySignal<number> :
@@ -83,18 +83,22 @@ declare global {
         computed: <T = any>(fn: () => T) => ReadonlySignal<T>;
         effect: (fn: () => any) => void;
 
-        // -------- prop: строго выводимый тип через PropTypeMap --------
-        prop<T extends
-            typeof String |
-            typeof Number |
-            typeof Boolean |
-            typeof Object |
-            typeof Array |
-            FunctionConstructor>(options: {
-                name: string;
+        // -------- НОВАЯ сигнатура prop(name, { type, default }) --------
+        prop<
+            T extends
+            | typeof String
+            | typeof Number
+            | typeof Boolean
+            | typeof Object
+            | typeof Array
+            | FunctionConstructor
+        >(
+            name: string,
+            opts: {
                 type: T;
                 default?: any;
-            }): PropTypeMap<T>;
+            }
+        ): PropTypeMap<T>;
 
         slot: SlotFn;
 

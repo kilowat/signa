@@ -53,7 +53,7 @@ export function defComponent(tagName, setup) {
                 computed,
                 html,
                 htmlFor,
-                prop: ({ name, type, default: defaultValue }) => {
+                prop: (name, { type, default: defaultValue }) => {
 
                     // Если уже существует — вернуть
                     if (this.props.has(name)) return this.props.get(name);
@@ -99,8 +99,6 @@ export function defComponent(tagName, setup) {
                     };
 
                     this.props.set(name, readonly);
-                    this._rawProps = this._rawProps || {};
-                    this._rawProps[name] = s;
 
                     return readonly;
                 },
@@ -157,18 +155,6 @@ export function defComponent(tagName, setup) {
         connectedCallback() {
             this.isMounted = true;
             componentStart();
-            this._attrObserver = new MutationObserver(mutations => {
-                for (const m of mutations) {
-                    if (m.type === 'attributes' && m.attributeName.startsWith('data-')) {
-                        const newValue = this.getAttribute(m.attributeName);
-                        this._updatePropFromAttribute(m.attributeName, newValue);
-                    }
-                }
-            });
-
-            this._attrObserver.observe(this, {
-                attributes: true
-            });
             requestAnimationFrame(() => {
                 if (!this.isMounted) return;
                 try {
@@ -189,27 +175,12 @@ export function defComponent(tagName, setup) {
             });
         }
 
-        _updatePropFromAttribute(attrName, value) {
-            const propName = attrName
-                .replace(/^data-/, '')
-                .replace(/-([a-z])/g, (_, c) => c.toUpperCase());
-
-            const raw = this._rawProps?.[propName];
-            if (!raw || !isSignal(raw)) return;
-
-            const type = raw.__type || String;
-            const parsed = this.parseAttributeValue(value, type);
-
-            raw.value = parsed;
-        }
-
         disconnectedCallback() {
             this.isMounted = false;
             this.cleanup.forEach(fn => { try { fn(); } catch { } });
             this.cleanup = [];
             this.hooksContext.cleanups.forEach(fn => { try { fn(); } catch { } });
             this.hooksContext.cleanups = [];
-            if (this._attrObserver) this._attrObserver.disconnect();
         }
     }
 
