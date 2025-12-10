@@ -69,8 +69,7 @@ defComponent('my-component', (ctx) => {
     } = ctx;
 
     // Define props  all props ReadOnly
-    const title = prop('title', { type: String, default: 'Hello'});
-    const shortProp = prop('myProp');
+    const title = prop('title');
     // Use slots
     const headerContent = slot('header');
     
