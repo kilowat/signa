@@ -2,88 +2,36 @@
 import type {
     Signal as PreactSignal,
     ReadonlySignal as PreactReadonlySignal,
-} from '@preact/signals-core';
+} from "@preact/signals-core";
 
 declare global {
+    // Base signal types 
     type Signal<T = any> = PreactSignal<T>;
     type ReadonlySignal<T = any> = PreactReadonlySignal<T>;
 
-    interface StoreRegistry { }
-
-    const signa: {
-        signal<T = any>(initial?: T): Signal<T>;
-        computed<T = any>(fn: () => T): ReadonlySignal<T>;
-        effect(fn: () => any): () => void;
-
-        defComponent(
-            tagName: string,
-            setup: (ctx: ComponentContext) => (() => any) | void
-        ): void;
-
-        provide<T = any>(key: string, value: T): void;
-        inject<T = any>(key: string): T;
-        getAppContext(): Map<string, any>;
-
-        defStore(key: string, factory: (ctx: StoreContext) => any): void;
-        resolveStore<T = any>(key: string): T;
-        resetStore(key: string): void;
-        clearAllStores(): void;
-
-        eventBus: EventBus;
-
-        componentStart(): void;
-        componentRendered(): void;
-        onSignaReady(cb: () => void): void;
-
-        createRouter(routes: RouteDefinition[]): Router;
-    };
-
-    interface ComponentContext {
-        $this: HTMLElement;
-        html: (strings: TemplateStringsArray, ...values: any[]) => any;
-        htmlFor: (ref: any) => any;
-
-        signal: <T = any>(initial?: T) => Signal<T>;
-        computed: <T = any>(fn: () => T) => ReadonlySignal<T>;
-        effect: (fn: () => any) => void;
-
-        prop(options: { name: string; type: FunctionConstructor; default?: Function }): Function;
-
-        prop(options: { name: string; type: 'Signal'; default?: never }): ReadonlySignal<any>;
-
-        prop(options: { name: string; type: StringConstructor; default?: string }): string;
-
-        prop(options: { name: string; type: NumberConstructor; default?: number }): number;
-
-        prop(options: { name: string; type: BooleanConstructor; default?: boolean }): boolean;
-
-        prop(options: { name: string; type: ObjectConstructor; default?: object }): object;
-
-        prop(options: { name: string; type: ArrayConstructor; default?: any[] }): any[];
-
-        slot: SlotFn;
-
-        store<K extends keyof StoreRegistry>(key: K): StoreRegistry[K];
-        store<T = any>(key: string): T;
-
-        effectWithCleanup?: (fn: () => void | (() => void)) => void;
-    }
-
+    // -----------------------------
+    // Store system
+    // -----------------------------
     interface StoreContext {
         signal: <T = any>(initial?: T) => Signal<T>;
         computed: <T = any>(fn: () => T) => ReadonlySignal<T>;
         effect: (fn: () => any) => void;
     }
 
-
-
-    type SlotFn = ((name?: string) => any[]) & { default: any[] };
-
-    interface EventBus {
-        emit(type: string, payload?: any): void;
-        on(type: string, handler: (payload: any) => void): void;
+    interface StoreRegistry {
+        [key: string]: any;
     }
 
+    // -----------------------------
+    // Slots
+    // -----------------------------
+    type SlotFn = ((name?: string) => any[]) & {
+        default: any[];
+    };
+
+    // -----------------------------
+    // Router
+    // -----------------------------
     interface RouteDefinition {
         name?: string;
         path: string;
@@ -98,10 +46,72 @@ declare global {
 
     interface Router {
         current: ReadonlySignal<ParsedRoute>;
-        route(name: string, params?: Record<string, any>): string;
         navigate(nameOrPath: string, params?: Record<string, any>): void;
+        route(name: string, params?: Record<string, any>): string;
         view(): any;
     }
+
+    // -----------------------------
+    // Event bus
+    // -----------------------------
+    interface EventBus {
+        emit(type: string, payload?: any): void;
+        on(type: string, handler: (payload: any) => void): void;
+    }
+
+    // -----------------------------
+    // Component context
+    // -----------------------------
+    interface ComponentContext {
+        $this: HTMLElement;
+
+        // template
+        html: (strings: TemplateStringsArray, ...values: any[]) => any;
+        htmlFor: (ref: any) => any;
+
+        // signals
+        signal: <T = any>(initial?: T) => Signal<T>;
+        computed: <T = any>(fn: () => T) => ReadonlySignal<T>;
+        effect: (fn: () => any) => void;
+
+        // props
+        prop(options: { name: string; type: "Signal" }): ReadonlySignal<any>;
+        prop(options: { name: string; type: typeof String; default?: string }): string;
+        prop(options: { name: string; type: typeof Number; default?: number }): number;
+        prop(options: { name: string; type: typeof Boolean; default?: boolean }): boolean;
+        prop(options: { name: string; type: typeof Object; default?: object }): object;
+        prop(options: { name: string; type: typeof Array; default?: any[] }): any[];
+        prop(options: { name: string; type: FunctionConstructor }): Function;
+
+        // slots
+        slot: SlotFn;
+
+        // store
+        store<T = any>(key: string): T;
+
+        // DI
+        provide<T = any>(key: string, value: T): void;
+        inject<T = any>(key: string): T;
+
+        // router factory
+        createRouter(routes: RouteDefinition[]): Router;
+
+        // event bus injected into context
+        eventBus: EventBus;
+    }
+
+    // -----------------------------
+    // Global API (ONLY THESE 2!)
+    // -----------------------------
+    const defComponent: (
+        tagName: string,
+        setup: (ctx: ComponentContext) => (() => any) | void
+    ) => void;
+
+    const defStore: (
+        key: string,
+        factory: (ctx: StoreContext) => any
+    ) => void;
 }
 
 export { };

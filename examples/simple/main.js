@@ -59,9 +59,9 @@ defComponent('counter-component', (ctx) => {
     const title = signal('My title');
 
     effect(() => {
+        console.log('mount');
         return () => console.log('unmount');
     })
-
 
     return () => html`
         <div>
