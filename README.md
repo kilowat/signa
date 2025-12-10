@@ -26,7 +26,6 @@ todo
 <script src="../dist/signa.min.js"></script>
 ```
 ```javascript
-const { defComponent, defStore} = signa;
 ```
 
 ### Component Example
@@ -63,6 +62,10 @@ defComponent('my-component', (ctx) => {
         prop,         // Define props
         slot         // Access slots
         store     // Get store instance by key
+        inject, // DI get by key 
+        provide, // DI add by key
+        eventBus, // Event bus
+        createRouter, // Routing
     } = ctx;
 
     // Define props primitave value not reactive
@@ -107,26 +110,6 @@ defComponent('my-component', (ctx) => {
         </div>
     `;
 });
-
-```
-
-### Private template builder
-Some component with template you don't need define in window, you can do this
-
-```typescript
-const { html } = signa;
-
-/**
- * @param {Signal<string>}
- */
-const buildSomeTemplte = (title) => html`<h4>${title.value}</h4>`
-
-defComponent('my-component', ({ html, prop, signal }) => {
-    //Caution all signal prop are read only
-    const title = signal('my title');
-    return html `${buildSomeTemplte(title)}`
-})
-
 
 ```
 ### Usage props
@@ -226,21 +209,18 @@ defComponent('user-profile', (ctx) => {
 Events communication:
 
 ```typescript
-const { eventBus } = signa;
-eventBus.on('my-event:update', (payload)=>{ console.log(payoload) });
+const { eventBus } = ctx;
+eventBus.on('my-event:update', (payload)=> { console.log(payoload) });
 eventBus.emit('my-event:update', {value: 1});
-// Global event
-const { onSignaReady } = signa;
-onSignaReady(()=>{
-    console.log('all components mounted end render html ready')
-})
+/// Use this event for init out side library, at this moment all html was rendered
+eventBus.on('components:ready', ()=> { console.log('all component was mounted and ready') });
 ```
 
 ### Provide/Inject Usage
 
 Dependency passing:
 ```typescript
-const { provide, inject, getAppContext } = signa;
+const { provide, inject } = ctx;
 provide('myApi', {
     getItems: () => [1,2,3]
 })
@@ -248,8 +228,6 @@ provide('myApi', {
 const myApi = inject('myApi');
 myApi.getItems();
 
-const context = getAppContext();
-console.log(context);
 // all registered dependecies
 ```
 
@@ -257,9 +235,8 @@ console.log(context);
 ### Routing usage
 
 ```typescript
-const { createRouter, defComponent, provide, inject } = signa;
 // Wrap def router root-component to get context
-defComponent("app-root", ({ html }) => {
+defComponent("app-root", ({ html, provide }) => {
     const router = createRouter([
         {
             name: "home",
@@ -302,7 +279,7 @@ defComponent("app-root", ({ html }) => {
     `;
 });
 // compnent helper to route link
-defComponent("route-link", ({ prop, html, slot, $this }) => {
+defComponent("route-link", ({ prop, html, slot, $this, inject }) => {
     const to = prop({ name: "to", type: String });
     const params = prop({ name: "params", type: Object, default: {} });
     const router = inject('router');

@@ -5,7 +5,7 @@ await esbuild.build({
     entryPoints: ["src/index.js"],
     bundle: true,
     format: "iife",
-    globalName: "signa",
+    globalName: "",
     outfile: "dist/signa.min.js",
     minify: true,
     sourcemap: false,

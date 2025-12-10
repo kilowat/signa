@@ -22,7 +22,3 @@ export function popContext() {
         context.currentPhase = null;
     }
 }
-
-export function getCurrentContext() {
-    return contextStack[contextStack.length - 1];
-}

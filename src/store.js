@@ -1,3 +1,4 @@
+//store.js
 import { signal, effect, computed } from '@preact/signals-core';
 
 const storeRegistry = {};

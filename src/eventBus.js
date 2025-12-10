@@ -1,3 +1,4 @@
+//eventBus.js
 import { effect } from '@preact/signals-core';
 import { defStore, resolveStore } from './store.js';
 

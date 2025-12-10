@@ -1,8 +1,12 @@
+//component.js
 import { reactive, html, htmlFor } from 'uhtml/reactive';
 import { effect, signal, computed } from '@preact/signals-core';
 import { createHooksContext, pushContext, popContext } from './hooks.js';
 import { resolveStore } from './store.js';
-import { componentStart, componentRendered } from './lifecycle.js';
+import { componentStart, componentRendered, } from './lifecycle.js';
+import { createRouter } from './router.js';
+import { eventBus } from './eventBus.js';
+import { inject, provide } from './registry.js';
 
 
 function camelCaseToKebabCase(camelCaseString) {
@@ -101,6 +105,10 @@ export function defComponent(tagName, setup) {
                 },
                 slot: slotFn,
                 store: key => resolveStore(key),
+                inject: inject,
+                provide: provide,
+                createRouter: createRouter,
+                eventBus: eventBus,
             };
         }
 

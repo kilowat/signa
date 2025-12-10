@@ -1,6 +1,6 @@
 
-signa.defComponent("app-root", ({ html }) => {
-    const router = signa.createRouter([
+defComponent("app-root", ({ html, createRouter, provide }) => {
+    const router = createRouter([
         {
             name: "home",
             path: "/",
@@ -23,7 +23,7 @@ signa.defComponent("app-root", ({ html }) => {
         }
     ]);
 
-    signa.provide('router', router);
+    provide('router', router);
 
     return () => html`
         <header>
@@ -43,13 +43,13 @@ signa.defComponent("app-root", ({ html }) => {
 });
 
 
-signa.defComponent("route-link", ({ prop, html, slot, $this, }) => {
+defComponent("route-link", ({ prop, html, slot, $this, inject }) => {
     const to = prop({ name: "to", type: String });
 
     const params = prop({ name: "params", type: Object, default: {} });
 
 
-    const router = signa.inject('router');
+    const router = inject('router');
     const route = router.route(to, params);
 
     $this.setAttribute('href', route ?? '#');
