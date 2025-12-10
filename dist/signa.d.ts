@@ -5,13 +5,15 @@ import type {
 } from "@preact/signals-core";
 
 declare global {
-    // Base signal types 
+    // --------------------------------
+    // Signals
+    // --------------------------------
     type Signal<T = any> = PreactSignal<T>;
     type ReadonlySignal<T = any> = PreactReadonlySignal<T>;
 
-    // -----------------------------
+    // --------------------------------
     // Store system
-    // -----------------------------
+    // --------------------------------
     interface StoreContext {
         signal: <T = any>(initial?: T) => Signal<T>;
         computed: <T = any>(fn: () => T) => ReadonlySignal<T>;
@@ -22,16 +24,14 @@ declare global {
         [key: string]: any;
     }
 
-    // -----------------------------
+    // --------------------------------
     // Slots
-    // -----------------------------
-    type SlotFn = ((name?: string) => any[]) & {
-        default: any[];
-    };
+    // --------------------------------
+    type SlotFn = ((name?: string) => any[]) & { default: any[] };
 
-    // -----------------------------
+    // --------------------------------
     // Router
-    // -----------------------------
+    // --------------------------------
     interface RouteDefinition {
         name?: string;
         path: string;
@@ -51,58 +51,66 @@ declare global {
         view(): any;
     }
 
-    // -----------------------------
+    // --------------------------------
     // Event bus
-    // -----------------------------
+    // --------------------------------
     interface EventBus {
         emit(type: string, payload?: any): void;
         on(type: string, handler: (payload: any) => void): void;
     }
 
-    // -----------------------------
+    // --------------------------------
     // Component context
-    // -----------------------------
+    // --------------------------------
+
+    // Маппинг типа → тип сигнала
+    type PropTypeMap<T> =
+        T extends typeof String ? ReadonlySignal<string> :
+        T extends typeof Number ? ReadonlySignal<number> :
+        T extends typeof Boolean ? ReadonlySignal<boolean> :
+        T extends typeof Object ? ReadonlySignal<object> :
+        T extends typeof Array ? ReadonlySignal<any[]> :
+        T extends FunctionConstructor ? Function :
+        never;
+
     interface ComponentContext {
         $this: HTMLElement;
 
-        // template
         html: (strings: TemplateStringsArray, ...values: any[]) => any;
         htmlFor: (ref: any) => any;
 
-        // signals
         signal: <T = any>(initial?: T) => Signal<T>;
         computed: <T = any>(fn: () => T) => ReadonlySignal<T>;
         effect: (fn: () => any) => void;
 
-        // props
-        prop(options: { name: string; type: "Signal" }): ReadonlySignal<any>;
-        prop(options: { name: string; type: typeof String; default?: string }): string;
-        prop(options: { name: string; type: typeof Number; default?: number }): number;
-        prop(options: { name: string; type: typeof Boolean; default?: boolean }): boolean;
-        prop(options: { name: string; type: typeof Object; default?: object }): object;
-        prop(options: { name: string; type: typeof Array; default?: any[] }): any[];
-        prop(options: { name: string; type: FunctionConstructor }): Function;
+        // -------- prop: строго выводимый тип через PropTypeMap --------
+        prop<T extends
+            typeof String |
+            typeof Number |
+            typeof Boolean |
+            typeof Object |
+            typeof Array |
+            FunctionConstructor>(options: {
+                name: string;
+                type: T;
+                default?: any;
+            }): PropTypeMap<T>;
 
-        // slots
         slot: SlotFn;
 
-        // store
         store<T = any>(key: string): T;
 
-        // DI
         provide<T = any>(key: string, value: T): void;
         inject<T = any>(key: string): T;
 
-        // router factory
         createRouter(routes: RouteDefinition[]): Router;
 
-        // event bus injected into context
         eventBus: EventBus;
     }
 
-    // -----------------------------
-    // Global API (ONLY THESE 2!)
-    // -----------------------------
+    // --------------------------------
+    // Global API
+    // --------------------------------
     const defComponent: (
         tagName: string,
         setup: (ctx: ComponentContext) => (() => any) | void

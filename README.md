@@ -68,14 +68,13 @@ defComponent('my-component', (ctx) => {
         createRouter, // Routing
     } = ctx;
 
-    // Define props primitave value not reactive
-    const titleProp = prop({ 
+    // Define props  all props ReadOnly
+    const title = prop({ 
         name: 'title',
         type: String,
         default: 'Hello',
     });
     
-    const title = signal(titleProp);
     // Use slots
     const headerContent = slot('header');
     
@@ -117,24 +116,23 @@ defComponent('my-component', (ctx) => {
 Props can be defined with the following types.
 
 ```typescript
-const myPropInitValue = prop({
+const myProp = prop({
     name: 'myPropName', // this name in html data-myPropName or direct pass .myPropName="{$somValue}"
     type: String | Number | Boolean | Array | Object | Function | 'Signal',
     default: 'default value',
 });
 
-const myReactiveValue = signal(myPropInitValue);
 
-return html`<div>${myReactiveValue.value}</div>`
+return html`<div>${myProp.value}</div>`
 //in component pass signal as prop value to child
 defComponent('my-component', ({ html, prop }) => {
     //Caution all signal prop are read only
-    const countReactiveNow = prop({
+    const count = prop({
         name: 'count',  
-        type: 'Signal', // pass reactive value
+        type: 'Number',
     });
 
-    return html `${countReactiveNow.value}`
+    return html `${count.value}`
 })
 
 //in parent
@@ -280,8 +278,8 @@ defComponent("app-root", ({ html, provide }) => {
 });
 // compnent helper to route link
 defComponent("route-link", ({ prop, html, slot, $this, inject }) => {
-    const to = prop({ name: "to", type: String });
-    const params = prop({ name: "params", type: Object, default: {} });
+    const to = prop({ name: "to", type: String }).value;
+    const params = prop({ name: "params", type: Object, default: {} }).value;
     const router = inject('router');
     const route = router.route(to, params);
 

@@ -54,54 +54,55 @@ export function defComponent(tagName, setup) {
                 html,
                 htmlFor,
                 prop: ({ name, type, default: defaultValue }) => {
-                    const val = this[name];
 
-                    // Если тип указан как 'Signal'
-                    if (type === 'Signal' || type === signal) {
-                        if (val !== undefined) {
-                            if (!isSignal(val)) {
-                                throw new Error(`Property "${name}" must be a Signal, but received ${typeof val}`);
-                            }
-                            // Делаем Signal readonly
-                            const readOnlySignal = {
-                                get value() { return val.value; },
-                                set value(v) { console.warn(`Property "${name}" is readonly`); },
-                                peek: val.peek.bind(val)
-                            };
-                            this.props.set(name, readOnlySignal);
-                            return readOnlySignal;
-                        }
-                        throw new Error(`Property "${name}" with type Signal is required but not provided`);
+                    // Если уже существует — вернуть
+                    if (this.props.has(name)) return this.props.get(name);
+
+                    const rawVal = this[name];
+
+                    // 1. Передан сигнал → используем напрямую
+                    if (isSignal(rawVal)) {
+                        rawVal.__type = type;
+                        this.props.set(name, rawVal);
+                        return rawVal;
                     }
 
-                    // Колбэки всегда возвращаем напрямую
-                    if (type === Function && typeof val === 'function') {
-                        this.props.set(name, val);
-                        return val;
+                    // 2. Передана функция → оставляем как есть
+                    if (typeof rawVal === 'function') {
+                        this.props.set(name, rawVal);
+                        return rawVal;
                     }
 
-                    // Если передан Signal, но ожидается примитивный тип - берем value
-                    if (isSignal(val) && (type === String || type === Number || type === Boolean || type === Object || type === Array)) {
-                        const extractedValue = val.value;
-                        this.props.set(name, extractedValue);
-                        return extractedValue;
-                    }
-
-                    // Если передано обычное значение
-                    if (val !== undefined) {
-                        this.props.set(name, val);
-                        return val;
-                    }
-
-                    // Чтение из атрибутов
+                    // 3. Пытаемся получить из атрибута data-*
                     const attrData = this.getAttribute(`data-${name}`);
-                    const attrValue = attrData === null ? this.getAttribute(`data-${camelCaseToKebabCase(name)}`) : attrData;
-                    const initialValue = attrValue !== null
-                        ? this.parseAttributeValue(attrValue, type)
-                        : (defaultValue !== undefined ? defaultValue : this.getDefaultForType(type));
+                    const attrValue = attrData === null
+                        ? this.getAttribute(`data-${camelCaseToKebabCase(name)}`)
+                        : attrData;
 
-                    this.props.set(name, initialValue);
-                    return initialValue;
+                    const initial = rawVal !== undefined
+                        ? rawVal
+                        : (attrValue !== null
+                            ? this.parseAttributeValue(attrValue, type)
+                            : (defaultValue !== undefined ? defaultValue : this.getDefaultForType(type)));
+
+                    // 4. Создаем внутренний сигнал
+                    const s = signal(initial);
+                    s.__type = type;
+
+                    // 5. Readonly wrapper
+                    const readonly = {
+                        get value() { return s.value; },
+                        set value(_) {
+                            console.warn(`Property "${name}" is readonly`);
+                        },
+                        peek: s.peek.bind(s)
+                    };
+
+                    this.props.set(name, readonly);
+                    this._rawProps = this._rawProps || {};
+                    this._rawProps[name] = s;
+
+                    return readonly;
                 },
                 slot: slotFn,
                 store: key => resolveStore(key),
@@ -156,7 +157,18 @@ export function defComponent(tagName, setup) {
         connectedCallback() {
             this.isMounted = true;
             componentStart();
+            this._attrObserver = new MutationObserver(mutations => {
+                for (const m of mutations) {
+                    if (m.type === 'attributes' && m.attributeName.startsWith('data-')) {
+                        const newValue = this.getAttribute(m.attributeName);
+                        this._updatePropFromAttribute(m.attributeName, newValue);
+                    }
+                }
+            });
 
+            this._attrObserver.observe(this, {
+                attributes: true
+            });
             requestAnimationFrame(() => {
                 if (!this.isMounted) return;
                 try {
@@ -172,12 +184,24 @@ export function defComponent(tagName, setup) {
                     queueMicrotask(() => componentRendered());
                 } catch (error) {
                     console.error(`Error mounting component ${this.tagName.toLowerCase()}:`, error);
-                    this.handleMountError(error);
                     componentRendered();
                 }
             });
         }
 
+        _updatePropFromAttribute(attrName, value) {
+            const propName = attrName
+                .replace(/^data-/, '')
+                .replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+
+            const raw = this._rawProps?.[propName];
+            if (!raw || !isSignal(raw)) return;
+
+            const type = raw.__type || String;
+            const parsed = this.parseAttributeValue(value, type);
+
+            raw.value = parsed;
+        }
 
         disconnectedCallback() {
             this.isMounted = false;
@@ -185,17 +209,7 @@ export function defComponent(tagName, setup) {
             this.cleanup = [];
             this.hooksContext.cleanups.forEach(fn => { try { fn(); } catch { } });
             this.hooksContext.cleanups = [];
-        }
-
-        handleMountError(error) {
-            const errorContainer = document.createElement('div');
-            errorContainer.style.cssText = 'padding: 1rem; border: 1px solid #ff0000; border-radius: 4px; margin: 0.5rem; color: #ff0000;';
-            errorContainer.innerHTML = `
-                <div>Error in component ${this.tagName.toLowerCase()}</div>
-                <pre style="font-size: 0.8em; margin-top: 0.5rem;">${error instanceof Error ? error.message : 'Unknown error'}</pre>
-            `;
-            this.innerHTML = '';
-            this.appendChild(errorContainer);
+            if (this._attrObserver) this._attrObserver.disconnect();
         }
     }
 
