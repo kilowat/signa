@@ -118,7 +118,7 @@ Props can be defined with the following types.
 ```typescript
 const myProp = prop({
     name: 'myPropName', // this name in html data-myPropName or direct pass .myPropName="{$somValue}"
-    type: String | Number | Boolean | Array | Object | Function | 'Signal',
+    type: String | Number | Boolean | Array | Object | Function
     default: 'default value',
 });
 
