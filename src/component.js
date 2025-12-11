@@ -1,5 +1,5 @@
 //component.js
-import { reactive, html, htmlFor } from 'uhtml/reactive';
+import { reactive, html, htmlFor, svg } from 'uhtml/reactive';
 import { effect, signal, computed } from '@preact/signals-core';
 import { createHooksContext, pushContext, popContext } from './hooks.js';
 import { resolveStore } from './store.js';
@@ -53,6 +53,7 @@ export function defComponent(tagName, setup) {
                 computed,
                 html,
                 htmlFor,
+                svg,
                 prop: (name, { type, default: defaultValue }) => {
 
                     // Если уже существует — вернуть

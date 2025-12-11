@@ -63,7 +63,7 @@ declare global {
     // Component context
     // --------------------------------
 
-    // Соответствие type → возвращаемый сигнал
+    // Маппинг типа → тип сигнала
     type PropTypeMap<T> =
         T extends typeof String ? ReadonlySignal<string> :
         T extends typeof Number ? ReadonlySignal<number> :
@@ -78,27 +78,23 @@ declare global {
 
         html: (strings: TemplateStringsArray, ...values: any[]) => any;
         htmlFor: (ref: any) => any;
-
+        svg: (content: string) => any,
         signal: <T = any>(initial?: T) => Signal<T>;
         computed: <T = any>(fn: () => T) => ReadonlySignal<T>;
         effect: (fn: () => any) => void;
 
-        // -------- НОВАЯ сигнатура prop(name, { type, default }) --------
-        prop<
-            T extends
-            | typeof String
-            | typeof Number
-            | typeof Boolean
-            | typeof Object
-            | typeof Array
-            | FunctionConstructor
-        >(
-            name: string,
-            opts: {
+        // -------- prop: строго выводимый тип через PropTypeMap --------
+        prop<T extends
+            typeof String |
+            typeof Number |
+            typeof Boolean |
+            typeof Object |
+            typeof Array |
+            FunctionConstructor>(options: {
+                name: string;
                 type: T;
                 default?: any;
-            }
-        ): PropTypeMap<T>;
+            }): PropTypeMap<T>;
 
         slot: SlotFn;
 

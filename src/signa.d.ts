@@ -78,7 +78,7 @@ declare global {
 
         html: (strings: TemplateStringsArray, ...values: any[]) => any;
         htmlFor: (ref: any) => any;
-
+        svg: (content: string) => any,
         signal: <T = any>(initial?: T) => Signal<T>;
         computed: <T = any>(fn: () => T) => ReadonlySignal<T>;
         effect: (fn: () => any) => void;
