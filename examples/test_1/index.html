@@ -5,16 +5,24 @@
     <title>UI Components Demo</title>
     <link href="styles.css" rel="stylesheet" />
     <script src="../../dist/signa.min.js"></script>
-    <script src="modal.js"></script>
     <script src="main.js"></script>
+    <script src="modal.js"></script>
 </head>
 
 <body>
-    <modal-trigger data-modal-id="modal-root" data-content="<b>test</b>">
-        <button> click me</button>
+
+    <modal-trigger data-content="<b>data-content</b>">
+        <button> click me one by data-content</button>
     </modal-trigger>
 
-    <modal-window id="modal-root"></modal-window>
+    <modal-trigger data-content-id="modal-content">
+        <button> click me one by data-content-id</button>
+    </modal-trigger>
+
+    <div id="modal-content" aria-hidden="true" style="display:none;">
+        <div>modal content in html</div>
+    </div>
+    <modal-window></modal-window>
 </body>
 
 

@@ -1,5 +1,7 @@
-//Programming open
-// document.getElementById('modal-root', { title: 'myTitle' });
+//Programming open document.querySelector('modal-window', ).open({ title: 'title' });
+function openModel(options) {
+    document.querySelector('modal-window',)?.open(options);
+}
 
 defComponent('modal-window', ({ signal, html, effect, $this }) => {
     const isOpen = signal(false);
@@ -7,7 +9,6 @@ defComponent('modal-window', ({ signal, html, effect, $this }) => {
     const body = signal('');
     const content = signal(null);
     const onClose = signal(null);
-    const popupId = $this.getAttribute('id') || null;
 
     const renderTitle = () => {
         if (!title.value) return '';
@@ -30,11 +31,19 @@ defComponent('modal-window', ({ signal, html, effect, $this }) => {
         `;
     };
 
-    $this.open = ({ title: t = '', body: b = '', content: c = null, onClose: onCb = null } = {}) => {
+    $this.open = (opts = {}) => {
+        const {
+            title: t = '',
+            body: b = '',
+            content: c = null,
+            onClose: closeCb = null
+        } = opts;
+
         title.value = t;
         body.value = b;
         content.value = c;
-        onClose.value = onCb;
+        onClose.value = closeCb;
+
         isOpen.value = true;
         document.body.style.overflow = 'hidden';
     };
@@ -58,6 +67,7 @@ defComponent('modal-window', ({ signal, html, effect, $this }) => {
         };
 
         $this.addEventListener('click', clickHandler);
+
         return () => $this.removeEventListener('click', clickHandler);
     });
 
@@ -65,12 +75,9 @@ defComponent('modal-window', ({ signal, html, effect, $this }) => {
     return () => html`
         <div class=${isOpen.value ? 'popup popup--open' : 'popup'}
              style=${isOpen.value ? 'display:flex' : 'display:none'}>
-             
             <div class="popup__overlay" data-popup-overlay></div>
-
             <div class="popup__window" data-popup-window>
                 <button class="popup__close" data-popup-close>&times;</button>
-
                 <div class="popup__content">
                     ${renderContent()}
                     <slot></slot>
@@ -82,20 +89,23 @@ defComponent('modal-window', ({ signal, html, effect, $this }) => {
 
 
 defComponent('modal-trigger', ({ $this, effect }) => {
-    const popupId = $this.getAttribute('data-modal-id');
-    const content = $this.getAttribute('data-content');
+    const contentData = $this.getAttribute('data-content');
+    const contentId = $this.getAttribute('data-content-id');
+    const modalWindowId = $this.getAttribute('data-modal-id');
+    const modalWindowElement = modalWindowId ? document.getElementById(modalWindowId) : document.querySelector('modal-window');
+    const modalContentElement = document.getElementById(contentId);
 
-    if (!popupId) {
-        throw new Error("data-modal-id required")
+    if (!modalWindowElement) {
+        throw new Error("modal-window not found in document")
     }
+    const content = modalContentElement ? modalContentElement.innerHTML : contentData;
+    if (modalContentElement) modalContentElement.remove();
 
     effect(() => {
         const clickHandler = () => {
-            const popup = document.getElementById(popupId);
-            if (popup && typeof popup.open === 'function') {
-                popup.open({ content });
-            }
+            modalWindowElement.open({ content });
         };
+
         $this.addEventListener('click', clickHandler);
 
         return () => $this.removeEventListener('click', clickHandler);
