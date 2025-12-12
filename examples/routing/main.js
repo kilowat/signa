@@ -62,4 +62,3 @@ defComponent("route-link", ({ prop, html, slot, $this, inject }) => {
 
     return () => html`${slot.default}`;
 });
-

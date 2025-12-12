@@ -1,9 +1,9 @@
-//Programming open document.querySelector('modal-window', ).open({ title: 'title' });
+//Programming open document.querySelector('popup-window', ).open({ title: 'title' });
 function openModel(options) {
-    document.querySelector('modal-window',)?.open(options);
+    document.querySelector('popup-window',)?.open(options);
 }
 
-defComponent('modal-window', ({ signal, html, effect, $this }) => {
+defComponent('popup-window', ({ signal, html, effect, $this }) => {
     const isOpen = signal(false);
     const title = signal('');
     const body = signal('');
@@ -88,22 +88,25 @@ defComponent('modal-window', ({ signal, html, effect, $this }) => {
 });
 
 
-defComponent('modal-trigger', ({ $this, effect }) => {
-    const contentData = $this.getAttribute('data-content');
-    const contentId = $this.getAttribute('data-content-id');
-    const modalWindowId = $this.getAttribute('data-modal-id');
-    const modalWindowElement = modalWindowId ? document.getElementById(modalWindowId) : document.querySelector('modal-window');
-    const modalContentElement = document.getElementById(contentId);
-
-    if (!modalWindowElement) {
-        throw new Error("modal-window not found in document")
-    }
-    const content = modalContentElement ? modalContentElement.innerHTML : contentData;
-    if (modalContentElement) modalContentElement.remove();
+defComponent('popup-trigger', ({ $this, effect, prop }) => {
+    const contentData = prop('content');
+    const contentId = prop('contentId');
+    const popupId = prop('popupId');
 
     effect(() => {
+        const popupWindowEl = popupId.value ? document.getElementById(popupId.value) : document.querySelector('popup-window');
+        const contentEl = document.getElementById(contentId.value);
+
+        if (!popupWindowEl) {
+            throw new Error("popup-window not found in document")
+        }
+
+        const content = contentEl ? contentEl.innerHTML : contentData.value;
+
+        if (contentEl) contentEl.remove();
+
         const clickHandler = () => {
-            modalWindowElement.open({ content });
+            popupWindowEl.open({ content });
         };
 
         $this.addEventListener('click', clickHandler);

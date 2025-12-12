@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>UI Components Demo</title>
+    <link href="styles.css" rel="stylesheet" />
+    <link href="popup.css" rel="stylesheet" />
+    <script src="../dist/signa.min.js"></script>
+    <script src="main.js"></script>
+    <script src="popup.js"></script>
+</head>
+
+<body>
+    <popup-trigger data-content="<b>data-content</b>">
+        <button> click me one by data-content</button>
+    </popup-trigger>
+
+    <popup-trigger data-content-id="popup-content">
+        <button> click me one by data-content-id</button>
+    </popup-trigger>
+
+    <div id="popup-content" aria-hidden="true" style="display:none;">
+        <div>modal content in html</div>
+    </div>
+    <popup-window></popup-window>
+</body>
+
+
+</html>
