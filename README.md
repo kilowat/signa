@@ -197,7 +197,11 @@ Events communication:
 
 ```typescript
 const { eventBus } = ctx;
-eventBus.on('my-event:update', (payload)=> { console.log(payoload) });
+
+effect(()=>{
+    const unsubscribe = eventBus.on('my-event:update', (payload)=> { console.log(payoload) });
+    return unsubscribe;
+})
 eventBus.emit('my-event:update', {value: 1});
 /// Use this event for init out side library, at this moment all html was rendered
 eventBus.on('components:ready', ()=> { console.log('all component was mounted and ready') });

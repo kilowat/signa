@@ -46,37 +46,37 @@
 
         <h2 id="popup-window">Модальное окно</h2>
         <pre><code class="language-html">
-        <script type="text/plain">
-        data-content="some content <my-component></my-compoent>"// Все что в значение атрибута будет в качестве конента    
-        <popup-trigger data-content="test" >
-            <button class="btn-accent">Открыть окно c data-content="test"</button>
-        </popup-trigger>
+<script type="text/plain"><!-- Все что в значение атрибута data-content будет в качестве конента -->    
+<popup-trigger data-content="test" >
+    <button class="btn-accent">Открыть окно c data-content="test"</button>
+</popup-trigger>
 
-        data-content-id="some id" // Id блока который будет в качестве контента для окна
-        <popup-trigger data-content-id="popup-content">
-            <button class="btn-accent">Открыть окно</button>
-        </popup-trigger>
-        <div style="display:none;height:0" aria-hidden="" id="popup-content">
-            блок который будет в качестве контента для окна
-        </div>
+<!-- Id блока который указан в data-content-id будет в качестве контента для окна -->
+<popup-trigger data-content-id="popup-content">
+    <button class="btn-accent">Открыть окно</button>
+</popup-trigger>
+<div style="display:none;height:0" aria-hidden="" id="popup-content">
+    блок который будет в качестве контента для окна
+</div>
 
-        //Расположить в конец body
-        <popup-window></popup-window>
+<!-- Расположить в конец body -->
+<popup-window></popup-window>
+</script>
+</code></pre>
 
-        // Программное открытие 
-        const options = {
-            title
-            body
-            content
-            onClose
-        } 
-
-        function openModal(options) {
-            document.querySelector('popup-window',)?.open(options);
-        }
-
-        </script>
-        </code></pre>
+        <pre><code class="language-javascript">// Программное открытие 
+const options = {
+    title
+    body
+    content
+    onClose
+} 
+//Открыть глобально 
+document.querySelector('popup-window', ).open({ title: 'title' })
+// Через event bus внутри компонентов
+eventBus.emit('popup:open', { title: 'title' });
+eventBus.emit('popup:close'); 
+</code></pre>
         <p>
             <popup-trigger data-content="test">
                 <button class="btn-accent">Открыть окно c data-content="test"</button>
@@ -96,8 +96,8 @@
         </p>
         <p>
         <div>
-            <button class="btn-accent" onclick="openModal({ title:'my-title', body:'my-body' })">
-                Открыть программно
+            <button class="btn-accent" onclick="document.querySelector('popup-window', )?.open({ title: 'title' })">
+                Открыть глобально
             </button>
         </div>
         </p>

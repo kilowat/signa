@@ -9,11 +9,12 @@ defStore('event:bus', ({ signal }) => {
         emit: (type, payload) => {
             lastEvent.value = { type, payload, ts: Date.now() };
         },
-        on: (type, handler) => {
-            effect(() => {
+        on(type, handler) {
+            const e = effect(() => {
                 const ev = lastEvent.value;
                 if (ev && ev.type === type) handler(ev.payload);
             });
+            return () => e();
         }
     };
 });
