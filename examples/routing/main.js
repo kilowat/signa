@@ -1,5 +1,4 @@
-
-defComponent("app-root", ({ html, createRouter, provide }) => {
+defComponent("app-root", ({ html, createRouter, provide, signal }) => {
     const router = createRouter([
         {
             name: "home",
@@ -25,14 +24,19 @@ defComponent("app-root", ({ html, createRouter, provide }) => {
 
     provide('router', router);
 
+    const param = signal({ id: '1' })
+
     return () => html`
         <header>
             <h2>My App</h2>
+            <div>
+                <input type="text">
+            </div>
             <nav>
                 <route-link .to=${`home`}><button>Home</button></route-link>
                 <route-link .to=${`about`}><button>About</button></route-link>
                 <route-link .to=${`user`} .params=${{ id: 123 }}><button>User 123</button></route-link>
-                <route-link .to=${`user`} .params=${{ id: 42 }}><button>User 42</button></route-link>
+                <route-link .to=${`user`} .params=${param.value}><button>User 42</button></route-link>
             </nav>
         </header>
 
@@ -43,20 +47,18 @@ defComponent("app-root", ({ html, createRouter, provide }) => {
 });
 
 
-defComponent("route-link", ({ prop, html, slot, $this, inject }) => {
-    const to = prop("to", { type: String }).value;
-
-    const params = prop("params", { type: Object, default: {} }).value;
-
+defComponent("route-link", ({ prop, html, slot, $this, inject, effect }) => {
+    const to = prop("to", { type: String });
+    const params = prop("params", { type: Object, default: {} });
 
     const router = inject('router');
-    const route = router.route(to, params);
+    const route = router.route(to.value, params.value);
 
     $this.setAttribute('href', route ?? '#');
 
     $this.onclick = (e) => {
-        if (to) {
-            router.navigate(to, params);
+        if (to.value) {
+            router.navigate(to.value, params.value);
         }
     }
 

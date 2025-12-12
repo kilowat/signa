@@ -1,29 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 
 <head>
-    <title>UI Components Demo</title>
-    <link href="styles.css" rel="stylesheet" />
-    <link href="popup.css" rel="stylesheet" />
-    <script src="../dist/signa.min.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Документация — MyLibrary</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="prism.css" />
+
     <script src="main.js"></script>
-    <script src="popup.js"></script>
+    <script src="prism.js"></script>
+    <script src="prism-js.js"></script>
+
+    <style>
+
+    </style>
 </head>
 
 <body>
-    <popup-trigger data-content="<b>data-content</b>">
-        <button> click me one by data-content</button>
-    </popup-trigger>
+    <aside class="sidebar">
+        <div class="logo">MyLibrary</div>
 
-    <popup-trigger data-content-id="popup-content">
-        <button> click me one by data-content-id</button>
-    </popup-trigger>
+        <div>
+            <div class="nav-section-title">Начало</div>
+            <a class="nav-link" href="#intro">Введение</a>
+            <a class="nav-link" href="#install">Установка</a>
+        </div>
 
-    <div id="popup-content" aria-hidden="true" style="display:none;">
-        <div>modal content in html</div>
-    </div>
-    <popup-window></popup-window>
+        <div>
+            <div class="nav-section-title">Примеры</div>
+            <a class="nav-link" href="#example1">Базовый пример</a>
+            <a class="nav-link" href="#example2">Расширенный пример</a>
+        </div>
+
+        <div>
+            <div class="nav-section-title">API</div>
+            <a class="nav-link" href="#api">Описание методов</a>
+        </div>
+    </aside>
+
+    <main class="content">
+        <h1 id="intro">Введение</h1>
+        <p>Краткое описание вашей библиотеки и её возможностей.</p>
+
+        <h2 id="install">Установка</h2>
+        <pre><code class="language-bash">npm install my-library</code></pre>
+
+        <h2 id="example1">Базовый пример</h2>
+        <pre><code class="language-javascript">import { something } from 'my-library';
+
+something();</code></pre>
+
+        <h2 id="example2">Расширенный пример</h2>
+        <pre><code class="language-javascript">// Тут может быть более сложный пример...
+export function advanced() {
+    return 'OK';
+}</code></pre>
+
+        <h2 id="api">API</h2>
+        <p>Описание публичных методов библиотеки.</p>
+
+        <h2 id="grid" class="text-2xl font-semibold mt-10">Пример сетки</h2>
+        <p>Ты можешь делать колонки с помощью классов <code>.row</code> и <code>.col-*</code>.</p>
+
+        <div class="row" style="margin-top:20px;">
+            <div class="col col-6">
+                <div class="box">Колонка 50%</div>
+            </div>
+            <div class="col col-6">
+                <div class="box">Колонка 50%</div>
+            </div>
+        </div>
+
+        <div class="row" style="margin-top:20px;">
+            <div class="col col-4">
+                <div class="box">33%</div>
+            </div>
+            <div class="col col-4">
+                <div class="box">33%</div>
+            </div>
+            <div class="col col-4">
+                <div class="box">33%</div>
+            </div>
+        </div>
+
+        <div class="row" style="margin-top:20px;">
+            <div class="col col-3">
+                <div class="box">25%</div>
+            </div>
+            <div class="col col-3">
+                <div class="box">25%</div>
+            </div>
+            <div class="col col-3">
+                <div class="box">25%</div>
+            </div>
+            <div class="col col-3">
+                <div class="box">25%</div>
+            </div>
+        </div>
+
+    </main>
+
 </body>
-
 
 </html>
