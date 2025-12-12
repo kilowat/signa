@@ -1,21 +1,40 @@
-//eventBus.js
-import { effect } from '@preact/signals-core';
+import { signal, effect } from '@preact/signals-core';
 import { defStore, resolveStore } from './store.js';
 
+
 defStore('event:bus', ({ signal }) => {
-    const lastEvent = signal(null);
+    const events = signal([]);
+    const tick = signal(0);
 
     return {
+        /**
+         * Генерация события
+         * @param {string} type
+         * @param {*} payload
+         */
         emit: (type, payload) => {
-            lastEvent.value = { type, payload, ts: Date.now() };
+            events.value = [...events.value, { type, payload, ts: Date.now() }];
+            tick.value++;
         },
-        on(type, handler) {
+
+        /**
+         * Подписка на события
+         * @param {string} type
+         * @param {(payload: any) => void} handler
+         * @returns {() => void} unsubscribe
+         */
+        on: (type, handler) => {
             const e = effect(() => {
-                const ev = lastEvent.value;
-                if (ev && ev.type === type) handler(ev.payload);
+                const evs = events.value.filter(ev => ev.type === type);
+                if (evs.length) {
+                    evs.forEach(ev => handler(ev.payload));
+                    events.value = events.value.filter(ev => ev.type !== type);
+                }
             });
+
             return () => e();
-        }
+        },
+
     };
 });
 
