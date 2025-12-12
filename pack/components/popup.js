@@ -1,5 +1,5 @@
 //Programming open document.querySelector('popup-window', ).open({ title: 'title' });
-function openModel(options) {
+function openModal(options) {
     document.querySelector('popup-window',)?.open(options);
 }
 

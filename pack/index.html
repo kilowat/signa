@@ -4,13 +4,15 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Документация — MyLibrary</title>
+    <title>Компоненты — UWebcomponents</title>
     <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="prism.css" />
+    <script src="../dist/signa.min.js"></script>
+    <link rel="stylesheet" href="default.css">
+    <script src="highlight.min.js"></script>
 
-    <script src="main.js"></script>
-    <script src="prism.js"></script>
-    <script src="prism-js.js"></script>
+    <script>hljs.highlightAll();</script>
+    <script src="components/popup.js"></script>
+    <link rel="stylesheet" href="components/popup.css" />
 
     <style>
 
@@ -19,17 +21,16 @@
 
 <body>
     <aside class="sidebar">
-        <div class="logo">MyLibrary</div>
+        <div class="logo">UWebcomponents</div>
 
         <div>
             <div class="nav-section-title">Начало</div>
             <a class="nav-link" href="#intro">Введение</a>
-            <a class="nav-link" href="#install">Установка</a>
         </div>
 
         <div>
-            <div class="nav-section-title">Примеры</div>
-            <a class="nav-link" href="#example1">Базовый пример</a>
+            <div class="nav-section-title">Компоненты</div>
+            <a class="nav-link" href="#popup-window">Popup window</a>
             <a class="nav-link" href="#example2">Расширенный пример</a>
         </div>
 
@@ -41,24 +42,68 @@
 
     <main class="content">
         <h1 id="intro">Введение</h1>
-        <p>Краткое описание вашей библиотеки и её возможностей.</p>
+        <p>Веб компоненты</p>
 
-        <h2 id="install">Установка</h2>
-        <pre><code class="language-bash">npm install my-library</code></pre>
+        <h2 id="popup-window">Модальное окно</h2>
+        <pre><code class="language-html">
+        <script type="text/plain">
+        data-content="some content <my-component></my-compoent>"// Все что в значение атрибута будет в качестве конента    
+        <popup-trigger data-content="test" >
+            <button class="btn-accent">Открыть окно c data-content="test"</button>
+        </popup-trigger>
 
-        <h2 id="example1">Базовый пример</h2>
-        <pre><code class="language-javascript">import { something } from 'my-library';
+        data-content-id="some id" // Id блока который будет в качестве контента для окна
+        <popup-trigger data-content-id="popup-content">
+            <button class="btn-accent">Открыть окно</button>
+        </popup-trigger>
+        <div style="display:none;height:0" aria-hidden="" id="popup-content">
+            блок который будет в качестве контента для окна
+        </div>
 
-something();</code></pre>
+        //Расположить в конец body
+        <popup-window></popup-window>
 
-        <h2 id="example2">Расширенный пример</h2>
-        <pre><code class="language-javascript">// Тут может быть более сложный пример...
-export function advanced() {
-    return 'OK';
-}</code></pre>
+        // Программное открытие 
+        const options = {
+            title
+            body
+            content
+            onClose
+        } 
 
-        <h2 id="api">API</h2>
-        <p>Описание публичных методов библиотеки.</p>
+        function openModal(options) {
+            document.querySelector('popup-window',)?.open(options);
+        }
+
+        </script>
+        </code></pre>
+        <p>
+            <popup-trigger data-content="test">
+                <button class="btn-accent">Открыть окно c data-content="test"</button>
+            </popup-trigger>
+        </p>
+
+        <p>
+            <popup-trigger data-content-id="popup-content">
+                <button class="btn-accent">Открыть окно с указанием блока по id с конентом</button>
+            </popup-trigger>
+        </p>
+
+        <p>
+        <div style="display:none;height:0" aria-hidden="" id="popup-content">
+            блок c контеном
+        </div>
+        </p>
+        <p>
+        <div>
+            <button class="btn-accent" onclick="openModal({ title:'my-title', body:'my-body' })">
+                Открыть программно
+            </button>
+        </div>
+        </p>
+
+
+        <popup-window></popup-window>
 
         <h2 id="grid" class="text-2xl font-semibold mt-10">Пример сетки</h2>
         <p>Ты можешь делать колонки с помощью классов <code>.row</code> и <code>.col-*</code>.</p>
