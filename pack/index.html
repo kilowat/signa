@@ -46,18 +46,18 @@
 
         <h2 id="popup-window">Модальное окно</h2>
         <pre><code class="language-html">
-<script type="text/plain"><!-- Все что в значение атрибута data-content будет в качестве конента -->    
-<popup-trigger data-content="test" >
-    <button class="btn-accent">Открыть окно c data-content="test"</button>
-</popup-trigger>
-
+<script type="text/plain">
 <!-- Id блока который указан в data-content-id будет в качестве контента для окна -->
 <popup-trigger data-content-id="popup-content">
     <button class="btn-accent">Открыть окно</button>
 </popup-trigger>
-<div style="display:none;height:0" aria-hidden="" id="popup-content">
-    блок который будет в качестве контента для окна
+<div style="display:none;height:0" aria-hidden="">
+    <div id="popup-content">блок который будет в качестве контента для окна </div>
 </div>
+<!-- Открыть в popup компонент и передать в этот компонент параметры-->
+<popup-trigger data-component="my-user" data-user-id="1">
+    Открыть компонент my-user с параметрам user-id
+</popup-trigger>
 
 <!-- Расположить в конец body -->
 <popup-window></popup-window>
@@ -69,6 +69,7 @@ const options = {
     title
     body
     content
+    autoClose // Время в милисек автозакрытия окна
     onClose
 } 
 //Открыть глобально 
@@ -76,13 +77,16 @@ document.querySelector('popup-window', ).open({ title: 'title' })
 // Через event bus внутри компонентов
 eventBus.emit('popup:open', { title: 'title' });
 eventBus.emit('popup:close'); 
+<script type="text/plain">
+defComponent('eventbus-open', ({ html, eventBus }) => {
+    const userId = "22";
+    const open = () => {
+        eventBus.emit('popup:open', { content: () => html`<my-user .userId=${userId}></my-user>` })
+    }
+    return () => html`<button class="btn-accent" onclick=${open}>Открыть через eventubs</button>`
+})
+</script>
 </code></pre>
-        <p>
-            <popup-trigger data-content="test">
-                <button class="btn-accent">Открыть окно c data-content="test"</button>
-            </popup-trigger>
-        </p>
-
         <p>
             <popup-trigger data-content-id="popup-content">
                 <button class="btn-accent">Открыть окно с указанием блока по id с конентом</button>
@@ -90,10 +94,31 @@ eventBus.emit('popup:close');
         </p>
 
         <p>
-        <div style="display:none;height:0" aria-hidden="" id="popup-content">
-            блок c контеном
+        <div style="display:none;height:0" aria-hidden="">
+            <div id="popup-content">блок c контеном</div>
         </div>
         </p>
+        <p>
+            <popup-trigger data-component="my-user" data-user-id="1">
+                <button class="btn-accent"> Открыть компонент с параметрами</button>
+            </popup-trigger>
+        </p>
+        <p>
+            <eventbus-open></eventbus-open>
+        </p>
+        <script>
+            defComponent('my-user', ({ html, prop }) => {
+                const userId = prop('userId');
+                return () => html`userId: ${userId.value}`
+            });
+            defComponent('eventbus-open', ({ html, eventBus }) => {
+                const userId = "22";
+                const open = () => {
+                    eventBus.emit('popup:open', { content: () => html`<my-user .userId=${userId}></my-user>` })
+                }
+                return () => html`<button class="btn-accent" onclick=${open}>Открыть через eventubs</button>`
+            })
+        </script>
         <p>
         <div>
             <button class="btn-accent" onclick="document.querySelector('popup-window', )?.open({ title: 'title' })">
