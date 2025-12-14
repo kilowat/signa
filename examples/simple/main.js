@@ -7,6 +7,17 @@ defStore('counterStore', ({ signal }) => {
     }
 })
 
+defStore('useCounter', ({ signal }) =>
+    (value) => {
+        const count = signal(value);
+        const inc = () => count.value++;
+        return {
+            count,
+            inc,
+        }
+    }
+)
+
 defComponent('counter-component', (ctx) => {
     const {
         $this,
@@ -29,13 +40,6 @@ defComponent('counter-component', (ctx) => {
 
     //Current created root dom element
     console.log($this)
-
-    let i = 0;
-    setInterval(() => {
-        console.log('tick')
-        $this.setAttribute('data-count', i++);
-    }, 2000)
-
     // Props
     const countProp = prop('count', {
         type: Number,
@@ -59,6 +63,8 @@ defComponent('counter-component', (ctx) => {
     });
 
     const counterStore = store('counterStore');
+    const counterState = store('useCounter')(10);
+
     const count = signal(countProp.value);
     const title = signal('My title');
 
@@ -86,6 +92,10 @@ defComponent('counter-component', (ctx) => {
             CountStore: ${counterStore.count.value}
             <button onclick=${() => counterStore.inc()}>Increment store</button>
             <button onclick=${() => count.value++}>Increment local count</button>
+        </div>
+        <div>
+            CounterState: ${counterState.count.value}
+            <button onclick=${() => counterState.inc()}>Increment counter state</button>
         </div>
     `;
 });
