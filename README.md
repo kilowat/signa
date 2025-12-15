@@ -248,8 +248,8 @@ myApi.getItems();
 ### Routing usage
 
 ```typescript
-// Wrap def router root-component to get context
- const router = createRouter([
+defComponent("app-root", ({ html, createRouter, provide, signal }) => {
+    const router = createRouter([
         { name: "home", path: "/", render: () => html`<h1>Home</h1>` },
         { name: "user", path: "/users/:id", render: ({ id }) => html`<h1>User ${id}</h1>` },
         { name: "about", path: "/about", render: () => html`<h1>About</h1>` },
@@ -263,23 +263,11 @@ myApi.getItems();
     return () => html`
         <header>
             <h2>My App</h2>
-
-            <div>
-                <input type="text"
-                    .value=${params.value.id}
-                    oninput=${(e) => params.value = { id: e.target.value }}>
-            </div>
-
             <nav>
                 <route-link .to=${`home`}><button>Home</button></route-link>
                 <route-link .to=${`about`}><button>About</button></route-link>
-
                 <route-link .to=${`user`} .params=${{ id: 123 }}>
                     <button>User 123</button>
-                </route-link>
-
-                <route-link .to=${`user`} .params=${params}>
-                    <button>User Param</button>
                 </route-link>
             </nav>
         </header>
@@ -294,6 +282,7 @@ myApi.getItems();
 defComponent("route-link", ({ prop, html, slot, $this, inject, effect }) => {
     const to = prop("to", { type: String });
     const params = prop("params", { type: Object, default: {} });
+
     const router = inject('router');
 
     effect(() => {
