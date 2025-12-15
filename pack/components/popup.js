@@ -163,6 +163,16 @@ defComponent('popup-window', ({ signal, html, eventBus, effect, $this }) => {
         return bindTouchEvents(el);
     });
 
+    effect(() => {
+        const escHandler = (e) => {
+            if (e.key === 'Escape' && isOpen) {
+                close();
+            }
+        }
+        document.addEventListener('keydown', escHandler);
+        return () => document.removeEventListener('keydown', escHandler);
+    })
+
     $this.open = open;
     $this.close = close;
 
@@ -179,8 +189,7 @@ defComponent('popup-window', ({ signal, html, eventBus, effect, $this }) => {
         return typeof content.value === 'string'
             ? html([content.value])
             : html`${renderTitle()}${renderBody()}`;
-    }
-
+    };
 
     return () => html`
         <div class=${isOpen.value ? 'popup popup--open' : 'popup'}

@@ -14,6 +14,9 @@
     <script src="components/popup.js"></script>
     <link rel="stylesheet" href="components/popup.css" />
 
+    <script src="components/navdrawer.js"></script>
+    <link rel="stylesheet" href="components/navdrawer.css" />
+
     <style>
 
     </style>
@@ -24,14 +27,9 @@
         <div class="logo">UWebcomponents</div>
 
         <div>
-            <div class="nav-section-title">Начало</div>
-            <a class="nav-link" href="#intro">Введение</a>
-        </div>
-
-        <div>
             <div class="nav-section-title">Компоненты</div>
             <a class="nav-link" href="#popup-window">Popup window</a>
-            <a class="nav-link" href="#example2">Расширенный пример</a>
+            <a class="nav-link" href="#nav-drawer">Navigation drawer</a>
         </div>
 
         <div>
@@ -127,8 +125,33 @@ defComponent('eventbus-open', ({ html, eventBus }) => {
         </div>
         </p>
 
-
         <popup-window></popup-window>
+
+        <h2 id="nav-drawer" class="text-2xl font-semibold mt-10">Navigation drawer</h2>
+        <pre><code class="language-html"><script type="text/plain">
+<toggle-drawer></toggle-drawer>
+<nav-drawer>
+    <ul>
+        <li><a href="#">Главная</a></li>
+        <li><a href="#">О нас</a></li>
+        <li><a href="#">Услуги</a></li>
+        <li><a href="#">Контакты</a></li>
+    </ul>
+</nav-drawer>
+</script>
+</code></pre>
+
+        <div data-theme="dark">
+            <toggle-drawer></toggle-drawer>
+            <nav-drawer>
+                <ul>
+                    <li><a href="#">Главная</a></li>
+                    <li><a href="#">О нас</a></li>
+                    <li><a href="#">Услуги</a></li>
+                    <li><a href="#">Контакты</a></li>
+                </ul>
+            </nav-drawer>
+        </div>
 
         <h2 id="grid" class="text-2xl font-semibold mt-10">Пример сетки</h2>
         <p>Ты можешь делать колонки с помощью классов <code>.row</code> и <code>.col-*</code>.</p>
