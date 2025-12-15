@@ -83,15 +83,19 @@ toggle-drawer {
     font-size: 18px;
 }
 
-/* overlay */
+.drawer__overlay.--opened {
+    opacity: 1;
+    display: block;
+}
+
 .drawer__overlay {
-    position: fixed;
+    display: none;
+    position: absolute;
     inset: 0;
-    background: var(--overlay-bg);
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px);
     opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-    z-index: 999;
+    transition: opacity .3s ease;
 }
 
 /* OPEN STATE (JS) */

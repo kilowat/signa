@@ -31,16 +31,10 @@
             <a class="nav-link" href="#popup-window">Popup window</a>
             <a class="nav-link" href="#nav-drawer">Navigation drawer</a>
         </div>
-
-        <div>
-            <div class="nav-section-title">API</div>
-            <a class="nav-link" href="#api">Описание методов</a>
-        </div>
     </aside>
 
     <main class="content">
-        <h1 id="intro">Введение</h1>
-        <p>Веб компоненты</p>
+        <h1 id="intro">Веб компоненты</h1>
 
         <h2 id="popup-window">Модальное окно</h2>
         <pre><code class="language-html">
@@ -138,11 +132,19 @@ defComponent('eventbus-open', ({ html, eventBus }) => {
         <li><a href="#">Контакты</a></li>
     </ul>
 </nav-drawer>
+<!--Глобавльный доступ к состоянию-->
+document.querySelector('nav-drawer')?.drawer 
 </script>
 </code></pre>
 
         <div data-theme="dark">
             <toggle-drawer></toggle-drawer>
+            <div class="margin-line">
+                <button class=" btn-accent" onclick="document.querySelector('nav-drawer')?.drawer.toggle()">Открыть
+                    через
+                    глобальную функцию
+                </button>
+            </div>
             <nav-drawer>
                 <ul>
                     <li><a href="#">Главная</a></li>
