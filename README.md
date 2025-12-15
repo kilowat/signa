@@ -162,11 +162,19 @@ const defaultContent = slot.default;    // Get default slot
 The framework provides a simple store mechanism for state management across components:
 
 ```typescript
-// Create and register a store
+// Create and register a store, sharing state
 defStore('userStore', (ctx) => {
-    const name = ctx.signal('');
-    const age = ctx.signal(0);
-    const displayName = ctx.computed(() => `User: ${name.value}`);
+    const {
+        signal,
+        computed,
+        store,
+        inject,
+        provide,
+        eventBus,
+    } = ctx ;
+    const name = signal('');
+    const age = signal(0);
+    const displayName = computed(() => `User: ${name.value}`);
 
     return {
         name,
@@ -190,6 +198,20 @@ defComponent('user-profile', (ctx) => {
         </div>
     `;
 });
+
+// use as composable, return function
+defStore('useUser', (ctx) => ({name, age}) => {
+    const name = ctx.signal(name);
+    const age = ctx.signal(age);
+    const displayName = ctx.computed(() => `User: ${name.value}`);
+
+    return {
+        name,
+        age,
+        displayName
+    };
+});
+const user = ctx.store('useUser')({ name: 'Alex', age: 20 });
 ```
 ### EventBus Usage
 

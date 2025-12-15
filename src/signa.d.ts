@@ -18,6 +18,10 @@ declare global {
         signal: <T = any>(initial?: T) => Signal<T>;
         computed: <T = any>(fn: () => T) => ReadonlySignal<T>;
         effect: (fn: () => any) => void;
+        store<T = any>(key: string): T;
+        provide<T = any>(key: string, value: T): void;
+        inject<T = any>(key: string): T;
+        eventBus: EventBus;
     }
 
     interface StoreRegistry {

@@ -1,10 +1,11 @@
 //store.js
 import { signal, effect, computed } from '@preact/signals-core';
+import { inject, provide } from './registry.js';
 
 const storeRegistry = {};
 
 export function defStore(key, setup) {
-    if (storeRegistry[key]) {
+    if (storeRegistry && storeRegistry[key]) {
         throw new Error(`Store "${key}" is already defined`);
     }
 
@@ -20,7 +21,15 @@ export function resolveStore(key) {
     }
 
     if (!entry.instance) {
-        entry.instance = entry.factory({ signal, effect, computed });
+        entry.instance = entry.factory({
+            signal,
+            effect,
+            computed,
+            store: key => resolveStore(key),
+            inject,
+            provide,
+            eventBus: storeRegistry['event:bus'],
+        });
     }
 
     return entry.instance;

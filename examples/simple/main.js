@@ -1,12 +1,13 @@
-defStore('counterStore', ({ signal }) => {
-    const count = signal(0);
+defStore('counterStore', (ctx) => {
+    console.log(ctx);
+    const count = ctx.signal(0);
     const inc = () => count.value++;
     return {
         count,
         inc,
     }
 })
-
+//composable
 defStore('useCounter', ({ signal }) =>
     (value) => {
         const count = signal(value);
