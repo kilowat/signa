@@ -25,7 +25,25 @@
 <body>
     <aside class="sidebar">
         <div class="logo">UWebcomponents</div>
+        <div class="nav-section-title">Введение</div>
+        <a class="nav-link" href="#intro">О библиотеке</a>
+        <a class="nav-link" href="#features">Возможности</a>
+        <a class="nav-link" href="#quick-start">Быстрый старт</a>
 
+
+        <div class="nav-section-title">Основы</div>
+        <a class="nav-link" href="#components">Компоненты</a>
+        <a class="nav-link" href="#props">Props</a>
+        <a class="nav-link" href="#slots">Slots</a>
+        <a class="nav-link" href="#store">Store</a>
+        <a class="nav-link" href="#eventbus">EventBus</a>
+        <a class="nav-link" href="#di">Provide / Inject</a>
+        <a class="nav-link" href="#routing">Роутинг</a>
+
+
+        <div class="nav-section-title">Дополнительно</div>
+        <a class="nav-link" href="#template">Template Engine</a>
+        <a class="nav-link" href="#reactivity">Reactivity</a>
         <div>
             <div class="nav-section-title">Компоненты</div>
             <a class="nav-link" href="#popup-window">Popup window</a>
@@ -34,7 +52,140 @@
     </aside>
 
     <main class="content">
-        <h1 id="intro">Веб компоненты</h1>
+
+
+        <h1 id="intro">Web Components Framework</h1>
+        <p>
+            <strong>UWebcomponents</strong> — лёгкий фреймворк для создания реактивных Web Components
+            на базе сигналов и микро-шаблонизатора.
+        </p>
+
+        <h2 id="features">Возможности</h2>
+        <ul>
+            <li>Создание Web Components через простой API</li>
+            <li>HTML-шаблоны на базе uhtml</li>
+            <li>Реактивность через @preact/signals-core</li>
+            <li>Store для разделяемого состояния</li>
+            <li>EventBus для общения компонентов</li>
+            <li>Provide / Inject (DI)</li>
+            <li>Клиентский роутинг</li>
+            <li>Размер: ~20kb min / ~8kb gzip</li>
+        </ul>
+        <h2 id="quick-start">Быстрый старт</h2>
+
+        <h3>IIFE в браузере</h3>
+        <pre><code class="language-html"><script type="text/plain">
+<script src="signa.min.js"></script>
+</script></code></pre>
+
+        <h3>Пример компонента</h3>
+        <pre><code class="language-javascript"><script type="text/plain">
+defComponent('my-counter', (ctx) => {
+    const count = ctx.signal(0);
+
+    return () => ctx.html`
+        <div>
+            <p>Count: ${count.value}</p>
+            <button onclick=${() => count.value++}>Increment</button>
+        </div>
+    `;
+});
+</script></code></pre>
+
+        <h2 id="components">Компоненты</h2>
+        <p>Компоненты объявляются через defComponent.</p>
+
+        <pre><code class="language-javascript"><script type="text/plain">
+defComponent('my-component', (ctx) => {
+    const {
+        signal,
+        effect,
+        computed,
+        html,
+        prop,
+        slot,
+        store,
+        inject,
+        provide,
+        eventBus,
+        createRouter,
+    } = ctx;
+
+    const title = prop('title');
+    const count = signal(0);
+    const doubleCount = computed(() => count.value * 2);
+
+    effect(() => {
+        console.log('Count changed:', count.value);
+    });
+
+    return () => html`
+        <h1>${title.value}</h1>
+        <p>Count: ${count.value}</p>
+        <p>Double: ${doubleCount.value}</p>
+    `;
+});
+</script></code></pre>
+
+        <h2 id="props">Props</h2>
+        <pre><code class="language-javascript"><script type="text/plain">
+const count = prop('count', { type: Number, default: 0 });
+</script></code></pre>
+
+        <pre><code class="language-html"><script type="text/plain">
+<my-component data-count="10"></my-component>
+</script></code></pre>
+
+        <h2 id="slots">Slots</h2>
+        <pre><code class="language-html"><script type="text/plain">
+<my-component>
+    <div data-slot="header">Header</div>
+    <div>Default slot</div>
+</my-component>
+</script></code></pre>
+
+        <pre><code class="language-javascript"><script type="text/plain">
+const header = slot('header');
+const content = slot.default;
+</script></code></pre>
+
+        <h2 id="store">Store</h2>
+        <pre><code class="language-javascript"><script type="text/plain">
+defStore('userStore', (ctx) => {
+    const name = ctx.signal('');
+    const age = ctx.signal(0);
+
+    return { name, age };
+});
+</script></code></pre>
+
+        <h2 id="eventbus">EventBus</h2>
+        <pre><code class="language-javascript"><script type="text/plain">
+eventBus.on('my-event:update', (payload) => {
+    console.log(payload);
+});
+
+eventBus.emit('my-event:update', { value: 1 });
+</script></code></pre>
+
+        <h2 id="di">Provide / Inject</h2>
+        <pre><code class="language-javascript"><script type="text/plain">
+provide('api', {
+    getItems: () => [1, 2, 3]
+});
+
+const api = inject('api');
+api.getItems();
+</script></code></pre>
+
+        <h2 id="routing">Роутинг</h2>
+        <pre><code class="language-javascript"><script type="text/plain">
+const router = createRouter([
+    { name: 'home', path: '/', render: () => html`<h1>Home</h1>` },
+    { name: 'user', path: '/users/:id', render: ({ id }) => html`<h1>User ${id}</h1>` },
+    { name: 'notfound', path: '*', render: () => html`<h1>404</h1>` }
+]);
+</script></code></pre>
 
         <h2 id="popup-window">Модальное окно</h2>
         <pre><code class="language-html">
