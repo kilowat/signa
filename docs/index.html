@@ -24,7 +24,7 @@
 
 <body>
     <aside class="sidebar">
-        <div class="logo">UWebcomponents</div>
+        <div class="logo">Signa</div>
         <div class="nav-section-title">Введение</div>
         <a class="nav-link" href="#intro">О библиотеке</a>
         <a class="nav-link" href="#features">Возможности</a>
@@ -39,11 +39,6 @@
         <a class="nav-link" href="#eventbus">EventBus</a>
         <a class="nav-link" href="#di">Provide / Inject</a>
         <a class="nav-link" href="#routing">Роутинг</a>
-
-
-        <div class="nav-section-title">Дополнительно</div>
-        <a class="nav-link" href="#template">Template Engine</a>
-        <a class="nav-link" href="#reactivity">Reactivity</a>
         <div>
             <div class="nav-section-title">Компоненты</div>
             <a class="nav-link" href="#popup-window">Popup window</a>
@@ -56,7 +51,7 @@
 
         <h1 id="intro">Web Components Framework</h1>
         <p>
-            <strong>UWebcomponents</strong> — лёгкий фреймворк для создания реактивных Web Components
+            <strong>Signa</strong> — лёгкий фреймворк для создания реактивных Web Components
             на базе сигналов и микро-шаблонизатора.
         </p>
 
@@ -130,10 +125,41 @@ defComponent('my-component', (ctx) => {
         <h2 id="props">Props</h2>
         <pre><code class="language-javascript"><script type="text/plain">
 const count = prop('count', { type: Number, default: 0 });
+
+const myProp = prop( 'myPropName', { // this name in html data-myPropName or direct pass .myPropName="{$somValue}"
+    type: String | Number | Boolean | Array | Object | Function
+    default: 'default value',
+});
+//or
+const shortProp = prop('myProp');
+
+return html`<div>${myProp.value}</div>`
+//in component pass signal as prop value to child
+defComponent('my-component', ({ html, prop }) => {
+    //Caution all signal prop are read only
+    const count = prop('count');
+
+    return html `${count.value}`
+})
+
+//in parent
+defComponent('my-component', ({ html, prop }) => {
+    const count = signal(0);
+    return html`<my-component .count="${count}"></my-component>`
+})
+
+// as function
+const onPressButton = prop('onPressButon');
+
+return html`<my-component .onPressButton="${() => console.log('onPress')}"></my-component>`
 </script></code></pre>
 
         <pre><code class="language-html"><script type="text/plain">
 <my-component data-count="10"></my-component>
+<!--In html use as initional value from php render-->
+<my-component data-count="10"></my-component>
+<my-component data-array="[1,2,3]"></my-component>
+<--Also can use KebabCase notation, example data-my-prop is convert to myProp in defComponent-->
 </script></code></pre>
 
         <h2 id="slots">Slots</h2>
@@ -151,21 +177,70 @@ const content = slot.default;
 
         <h2 id="store">Store</h2>
         <pre><code class="language-javascript"><script type="text/plain">
+// Create and register a store, sharing state
 defStore('userStore', (ctx) => {
-    const name = ctx.signal('');
-    const age = ctx.signal(0);
+    const {
+        signal,
+        computed,
+        store,
+        inject,
+        provide,
+        eventBus,
+    } = ctx ;
+    const name = signal('');
+    const age = signal(0);
+    const displayName = computed(() => `User: ${name.value}`);
 
-    return { name, age };
+    return {
+        name,
+        age,
+        displayName
+    };
 });
+
+
+// Use store in components
+defComponent('user-profile', (ctx) => {
+    const userStore = ctx.store('userStore');
+    
+    return () => ctx.html`
+        <div>
+            <input 
+                value=${userStore.name.value} 
+                onInput=${(e) => userStore.name.value = e.target.value}
+            />
+            <div>${userStore.displayName.value}</div>
+        </div>
+    `;
+});
+
+// use as composable, return function
+defStore('useUser', (ctx) => ({name, age}) => {
+    const name = ctx.signal(name);
+    const age = ctx.signal(age);
+    const displayName = ctx.computed(() => `User: ${name.value}`);
+
+    return {
+        name,
+        age,
+        displayName
+    };
+});
+const user = ctx.store('useUser')({ name: 'Alex', age: 20 });
 </script></code></pre>
 
         <h2 id="eventbus">EventBus</h2>
         <pre><code class="language-javascript"><script type="text/plain">
-eventBus.on('my-event:update', (payload) => {
-    console.log(payload);
-});
+const { eventBus } = ctx;
 
-eventBus.emit('my-event:update', { value: 1 });
+effect(()=>{
+    const unsubscribe = eventBus.on('my-event:update', (payload)=> { console.log(payoload) });
+    return unsubscribe;
+})
+eventBus.emit('my-event:update', {value: 1});
+/// Use this event for init out side library, at this moment all html was rendered
+eventBus.on('components:ready', ()=> { console.log('all component was mounted and ready') });
+```
 </script></code></pre>
 
         <h2 id="di">Provide / Inject</h2>
@@ -180,11 +255,58 @@ api.getItems();
 
         <h2 id="routing">Роутинг</h2>
         <pre><code class="language-javascript"><script type="text/plain">
-const router = createRouter([
-    { name: 'home', path: '/', render: () => html`<h1>Home</h1>` },
-    { name: 'user', path: '/users/:id', render: ({ id }) => html`<h1>User ${id}</h1>` },
-    { name: 'notfound', path: '*', render: () => html`<h1>404</h1>` }
-]);
+defComponent("app-root", ({ html, createRouter, provide, signal }) => {
+    const router = createRouter([
+        { name: "home", path: "/", render: () => html`<h1>Home</h1>` },
+        { name: "user", path: "/users/:id", render: ({ id }) => html`<h1>User ${id}</h1>` },
+        { name: "about", path: "/about", render: () => html`<h1>About</h1>` },
+        { name: "notfound", path: "*", render: () => html`<h1>404 Not Found</h1>` }
+    ]);
+
+    provide('router', router);
+
+    const params = signal({ id: '1' });
+
+    return () => html`
+        <header>
+            <h2>My App</h2>
+            <nav>
+                <route-link .to=${`home`}><button>Home</button></route-link>
+                <route-link .to=${`about`}><button>About</button></route-link>
+                <route-link .to=${`user`} .params=${{ id: 123 }}>
+                    <button>User 123</button>
+                </route-link>
+            </nav>
+        </header>
+
+        <main>
+            ${router.view()}
+        </main>
+    `;
+});
+
+
+defComponent("route-link", ({ prop, html, slot, $this, inject, effect }) => {
+    const to = prop("to", { type: String });
+    const params = prop("params", { type: Object, default: {} });
+
+    const router = inject('router');
+
+    effect(() => {
+        const route = router.route(to.value, params.value);
+        $this.setAttribute('href', route ?? '#');
+    });
+
+
+    $this.onclick = (e) => {
+        e.preventDefault();
+        if (to.value) {
+            router.navigate(to.value, params.value);
+        }
+    }
+
+    return () => html`${slot.default}`;
+});
 </script></code></pre>
 
         <h2 id="popup-window">Модальное окно</h2>
