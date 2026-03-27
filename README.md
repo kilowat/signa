@@ -25,7 +25,7 @@ todo
 ```html
 <script src="../dist/signa.min.js"></script>
 
-window.defComponent, window.defStore, window.getStore
+window.defComponent, window.defStore
 
 ```
 ```javascript
@@ -185,9 +185,6 @@ defStore('userStore', (ctx) => {
         displayName
     };
 });
-
-// For global use in broweser
-const userStore = getStore('userStore')
 
 
 // Use store in components
