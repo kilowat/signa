@@ -24,6 +24,9 @@ todo
 ### IIFE in browsers
 ```html
 <script src="../dist/signa.min.js"></script>
+
+window.defComponent, window.defStore, window.resolveStore
+
 ```
 ```javascript
 ```
@@ -182,6 +185,9 @@ defStore('userStore', (ctx) => {
         displayName
     };
 });
+
+// For global use in broweser
+const userStore = resolveStore('userStore')
 
 
 // Use store in components
