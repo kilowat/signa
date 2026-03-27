@@ -23,11 +23,7 @@ export function defStore(key, setup) {
 }
 
 export function resolveStore(key) {
-    const entry = storeRegistry[key];
-    if (!entry) {
-        throw new Error(`Store "${key}" is not defined`);
-    }
-
+    const entry = getStore(key)
     if (!entry.instance) {
         entry.instance = entry.factory({
             signal,
