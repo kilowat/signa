@@ -1,5 +1,5 @@
 import { defComponent } from './component.js';
-import { defStore, resolveStore } from './store.js';
+import { defStore, getStore } from './store.js';
 
 
-Object.assign(window, { defComponent, defStore, resolveStore });
+Object.assign(window, { defComponent, defStore, getStore });

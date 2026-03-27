@@ -4,6 +4,14 @@ import { inject, provide } from './registry.js';
 
 const storeRegistry = {};
 
+export const getStore = (key) => {
+    const entry = storeRegistry[key];
+    if (!entry) {
+        throw new Error(`Store "${key}" is not defined`);
+    }
+    return entry;
+}
+
 export function defStore(key, setup) {
     if (storeRegistry && storeRegistry[key]) {
         throw new Error(`Store "${key}" is already defined`);
