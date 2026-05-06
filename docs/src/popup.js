@@ -5,7 +5,7 @@ defComponent('popup-window', ({ signal, html, eventBus, effect, $this }) => {
     const content = signal(null);
     const onClose = signal(null);
 
-    const autClose = signal(0);
+    const autoClose = signal(0);
     const timeToClose = signal(0);
 
     let startY = 0;
@@ -73,32 +73,38 @@ defComponent('popup-window', ({ signal, html, eventBus, effect, $this }) => {
         content.value = opts.content || null;
         onClose.value = opts.onClose || null;
 
-        autClose.value = opts.autClose || 0;
-        timeToClose.value = autClose.value;
+        autoClose.value = opts.autoClose || 0;
+
+        if (timer) clearTimeout(timer);
 
         isOpen.value = true;
         document.body.style.overflow = 'hidden';
+
+        if (autoClose.value > 0) {
+            timer = setTimeout(() => {
+                close();
+            }, autoClose.value);
+        }
 
         requestAnimationFrame(() => {
             resetWindowPosition();
             mountContent();
         });
     };
-
     const close = () => {
         isOpen.value = false;
         document.body.style.overflow = '';
+
+        if (timer) {
+            clearTimeout(timer);
+            timer = null;
+        }
 
         resetWindowPosition();
         restoreContent();
 
         currentY = 0;
         isDragging = false;
-
-        if (timer) {
-            clearInterval(timer);
-            timer = null;
-        }
 
         if (onClose.value) {
             onClose.value();
