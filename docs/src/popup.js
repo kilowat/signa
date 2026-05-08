@@ -68,6 +68,7 @@ defComponent('popup-window', ({ signal, html, eventBus, effect, $this }) => {
     };
 
     const open = (opts = {}) => {
+        close();
         title.value = opts.title || '';
         body.value = opts.body || '';
         content.value = opts.content || null;
