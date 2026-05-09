@@ -1,6 +1,6 @@
 
 
-defComponent('todo-list', (ctx) => {
+sig('todo-list', (ctx) => {
     const { html, signal } = ctx;
 
     const todoList = signal([

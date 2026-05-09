@@ -1,245 +1,169 @@
-// component.js
-import { reactive, html, htmlFor, svg } from 'uhtml/reactive';
+import { reactive, html } from 'uhtml/reactive';
 import { effect, signal, computed } from '@preact/signals-core';
-import { createHooksContext, pushContext, popContext } from './hooks.js';
-import { resolveStore } from './store.js';
-import { componentStart, componentRendered } from './lifecycle.js';
-import { createRouter } from './router.js';
-import { eventBus } from './eventBus.js';
-import { inject, provide } from './registry.js';
+import { resolveState, isSignal } from './state.js';
+import { bus } from './bus.js';
 
-function camelCaseToKebabCase(str) {
-    return str.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+function toKebab(str) {
+    return str.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
-function isSignal(obj) {
-    return obj && typeof obj === 'object' && typeof obj.peek === 'function' && 'value' in obj;
+function parseAttr(value, type) {
+    if (value === null) return null;
+    switch (type) {
+        case Number: return Number(value);
+        case Boolean: return value !== 'false';
+        case Object:
+        case Array:
+            try { return JSON.parse(value); } catch { return type === Object ? {} : []; }
+        default: return value;
+    }
+}
+
+function defaultFor(type) {
+    switch (type) {
+        case String: return '';
+        case Number: return 0;
+        case Boolean: return false;
+        case Object: return {};
+        case Array: return [];
+        default: return null;
+    }
 }
 
 export function defComponent(tagName, setup) {
     const uRender = reactive(effect);
 
     class Component extends HTMLElement {
-        constructor() {
-            super();
-            this.hooksContext = createHooksContext();
-            this.cleanup = [];
-            this.isMounted = false;
-            this.slots = { default: [] };
-            this.props = new Map();
-
-            this._rawProps = {};
-        }
+        #cleanups = [];
+        #props = new Map();
+        #rawProps = {};
+        #slots = { default: [] };
+        #mounted = false;
 
         #addEffect(fn) {
             const stop = effect(() => {
                 const cleanup = fn();
-                if (typeof cleanup === 'function') {
-                    this.hooksContext.cleanups.push(cleanup);
-                }
+                if (typeof cleanup === 'function') this.#cleanups.push(cleanup);
             });
-            this.hooksContext.cleanups.push(() => stop());
+            this.#cleanups.push(() => stop());
         }
 
+        #resolveProp(name, type, defaultValue) {
+            if (this.#props.has(name)) return this.#props.get(name);
 
-        #resolveProp(name, config = {}) {
-            const { type, default: defaultValue } = config;
+            const raw = this[name];
 
-            if (this.props.has(name)) return this.props.get(name);
-
-            const rawVal = this[name];
-
-            if (isSignal(rawVal)) {
-                rawVal.__type = type ?? rawVal.__type ?? null;
-                this.props.set(name, rawVal);
-                this._rawProps[name] = rawVal;
-                return rawVal;
+            if (isSignal(raw)) {
+                raw.__type = type ?? raw.__type ?? null;
+                this.#props.set(name, raw);
+                this.#rawProps[name] = raw;
+                return raw;
             }
 
-            if (typeof rawVal === 'function') {
-                this.props.set(name, rawVal);
-                return rawVal;
+            if (typeof raw === 'function') {
+                this.#props.set(name, raw);
+                return raw;
             }
 
-            const attrData = this.getAttribute(`data-${name}`);
-            const kebab = camelCaseToKebabCase(name);
-            const attrValue = attrData ?? this.getAttribute(`data-${kebab}`);
+            const attrVal = this.getAttribute(`data-${name}`) ?? this.getAttribute(`data-${toKebab(name)}`);
 
             let finalType = type;
-
             if (!finalType) {
-                if (rawVal !== undefined) finalType = rawVal.constructor;
-                else if (attrValue !== null) {
-                    if (!isNaN(Number(attrValue))) finalType = Number;
-                    else if (attrValue === 'true' || attrValue === 'false') finalType = Boolean;
-                    else if (attrValue.startsWith('{') || attrValue.startsWith('[')) finalType = Object;
+                if (raw !== undefined) finalType = raw.constructor;
+                else if (attrVal !== null) {
+                    if (!isNaN(Number(attrVal))) finalType = Number;
+                    else if (attrVal === 'true' || attrVal === 'false') finalType = Boolean;
+                    else if (attrVal.startsWith('{') || attrVal.startsWith('[')) finalType = Object;
                     else finalType = String;
-                } else if (defaultValue !== undefined) {
-                    finalType = defaultValue.constructor;
-                } else {
-                    finalType = String;
-                }
+                } else if (defaultValue !== undefined) finalType = defaultValue.constructor;
+                else finalType = String;
             }
 
-            const initial =
-                rawVal !== undefined
-                    ? rawVal
-                    : (attrValue !== null
-                        ? this.#parseAttributeValue(attrValue, finalType)
-                        : (defaultValue !== undefined
-                            ? defaultValue
-                            : this.#getDefaultForType(finalType)));
+            const initial = raw !== undefined
+                ? raw
+                : attrVal !== null
+                    ? parseAttr(attrVal, finalType)
+                    : defaultValue !== undefined ? defaultValue : defaultFor(finalType);
 
             const s = signal(initial);
             s.__type = finalType;
-            this._rawProps[name] = s;
+            this.#rawProps[name] = s;
 
-            const readonly = {
-                get value() { return s.value; },
-                set value(_) { },
-                peek: s.peek.bind(s)
-            };
-
-            this.props.set(name, readonly);
+            const readonly = { get value() { return s.value; }, set value(_) { }, peek: s.peek.bind(s) };
+            this.#props.set(name, readonly);
             return readonly;
-        }
-
-        #getDefaultForType(type) {
-            switch (type) {
-                case String: return '';
-                case Number: return 0;
-                case Boolean: return false;
-                case Object: return {};
-                case Array: return [];
-                default: return null;
-            }
-        }
-
-        #parseAttributeValue(value, type) {
-            if (value === null) return null;
-            switch (type) {
-                case Number: return Number(value);
-                case Boolean: return value !== 'false';
-                case Object:
-                case Array:
-                    try { return JSON.parse(value); }
-                    catch { return type === Object ? {} : []; }
-                default:
-                    return value;
-            }
-        }
-
-        #updatePropFromAttribute(attrName, value) {
-            const propName = attrName
-                .replace(/^data-/, '')
-                .replace(/-([a-z])/g, (_, c) => c.toUpperCase());
-
-            const raw = this._rawProps[propName];
-            if (!raw || !isSignal(raw)) return;
-
-            const type = raw.__type || String;
-            const parsed = this.#parseAttributeValue(value, type);
-
-            raw.value = parsed;
         }
 
         #collectSlots() {
             const slots = { default: [] };
-
-            Array.from(this.childNodes).forEach(node => {
+            for (const node of this.childNodes) {
                 if (node instanceof Element) {
-                    const slotName = node.getAttribute('data-slot');
-                    if (slotName) {
-                        slots[slotName] ??= [];
-                        slots[slotName].push(...Array.from(node.childNodes));
-                    } else {
-                        slots.default.push(node);
-                    }
+                    const name = node.getAttribute('data-slot');
+                    if (name) { slots[name] ??= []; slots[name].push(...node.childNodes); }
+                    else slots.default.push(node);
                 } else {
                     slots.default.push(node);
                 }
-            });
-
-            this.slots = slots;
+            }
+            this.#slots = slots;
         }
 
-        #createComponentContext() {
-            const slotFn = Object.assign(
-                name => this.slots[name] || [],
-                { default: this.slots.default }
-            );
-
+        #ctx() {
+            const slot = Object.assign(name => this.#slots[name] ?? [], { default: this.#slots.default });
             return {
                 $this: this,
                 signal,
-                effect: this.#addEffect.bind(this),
                 computed,
+                effect: this.#addEffect.bind(this),
                 html,
-                htmlFor,
-                svg,
-                prop: this.#resolveProp.bind(this),
-                slot: slotFn,
-                store: key => resolveStore(key),
-                inject,
-                provide,
-                createRouter,
-                eventBus,
+                prop: (name, type, def) => this.#resolveProp(name, type, def),
+                slot,
+                state: resolveState,
+                bus,
             };
         }
 
         connectedCallback() {
-            this.isMounted = true;
-            componentStart();
+            this.#mounted = true;
 
-            this._attrObserver = new MutationObserver(muts => {
+            this._observer = new MutationObserver(muts => {
                 for (const m of muts) {
-                    if (m.type === 'attributes' && m.attributeName.startsWith('data-')) {
-                        const newValue = this.getAttribute(m.attributeName);
-                        this.#updatePropFromAttribute(m.attributeName, newValue);
+                    if (m.type !== 'attributes' || !m.attributeName.startsWith('data-')) continue;
+                    const propName = m.attributeName
+                        .replace(/^data-/, '')
+                        .replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+                    const raw = this.#rawProps[propName];
+                    if (raw && isSignal(raw)) {
+                        raw.value = parseAttr(this.getAttribute(m.attributeName), raw.__type || String);
                     }
                 }
             });
-
-            this._attrObserver.observe(this, { attributes: true });
+            this._observer.observe(this, { attributes: true });
 
             requestAnimationFrame(() => {
-                if (!this.isMounted) return;
-
+                if (!this.#mounted) return;
                 try {
                     this.#collectSlots();
-
-                    pushContext(this.hooksContext, 'setup');
-                    const renderFn = setup(this.#createComponentContext());
-
-                    if (renderFn !== undefined) {
+                    const renderFn = setup(this.#ctx());
+                    if (typeof renderFn === 'function') {
                         const clean = uRender(this, renderFn);
-                        if (typeof clean === 'function') this.cleanup.push(clean);
+                        if (typeof clean === 'function') this.#cleanups.push(clean);
                     }
-
-                    popContext();
-                    queueMicrotask(() => componentRendered());
+                    queueMicrotask(() => bus.emit('sig:ready'));
                 } catch (e) {
-                    console.error(`Error mounting component ${this.tagName.toLowerCase()}:`, e);
-                    componentRendered();
+                    console.error(`[sig] error mounting <${tagName}>:`, e);
                 }
             });
         }
 
         disconnectedCallback() {
-            this.isMounted = false;
-
-            if (this._attrObserver) this._attrObserver.disconnect();
-
-            this.cleanup.forEach(fn => { try { fn(); } catch { } });
-            this.cleanup = [];
-
-            this.hooksContext.cleanups.forEach(fn => { try { fn(); } catch { } });
-            this.hooksContext.cleanups = [];
+            this.#mounted = false;
+            this._observer?.disconnect();
+            this.#cleanups.forEach(fn => { try { fn(); } catch { } });
+            this.#cleanups = [];
         }
     }
 
-    if (customElements.get(tagName))
-        throw new Error(`Component "${tagName}" is already defined`);
-
+    if (customElements.get(tagName)) throw new Error(`[sig] <${tagName}> is already defined`);
     customElements.define(tagName, Component);
 }

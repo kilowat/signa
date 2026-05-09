@@ -1,326 +1,339 @@
-# Web Components Framework
+# Signa
 
-A lightweight lib for building reactive web components with signals and template engine.
+Lightweight wrapper around Web Components, [uhtml](https://github.com/WebReflection/uhtml) and [@preact/signals-core](https://www.npmjs.com/package/@preact/signals-core). Designed for regular HTML and PHP sites — no build step required on the page itself.
 
-## Features
+**~20kb minified, ~8kb gzip.**
 
-- **Web Components**: Create custom elements with a simple API
-- **Template**: Micro template engine from uhtml
-- **Reactive**: Built-in reactivity using @preact/signals-core
-- **Store**: Simple state management with signals
-- **Dependencies**:
-    - [@preact/signals-core](https://www.npmjs.com/package/@preact/signals-core) for reactivity
-    - [uhtml](https://github.com/WebReflection/uhtml) for html template
-- **Build size**: 20kb minify, 8kb gzib
+## How it works
+
+One function on `window` — `sig()` — does everything:
+
+```js
+sig(id, fn)   // two args → define component or state
+sig(id)       // one arg  → get state instance
+sig.router()  // create a hash router
+```
+
+- `id` contains a hyphen → **component** (`my-cart`, `user-card`)
+- `id` is camelCase, `fn` returns an object → **singleton state**
+- `id` is camelCase, `fn` returns a function → **composable**
+
+---
 
 ## Installation
 
 ```bash
-todo
+npm install
+npm run build
 ```
 
-## Quick Start
-
-### IIFE in browsers
-```html
-<script src="../dist/signa.min.js"></script>
-
-window.defComponent, window.defStore
-
-```
-```javascript
-```
-
-### Component Example
-```typescript
-
-defComponent('my-counter', (ctx) => {
-    const count = ctx.signal(0);
-    
-    return () => ctx.html`
-        <div>
-            <p>Count: ${count.value}</p>
-            <button onclick=${() => count.value++}>Increment</button>
-        </div>
-    `;
-});
-```
-
-## Usage
-
-### Component Definition
-
-Components are defined using the `defComponent` function that takes a tag name and a setup function:
-
-```typescript
-defComponent('my-component', (ctx) => {
-    // Component Context provides:
-    const {
-        $this,        // Created component context
-        signal,       // Create reactive state
-        effect,       // Create side effects
-        computed,     // Create computed values
-        html,         // Template engine
-        htmlFor,      // Template with keys
-        prop,         // Define props
-        slot         // Access slots
-        store     // Get store instance by key
-        inject, // DI get by key 
-        provide, // DI add by key
-        eventBus, // Event bus
-        createRouter, // Routing
-    } = ctx;
-
-    // Define props  all props ReadOnly
-    const title = prop('title');
-    // Use slots
-    const headerContent = slot('header');
-    
-    // Create state
-    const count = signal(0);
-    
-    // Create computed
-    const doubleCount = computed(() => count.value * 2);
-    
-    //Create effect
-
-    // Watch to count.value changed
-    effect(() => {
-        console.log('Count changed:', count.value);
-    });
-
-    effect(() => {
-        //UnMounted
-        return () => { console.log('Component disconnected from dom') }
-    })
-
-    // Return render function
-    return () => html`
-        <div>
-            <div>${headerContent}</div>
-            <h1>${title.value}</h1>
-            <p>Count: ${count.value}</p>
-            <p>Double: ${doubleCount.value}</p>
-            <button onclick=${() => count.value++}>
-                Increment
-            </button>
-        </div>
-    `;
-});
-
-```
-### Usage props
-
-Props can be defined with the following types.
-
-```typescript
-const myProp = prop( 'myPropName', { // this name in html data-myPropName or direct pass .myPropName="{$somValue}"
-    type: String | Number | Boolean | Array | Object | Function
-    default: 'default value',
-});
-//or
-const shortProp = prop('myProp');
-
-return html`<div>${myProp.value}</div>`
-//in component pass signal as prop value to child
-defComponent('my-component', ({ html, prop }) => {
-    //Caution all signal prop are read only
-    const count = prop('count');
-
-    return html `${count.value}`
-})
-
-//in parent
-defComponent('my-component', ({ html, prop }) => {
-    const count = signal(0);
-    return html`<my-component .count="${count}"></my-component>`
-})
-
-// as function
-const onPressButton = prop('onPressButon');
-
-return html`<my-component .onPressButton="${() => console.log('onPress')}"></my-component>`
-```
-In html use as initional value from php render
-<my-component data-count="10"></my-component>
-<my-component data-array="[1,2,3]"></my-component>
-Also can use KebabCase notation, example data-my-prop is convert to myProp in defComponent
-### Slots Usage
+Then include the bundle on your page:
 
 ```html
-<my-component>
-    <div data-slot="header">Header Content</div>
-    <div>Default Slot Content</div>
-</my-component>
+<script src="/dist/signa.min.js"></script>
 ```
 
-In component:
-```typescript
-const headerSlot = slot('header');     // Get named slot
-const defaultContent = slot.default;    // Get default slot
-```
+TypeScript types are available at `dist/signa.d.ts`.
 
-### Store Usage
+---
 
-The framework provides a simple store mechanism for state management across components:
+## Quick start
 
-```typescript
-// Create and register a store, sharing state
-defStore('userStore', (ctx) => {
-    const {
-        signal,
-        computed,
-        store,
-        inject,
-        provide,
-        eventBus,
-    } = ctx ;
-    const name = signal('');
-    const age = signal(0);
-    const displayName = computed(() => `User: ${name.value}`);
+```html
+<script src="/dist/signa.min.js"></script>
 
-    return {
-        name,
-        age,
-        displayName
-    };
-});
-
-
-// Use store in components
-defComponent('user-profile', (ctx) => {
-    const userStore = ctx.store('userStore');
-    
-    return () => ctx.html`
-        <div>
-            <input 
-                value=${userStore.name.value} 
-                onInput=${(e) => userStore.name.value = e.target.value}
-            />
-            <div>${userStore.displayName.value}</div>
-        </div>
-    `;
-});
-
-// use as composable, return function
-defStore('useUser', (ctx) => ({name, age}) => {
-    const name = ctx.signal(name);
-    const age = ctx.signal(age);
-    const displayName = ctx.computed(() => `User: ${name.value}`);
-
-    return {
-        name,
-        age,
-        displayName
-    };
-});
-const user = ctx.store('useUser')({ name: 'Alex', age: 20 });
-```
-### EventBus Usage
-
-Events communication:
-
-```typescript
-const { eventBus } = ctx;
-
-effect(()=>{
-    const unsubscribe = eventBus.on('my-event:update', (payload)=> { console.log(payoload) });
-    return unsubscribe;
-})
-eventBus.emit('my-event:update', {value: 1});
-/// Use this event for init out side library, at this moment all html was rendered
-eventBus.on('components:ready', ()=> { console.log('all component was mounted and ready') });
-```
-
-### Provide/Inject Usage
-
-Dependency passing:
-```typescript
-const { provide, inject } = ctx;
-provide('myApi', {
-    getItems: () => [1,2,3]
-})
-
-const myApi = inject('myApi');
-myApi.getItems();
-
-// all registered dependecies
-```
-
-
-### Routing usage
-
-```typescript
-defComponent("app-root", ({ html, createRouter, provide, signal }) => {
-    const router = createRouter([
-        { name: "home", path: "/", render: () => html`<h1>Home</h1>` },
-        { name: "user", path: "/users/:id", render: ({ id }) => html`<h1>User ${id}</h1>` },
-        { name: "about", path: "/about", render: () => html`<h1>About</h1>` },
-        { name: "notfound", path: "*", render: () => html`<h1>404 Not Found</h1>` }
-    ]);
-
-    provide('router', router);
-
-    const params = signal({ id: '1' });
-
+<script>
+  sig('my-counter', ({ html, signal }) => {
+    const count = signal(0)
     return () => html`
-        <header>
-            <h2>My App</h2>
-            <nav>
-                <route-link .to=${`home`}><button>Home</button></route-link>
-                <route-link .to=${`about`}><button>About</button></route-link>
-                <route-link .to=${`user`} .params=${{ id: 123 }}>
-                    <button>User 123</button>
-                </route-link>
-            </nav>
-        </header>
+      <div>
+        <p>Count: ${count.value}</p>
+        <button onclick=${() => count.value++}>+</button>
+      </div>
+    `
+  })
+</script>
 
-        <main>
-            ${router.view()}
-        </main>
-    `;
-});
+<my-counter></my-counter>
+```
 
+---
 
-defComponent("route-link", ({ prop, html, slot, $this, inject, effect }) => {
-    const to = prop("to", { type: String });
-    const params = prop("params", { type: Object, default: {} });
+## Components
 
-    const router = inject('router');
+`sig('tag-name', setup)` registers a custom element. The setup function receives a context object and must return a render function.
 
-    effect(() => {
-        const route = router.route(to.value, params.value);
-        $this.setAttribute('href', route ?? '#');
-    });
+```js
+sig('user-card', ({ html, signal, computed, effect, prop, slot, state, bus, $this }) => {
 
+  // props
+  const name  = prop('name', String, 'Anonymous')
+  const score = prop('score', Number, 0)
 
-    $this.onclick = (e) => {
-        e.preventDefault();
-        if (to.value) {
-            router.navigate(to.value, params.value);
-        }
+  // local state
+  const open = signal(false)
+
+  // computed
+  const label = computed(() => open.value ? 'Close' : 'Open')
+
+  // side effect with optional cleanup
+  effect(() => {
+    console.log('score changed:', score.value)
+    return () => console.log('cleanup')
+  })
+
+  // render
+  return () => html`
+    <div>
+      <h2>${name.value} — ${score.value} pts</h2>
+      <button onclick=${() => open.value = !open.value}>${label.value}</button>
+      ${open.value ? html`<div>${slot.default}</div>` : null}
+    </div>
+  `
+})
+```
+
+### Context API
+
+| Key | Description |
+|---|---|
+| `$this` | The HTMLElement instance |
+| `html` | uhtml tagged template |
+| `signal(val)` | Create reactive value |
+| `computed(fn)` | Create derived value |
+| `effect(fn)` | Side effect, return fn for cleanup |
+| `prop(name, Type?, default?)` | Reactive read-only prop |
+| `slot` / `slot('name')` | Access slotted children |
+| `state(key)` | Get a state instance |
+| `bus` | Event bus |
+
+### Props
+
+Props are **read-only** inside a component. They can be passed as:
+
+**HTML attributes** (from PHP or static HTML):
+```html
+<user-card data-name="Alex" data-score="42"></user-card>
+<!-- kebab-case also works -->
+<user-card data-first-name="Alex"></user-card>
+```
+
+**JS property** (signal or plain value from a parent component):
+```js
+// parent passing a signal down
+html`<user-card .score=${mySignal}></user-card>`
+
+// parent passing a callback
+html`<user-card .onSelect=${(id) => console.log(id)}></user-card>`
+```
+
+```js
+// child reads it the same way either way
+const score    = prop('score', Number, 0)
+const onSelect = prop('onSelect')
+
+// onSelect is a function, not a signal
+onSelect(item.id)
+```
+
+### Slots
+
+```html
+<user-card data-name="Alex">
+  <div data-slot="footer">Footer content</div>
+  <p>Default slot content</p>
+</user-card>
+```
+
+```js
+sig('user-card', ({ html, slot }) => {
+  return () => html`
+    <div>
+      ${slot.default}
+      <footer>${slot('footer')}</footer>
+    </div>
+  `
+})
+```
+
+---
+
+## State
+
+`sig('key', factory)` registers state. The factory receives `{ signal, computed, effect, state }`.
+
+**Return an object → singleton:**
+```js
+sig('cartState', ({ signal, computed }) => {
+  const items = signal([])
+  const total = computed(() => items.value.reduce((s, i) => s + i.price, 0))
+  return { items, total }
+})
+```
+
+**Return a function → composable:**
+```js
+sig('useCounter', ({ signal }) => (start = 0) => {
+  const count = signal(start)
+  return { count, inc: () => count.value++ }
+})
+```
+
+**Get instance anywhere:**
+```js
+// in a component
+const cart = state('cartState')
+
+// on the page (PHP sets initial data)
+sig('cartState').items.value = <?= json_encode($cart['items']) ?>
+```
+
+**Composable — call the returned function:**
+```js
+// in a component
+const counter = state('useCounter')(10)
+counter.inc()
+```
+
+**State can use other state:**
+```js
+sig('orderState', ({ signal, state }) => {
+  const cart = state('cartState')
+  const submitted = signal(false)
+
+  return {
+    submitted,
+    submit() {
+      if (!cart.items.value.length) return
+      submitted.value = true
     }
-
-    return () => html`${slot.default}`;
-});
-
-
+  }
+})
 ```
 
-### Template Engine
+---
 
-The framework uses uhtml for templating. For detailed templating features see:
-- [uhtml documentation](https://github.com/WebReflection/uhtml)
+## PHP integration
 
-### Reactivity
+State can be seeded from the server by simply writing to it after the bundle loads. `sig(key)` resolves the instance on first call, so you can write before any component mounts.
 
-Reactivity is based on @preact/signals-core. For detailed signal features see:
-- [@preact/signals-core documentation](https://www.npmjs.com/package/@preact/signals-core)
+```html
+<script src="/dist/signa.min.js"></script>
+<script>
+  sig('cartState').items.value = <?= json_encode($cart) ?>
+  sig('userState').profile.value = <?= json_encode($user) ?>
+</script>
 
-## Browser Support
+<my-cart></my-cart>
+```
 
-- All modern browsers supporting Web Components
-- Chrome, Firefox, Safari, Edge
+Or define state directly on the page before the components mount:
+
+```html
+<script>
+  sig('pageState', ({ signal }) => {
+    const filters = signal(<?= json_encode($filters) ?>)
+    return { filters }
+  })
+</script>
+```
+
+---
+
+## Event bus
+
+`bus.on` returns an unsubscribe function. Use it inside `effect` for automatic cleanup.
+
+```js
+sig('my-widget', ({ html, bus, effect, signal }) => {
+  const message = signal('')
+
+  effect(() => {
+    const off = bus.on('chat:message', payload => {
+      message.value = payload.text
+    })
+    return off
+  })
+
+  return () => html`<div>${message.value}</div>`
+})
+```
+
+Emit from anywhere:
+```js
+sig('send-btn', ({ html, bus }) => {
+  return () => html`
+    <button onclick=${() => bus.emit('chat:message', { text: 'Hello' })}>
+      Send
+    </button>
+  `
+})
+```
+
+**Built-in event:**
+```js
+bus.on('sig:ready', () => {
+  // fires after each component finishes mounting
+})
+```
+
+---
+
+## Router
+
+`sig.router(routes)` returns a router instance. Define it once, share via state.
+
+```js
+sig('appRouter', ({html}) => {
+  return sig.router([
+    { name: 'home',  path: '/',          render: () => html`<h1>Home</h1>` },
+    { name: 'user',  path: '/users/:id', render: ({ id }) => html`<h1>User ${id}</h1>` },
+    { name: '404',   path: '*',          render: () => html`<h1>Not found</h1>` },
+  ])
+})
+```
+
+```js
+sig('app-root', ({ html, state }) => {
+  const router = state('appRouter')
+  return () => html`
+    <nav>
+      <a href=${router.route('home')}>Home</a>
+      <a href=${router.route('user', { id: 1 })}>User 1</a>
+    </nav>
+    <main>${router.view()}</main>
+  `
+})
+```
+
+```js
+// navigate programmatically
+state('appRouter').navigate('user', { id: 42 })
+state('appRouter').navigate('/users/42')
+```
+
+---
+
+## File structure
+
+```
+src/
+  index.js      entry — defines sig(), mounts on window
+  component.js  custom element factory
+  state.js      state registry and resolver
+  bus.js        event bus (built-in state)
+  router.js     hash router
+  signa.d.ts    TypeScript declarations
+build.js
+```
+
+---
+
+## Browser support
+
+All modern browsers with Web Components support: Chrome, Firefox, Safari, Edge.
+
+---
 
 ## License
 

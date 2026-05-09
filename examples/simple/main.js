@@ -1,4 +1,4 @@
-defStore('counterStore', (ctx) => {
+sig('counterStore', (ctx) => {
     console.log(ctx);
     const count = ctx.signal(0);
     const inc = () => count.value++;
@@ -8,7 +8,7 @@ defStore('counterStore', (ctx) => {
     }
 })
 //composable
-defStore('useCounter', ({ signal }) =>
+sig('useCounter', ({ signal }) =>
     (value) => {
         const count = signal(value);
         const inc = () => count.value++;
@@ -19,7 +19,7 @@ defStore('useCounter', ({ signal }) =>
     }
 )
 
-defComponent('counter-component', (ctx) => {
+sig('counter-component', (ctx) => {
     const {
         $this,
         signal,
@@ -29,7 +29,7 @@ defComponent('counter-component', (ctx) => {
         prop,
         slot,
         render,
-        store,
+        state,
         inject,
         provide,
         eventBus,
@@ -63,8 +63,8 @@ defComponent('counter-component', (ctx) => {
         default: null
     });
 
-    const counterStore = store('counterStore');
-    const counterState = store('useCounter')(10);
+    const counterStore = state('counterStore');
+    const counterState = state('useCounter')(10);
 
     const count = signal(countProp.value);
     const title = signal('My title');
@@ -76,7 +76,7 @@ defComponent('counter-component', (ctx) => {
 
     return () => html`
         <div>
-            <div>${header}</div>
+            <div>Modify: ${header}</div>
             <div>${slot.default}</div>
             <div>${footer}</div>
         </div>
@@ -101,7 +101,7 @@ defComponent('counter-component', (ctx) => {
     `;
 });
 
-defComponent('parent-component', ({ signal, html }) => {
+sig('parent-component', ({ signal, html }) => {
     const count = signal(10);
     return () => html`
         <div>
@@ -112,7 +112,7 @@ defComponent('parent-component', ({ signal, html }) => {
     `;
 });
 
-defComponent('child-component', ({ prop, html, signal }) => {
+sig('child-component', ({ prop, html, signal }) => {
     const propCount = prop('count', { type: Number });
     const count = signal(propCount.value);
     const myClick = prop('myClick', { type: Function });

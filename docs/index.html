@@ -9,17 +9,11 @@
     <script src="signa.min.js"></script>
     <link rel="stylesheet" href="default.css">
     <script src="highlight.min.js"></script>
-
     <script>hljs.highlightAll();</script>
     <script src="src/popup.js"></script>
     <link rel="stylesheet" href="src/popup.css" />
-
     <script src="src/navdrawer.js"></script>
     <link rel="stylesheet" href="src/navdrawer.css" />
-
-    <style>
-
-    </style>
 </head>
 
 <body>
@@ -30,392 +24,449 @@
         <a class="nav-link" href="#features">Возможности</a>
         <a class="nav-link" href="#quick-start">Быстрый старт</a>
 
-
         <div class="nav-section-title">Основы</div>
         <a class="nav-link" href="#components">Компоненты</a>
         <a class="nav-link" href="#props">Props</a>
         <a class="nav-link" href="#slots">Slots</a>
-        <a class="nav-link" href="#store">Store</a>
-        <a class="nav-link" href="#eventbus">EventBus</a>
-        <a class="nav-link" href="#di">Provide / Inject</a>
+        <a class="nav-link" href="#state">State</a>
+        <a class="nav-link" href="#bus">Bus</a>
         <a class="nav-link" href="#routing">Роутинг</a>
-        <div>
-            <div class="nav-section-title">Компоненты</div>
-            <a class="nav-link" href="#popup-window">Popup window</a>
-            <a class="nav-link" href="#nav-drawer">Navigation drawer</a>
-        </div>
+        <a class="nav-link" href="#php">PHP интеграция</a>
+
+        <div class="nav-section-title">Компоненты</div>
+        <a class="nav-link" href="#popup-window">Popup window</a>
+        <a class="nav-link" href="#nav-drawer">Navigation drawer</a>
     </aside>
 
     <main class="content">
 
-
-        <h1 id="intro">Web Components Framework</h1>
+        <h1 id="intro">Signa</h1>
         <p>
-            <strong>Signa</strong> — лёгкий фреймворк для создания реактивных Web Components
-            на базе сигналов и микро-шаблонизатора.
+            Лёгкая обёртка над Web Components,
+            <a href="https://github.com/WebReflection/uhtml">uhtml</a> и
+            <a href="https://www.npmjs.com/package/@preact/signals-core">@preact/signals-core</a>.
+            Для обычных HTML и PHP сайтов — без сборки на странице. <strong>~20kb min / ~8kb gzip.</strong>
         </p>
 
         <h2 id="features">Возможности</h2>
         <ul>
-            <li>Создание Web Components через простой API</li>
+            <li>Одна функция <code>sig()</code> — компоненты, стейт, composable</li>
             <li>HTML-шаблоны на базе uhtml</li>
             <li>Реактивность через @preact/signals-core</li>
-            <li>Store для разделяемого состояния</li>
-            <li>EventBus для общения компонентов</li>
-            <li>Provide / Inject (DI)</li>
-            <li>Клиентский роутинг</li>
-            <li>Размер: ~20kb min / ~8kb gzip</li>
+            <li>State: синглтон и composable</li>
+            <li>Bus для общения компонентов</li>
+            <li>Хэш-роутер</li>
         </ul>
+
         <h2 id="quick-start">Быстрый старт</h2>
 
-        <h3>IIFE в браузере</h3>
         <pre><code class="language-html"><script type="text/plain">
 <script src="signa.min.js"></script>
 </script></code></pre>
 
-        <h3>Пример компонента</h3>
+        <p>На <code>window</code> появляется одна функция <code>sig()</code>:</p>
         <pre><code class="language-javascript"><script type="text/plain">
-defComponent('my-counter', (ctx) => {
-    const count = ctx.signal(0);
-
-    return () => ctx.html`
-        <div>
-            <p>Count: ${count.value}</p>
-            <button onclick=${() => count.value++}>Increment</button>
-        </div>
-    `;
-});
+sig(id, fn)   // два аргумента — определить компонент или стейт
+sig(id)       // один аргумент — получить инстанс стейта
+sig.router()  // создать роутер
 </script></code></pre>
 
+        <pre><code class="language-javascript"><script type="text/plain">
+sig('my-counter', ({ html, signal }) => {
+    const count = signal(0)
+
+    return () => html`
+        <div>
+            <p>Count: ${count.value}</p>
+            <button onclick=${() => count.value++}>+</button>
+        </div>
+    `
+})
+</script></code></pre>
+        <pre><code class="language-html"><script type="text/plain">
+<my-counter></my-counter>
+</script></code></pre>
+
+
         <h2 id="components">Компоненты</h2>
-        <p>Компоненты объявляются через defComponent.</p>
+        <p>
+            <code>id</code> содержит дефис → компонент. Функция setup получает контекст
+            и должна вернуть функцию-рендер.
+        </p>
 
         <pre><code class="language-javascript"><script type="text/plain">
-defComponent('my-component', (ctx) => {
-    const {
-        signal,
-        effect,
-        computed,
-        html,
-        prop,
-        slot,
-        store,
-        inject,
-        provide,
-        eventBus,
-        createRouter,
-    } = ctx;
+sig('my-component', ({ html, signal, computed, effect, prop, slot, state, bus, $this }) => {
 
-    const title = prop('title');
-    const count = signal(0);
-    const doubleCount = computed(() => count.value * 2);
+    const title = prop('title', String, 'Default')
+    const count = signal(0)
+    const double = computed(() => count.value * 2)
 
     effect(() => {
-        console.log('Count changed:', count.value);
-    });
+        console.log('count:', count.value)
+        return () => console.log('cleanup')
+    })
 
     return () => html`
         <h1>${title.value}</h1>
-        <p>Count: ${count.value}</p>
-        <p>Double: ${doubleCount.value}</p>
-    `;
-});
+        <p>Count: ${count.value}, double: ${double.value}</p>
+        <button onclick=${() => count.value++}>+</button>
+        <div>${slot.default}</div>
+    `
+})
 </script></code></pre>
 
+        <h3>Контекст компонента</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Ключ</th>
+                    <th>Описание</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>$this</code></td>
+                    <td>HTMLElement инстанс</td>
+                </tr>
+                <tr>
+                    <td><code>html</code></td>
+                    <td>uhtml тег-шаблон</td>
+                </tr>
+                <tr>
+                    <td><code>signal(val)</code></td>
+                    <td>Реактивное значение</td>
+                </tr>
+                <tr>
+                    <td><code>computed(fn)</code></td>
+                    <td>Вычисляемое значение</td>
+                </tr>
+                <tr>
+                    <td><code>effect(fn)</code></td>
+                    <td>Сайд-эффект, вернуть fn для cleanup</td>
+                </tr>
+                <tr>
+                    <td><code>prop(name, Type?, default?)</code></td>
+                    <td>Read-only проп</td>
+                </tr>
+                <tr>
+                    <td><code>slot</code> / <code>slot('name')</code></td>
+                    <td>Слотированный контент</td>
+                </tr>
+                <tr>
+                    <td><code>state(key)</code></td>
+                    <td>Получить инстанс стейта</td>
+                </tr>
+                <tr>
+                    <td><code>bus</code></td>
+                    <td>Event bus</td>
+                </tr>
+            </tbody>
+        </table>
+
+
         <h2 id="props">Props</h2>
+        <p>Props — read-only внутри компонента. Позиционные аргументы: имя, тип, дефолт.</p>
+
         <pre><code class="language-javascript"><script type="text/plain">
-const count = prop('count', { type: Number, default: 0 });
+// позиционно: имя, тип, дефолт
+const count = prop('count', Number, 0)
+const label = prop('label', String, 'Click me')
+const items = prop('items', Array, [])
 
-const myProp = prop( 'myPropName', { // this name in html data-myPropName or direct pass .myPropName="{$somValue}"
-    type: String | Number | Boolean | Array | Object | Function
-    default: 'default value',
-});
-//or
-const shortProp = prop('myProp');
-
-return html`<div>${myProp.value}</div>`
-//in component pass signal as prop value to child
-defComponent('my-component', ({ html, prop }) => {
-    //Caution all signal prop are read only
-    const count = prop('count');
-
-    return html `${count.value}`
-})
-
-//in parent
-defComponent('my-component', ({ html, prop }) => {
-    const count = signal(0);
-    return html`<my-component .count="${count}"></my-component>`
-})
-
-// as function
-const onPressButton = prop('onPressButon');
-
-return html`<my-component .onPressButton="${() => console.log('onPress')}"></my-component>`
+// без типа — автодетект
+const title = prop('title')
 </script></code></pre>
 
         <pre><code class="language-html"><script type="text/plain">
-<my-component data-count="10"></my-component>
-<!--In html use as initional value from php render-->
-<my-component data-count="10"></my-component>
-<my-component data-array="[1,2,3]"></my-component>
-<--Also can use KebabCase notation, example data-my-prop is convert to myProp in defComponent-->
+<!-- из HTML / PHP -->
+<my-card data-count="10"></my-card>
+<my-card data-first-name="Alex"></my-card>  <!-- kebab → camelCase -->
+<my-card data-items="[1,2,3]"></my-card>
 </script></code></pre>
+
+        <pre><code class="language-javascript"><script type="text/plain">
+// передать сигнал из родителя — ребёнок читает как read-only
+sig('parent-comp', ({ html, signal }) => {
+    const count = signal(0)
+    return () => html`<child-comp .count=${count}></child-comp>`
+})
+
+sig('child-comp', ({ html, prop }) => {
+    const count = prop('count', Number, 0)
+    return () => html`<span>${count.value}</span>`
+})
+
+// передать функцию
+sig('my-btn', ({ prop }) => {
+    const onClick = prop('onClick')  // не сигнал, а функция напрямую
+    return () => html`<button onclick=${onClick}>Click</button>`
+})
+</script></code></pre>
+
 
         <h2 id="slots">Slots</h2>
         <pre><code class="language-html"><script type="text/plain">
-<my-component>
-    <div data-slot="header">Header</div>
-    <div>Default slot</div>
-</my-component>
+<my-card>
+    <div data-slot="header">Заголовок</div>
+    <p>Дефолтный контент</p>
+</my-card>
 </script></code></pre>
 
         <pre><code class="language-javascript"><script type="text/plain">
-const header = slot('header');
-const content = slot.default;
-</script></code></pre>
-
-        <h2 id="store">Store</h2>
-        <pre><code class="language-javascript"><script type="text/plain">
-// Create and register a store, sharing state
-defStore('userStore', (ctx) => {
-    const {
-        signal,
-        computed,
-        store,
-        inject,
-        provide,
-        eventBus,
-    } = ctx ;
-    const name = signal('');
-    const age = signal(0);
-    const displayName = computed(() => `User: ${name.value}`);
-
-    return {
-        name,
-        age,
-        displayName
-    };
-});
-
-
-// Use store in components
-defComponent('user-profile', (ctx) => {
-    const userStore = ctx.store('userStore');
-    
-    return () => ctx.html`
-        <div>
-            <input 
-                value=${userStore.name.value} 
-                onInput=${(e) => userStore.name.value = e.target.value}
-            />
-            <div>${userStore.displayName.value}</div>
+sig('my-card', ({ html, slot }) => {
+    return () => html`
+        <div class="card">
+            <div class="card__header">${slot('header')}</div>
+            <div class="card__body">${slot.default}</div>
         </div>
-    `;
-});
-
-// use as composable, return function
-defStore('useUser', (ctx) => ({name, age}) => {
-    const name = ctx.signal(name);
-    const age = ctx.signal(age);
-    const displayName = ctx.computed(() => `User: ${name.value}`);
-
-    return {
-        name,
-        age,
-        displayName
-    };
-});
-const user = ctx.store('useUser')({ name: 'Alex', age: 20 });
-</script></code></pre>
-
-        <h2 id="eventbus">EventBus</h2>
-        <pre><code class="language-javascript"><script type="text/plain">
-const { eventBus } = ctx;
-
-effect(()=>{
-    const unsubscribe = eventBus.on('my-event:update', (payload)=> { console.log(payoload) });
-    return unsubscribe;
+    `
 })
-eventBus.emit('my-event:update', {value: 1});
-/// Use this event for init out side library, at this moment all html was rendered
-eventBus.on('components:ready', ()=> { console.log('all component was mounted and ready') });
-```
 </script></code></pre>
 
-        <h2 id="di">Provide / Inject</h2>
-        <pre><code class="language-javascript"><script type="text/plain">
-provide('api', {
-    getItems: () => [1, 2, 3]
-});
 
-const api = inject('api');
-api.getItems();
+        <h2 id="state">State</h2>
+        <p>
+            <code>id</code> без дефиса → стейт. Возвращает объект — синглтон,
+            возвращает функцию — composable.
+        </p>
+
+        <pre><code class="language-javascript"><script type="text/plain">
+// синглтон — fn возвращает объект
+sig('cartState', ({ signal, computed }) => {
+    const items = signal([])
+    const total = computed(() => items.value.reduce((s, i) => s + i.price, 0))
+    return { items, total }
+})
+
+// composable — fn возвращает функцию
+sig('useCounter', ({ signal }) => (start = 0) => {
+    const count = signal(start)
+    return { count, inc: () => count.value++ }
+})
 </script></code></pre>
 
-        <h2 id="routing">Роутинг</h2>
         <pre><code class="language-javascript"><script type="text/plain">
-defComponent("app-root", ({ html, createRouter, provide, signal }) => {
-    const router = createRouter([
-        { name: "home", path: "/", render: () => html`<h1>Home</h1>` },
-        { name: "user", path: "/users/:id", render: ({ id }) => html`<h1>User ${id}</h1>` },
-        { name: "about", path: "/about", render: () => html`<h1>About</h1>` },
-        { name: "notfound", path: "*", render: () => html`<h1>404 Not Found</h1>` }
-    ]);
-
-    provide('router', router);
-
-    const params = signal({ id: '1' });
+// использование в компоненте
+sig('my-cart', ({ html, state }) => {
+    const cart    = state('cartState')       // синглтон
+    const counter = state('useCounter')(10)  // composable — вызвать сразу
 
     return () => html`
-        <header>
-            <h2>My App</h2>
-            <nav>
-                <route-link .to=${`home`}><button>Home</button></route-link>
-                <route-link .to=${`about`}><button>About</button></route-link>
-                <route-link .to=${`user`} .params=${{ id: 123 }}>
-                    <button>User 123</button>
-                </route-link>
-            </nav>
-        </header>
-
-        <main>
-            ${router.view()}
-        </main>
-    `;
-});
-
-
-defComponent("route-link", ({ prop, html, slot, $this, inject, effect }) => {
-    const to = prop("to", { type: String });
-    const params = prop("params", { type: Object, default: {} });
-
-    const router = inject('router');
-
-    effect(() => {
-        const route = router.route(to.value, params.value);
-        $this.setAttribute('href', route ?? '#');
-    });
-
-
-    $this.onclick = (e) => {
-        e.preventDefault();
-        if (to.value) {
-            router.navigate(to.value, params.value);
-        }
-    }
-
-    return () => html`${slot.default}`;
-});
+        <div>
+            <p>Итого: ${cart.total.value} ₽</p>
+            <p>Count: ${counter.count.value}</p>
+            <button onclick=${counter.inc}>+</button>
+        </div>
+    `
+})
 </script></code></pre>
 
+        <pre><code class="language-javascript"><script type="text/plain">
+// стейт может использовать другой стейт
+sig('orderState', ({ signal, state }) => {
+    const cart = state('cartState')
+    const submitted = signal(false)
+    return {
+        submitted,
+        submit() {
+            if (!cart.items.value.length) return
+            submitted.value = true
+        }
+    }
+})
+</script></code></pre>
+
+
+        <h2 id="bus">Bus</h2>
+        <p>
+            <code>bus.on</code> возвращает функцию отписки. Используй внутри <code>effect</code>
+            — очистится автоматически при размонтировании компонента.
+        </p>
+
+        <pre><code class="language-javascript"><script type="text/plain">
+sig('my-widget', ({ html, bus, effect, signal }) => {
+    const message = signal('')
+
+    effect(() => {
+        const off = bus.on('chat:message', ({ text }) => {
+            message.value = text
+        })
+        return off  // автоочистка
+    })
+
+    return () => html`<div>${message.value}</div>`
+})
+
+// emit откуда угодно
+sig('send-btn', ({ html, bus }) => {
+    return () => html`
+        <button onclick=${() => bus.emit('chat:message', { text: 'Hello' })}>
+            Отправить
+        </button>
+    `
+})
+</script></code></pre>
+
+        <pre><code class="language-javascript"><script type="text/plain">
+// встроенное событие — все компоненты смонтированы
+bus.on('sig:ready', () => {
+    console.log('все компоненты готовы')
+})
+</script></code></pre>
+
+
+        <h2 id="routing">Роутинг</h2>
+        <p>Хэш-роутер. Создаётся через <code>sig.router()</code>, удобно хранить в стейте.</p>
+
+        <pre><code class="language-javascript"><script type="text/plain">
+sig('appRouter', ({html}) => sig.router([
+    { name: 'home',  path: '/',          render: () => html`<h1>Home</h1>` },
+    { name: 'user',  path: '/users/:id', render: ({ id }) => html`<h1>User ${id}</h1>` },
+    { name: '404',   path: '*',          render: () => html`<h1>Not found</h1>` },
+]))
+
+sig('app-root', ({ html, state }) => {
+    const router = state('appRouter')
+
+    return () => html`
+        <nav>
+            <a href=${router.route('home')}>Home</a>
+            <a href=${router.route('user', { id: 1 })}>User 1</a>
+        </nav>
+        <main>${router.view()}</main>
+    `
+})
+
+// программная навигация
+state('appRouter').navigate('user', { id: 42 })
+</script></code></pre>
+
+
+        <h2 id="php">PHP интеграция</h2>
+        <p>
+            <code>sig(key)</code> с одним аргументом возвращает инстанс стейта.
+            Инстанс создаётся лениво при первом вызове, поэтому можно писать в него
+            до монтирования компонентов.
+        </p>
+
+        <pre><code class="language-html"><script type="text/plain">
+<script src="signa.min.js"></script>
+<script>
+    sig('cartState').items.value = <?= json_encode($cart['items']) ?>
+        sig('userState').profile.value = <?= json_encode($user) ?>
+</script>
+
+<my-cart></my-cart>
+</script></code></pre>
+
+
         <h2 id="popup-window">Модальное окно</h2>
-        <pre><code class="language-html">
-<script type="text/plain">
-<!-- Id блока который указан в data-content-id будет в качестве контента для окна -->
+
+        <pre><code class="language-html"><script type="text/plain">
+<!-- контент по id элемента -->
 <popup-trigger data-content-id="popup-content">
-    <button class="btn-accent">Открыть окно</button>
+    <button>Открыть окно</button>
 </popup-trigger>
 <div style="display:none;height:0" aria-hidden="">
-    <div id="popup-content">блок который будет в качестве контента для окна </div>
+    <div id="popup-content">Контент окна</div>
 </div>
-<!-- Открыть в popup компонент и передать в этот компонент параметры-->
+
+<!-- открыть компонент с параметрами -->
 <popup-trigger data-component="my-user" data-user-id="1">
-    Открыть компонент my-user с параметрам user-id
+    <button>Открыть компонент</button>
 </popup-trigger>
 
-<!-- Расположить в конец body -->
+<!-- разместить в конце body -->
 <popup-window></popup-window>
-</script>
-</code></pre>
+</script></code></pre>
 
-        <pre><code class="language-javascript">// Программное открытие 
-const options = {
-    title
-    body
-    content
-    autoClose // Время в милисек автозакрытия окна
-    onClose
-} 
-//Открыть глобально 
-document.querySelector('popup-window', ).open({ title: 'title' })
-// Через event bus внутри компонентов
-eventBus.emit('popup:open', { title: 'title' });
-eventBus.emit('popup:close'); 
-<script type="text/plain">
-defComponent('eventbus-open', ({ html, eventBus }) => {
-    const userId = "22";
-    const open = () => {
-        eventBus.emit('popup:open', { content: () => html`<my-user .userId=${userId}></my-user>` })
-    }
-    return () => html`<button class="btn-accent" onclick=${open}>Открыть через eventubs</button>`
+        <pre><code class="language-javascript"><script type="text/plain">
+// программное открытие — глобально
+document.querySelector('popup-window').open({
+    title: 'Заголовок',
+    body: 'Текст',
+    autoClose: 3000,   // мс, 0 = не закрывать
+    onClose: () => console.log('closed'),
 })
-</script>
-</code></pre>
+
+// через bus внутри компонента
+sig('my-comp', ({ html, bus }) => {
+    const open = () => bus.emit('popup:open', {
+        content: () => html`<my-user .userId=${'22'}></my-user>`
+    })
+    return () => html`<button onclick=${open}>Открыть</button>`
+})
+
+bus.emit('popup:close')
+</script></code></pre>
+
         <p>
             <popup-trigger data-content-id="popup-content">
-                <button class="btn-accent">Открыть окно с указанием блока по id с конентом</button>
+                <button class="btn-accent">Открыть по id блока</button>
+            </popup-trigger>
+        </p>
+        <div style="display:none;height:0" aria-hidden="">
+            <div id="popup-content">Контент из блока по id</div>
+        </div>
+
+        <p>
+            <popup-trigger data-component="my-user" data-user-id="1">
+                <button class="btn-accent">Открыть компонент с параметрами</button>
             </popup-trigger>
         </p>
 
         <p>
-        <div style="display:none;height:0" aria-hidden="">
-            <div id="popup-content">блок c контеном</div>
-        </div>
+            <bus-open></bus-open>
         </p>
+
         <p>
-            <popup-trigger data-component="my-user" data-user-id="1">
-                <button class="btn-accent"> Открыть компонент с параметрами</button>
-            </popup-trigger>
-        </p>
-        <p>
-            <eventbus-open></eventbus-open>
-        </p>
-        <script>
-            defComponent('my-user', ({ html, prop }) => {
-                const userId = prop('userId');
-                return () => html`userId: ${userId.value}`
-            });
-            defComponent('eventbus-open', ({ html, eventBus }) => {
-                const userId = "22";
-                const open = () => {
-                    eventBus.emit('popup:open', { content: () => html`<my-user .userId=${userId}></my-user>` })
-                }
-                return () => html`<button class="btn-accent" onclick=${open}>Открыть через eventubs</button>`
-            })
-        </script>
-        <p>
-        <div>
-            <button class="btn-accent" onclick="document.querySelector('popup-window', )?.open({ title: 'title' })">
+            <button class="btn-accent" onclick="document.querySelector('popup-window')?.open({ title: 'Заголовок' })">
                 Открыть глобально
             </button>
-        </div>
         </p>
+
+        <script>
+                sig('my-user', ({ html, prop }) => {
+                    const userId = prop('userId')
+                    return () => html`<div>userId: ${userId.value}</div>`
+                })
+
+            sig('bus-open', ({ html, bus }) => {
+                    const userId = '22'
+                    const open = () => bus.emit('popup:open', {
+                        content: () => html`<my-user .userId=${userId}></my-user>`
+                    })
+                    return () => html`<button class="btn-accent" onclick=${open}>Открыть через bus</button>`
+                })
+        </script>
 
         <popup-window></popup-window>
 
-        <h2 id="nav-drawer" class="text-2xl font-semibold mt-10">Navigation drawer</h2>
+
+        <h2 id="nav-drawer">Navigation drawer</h2>
+
         <pre><code class="language-html"><script type="text/plain">
 <toggle-drawer></toggle-drawer>
 <nav-drawer>
     <ul>
         <li><a href="#">Главная</a></li>
         <li><a href="#">О нас</a></li>
-        <li><a href="#">Услуги</a></li>
-        <li><a href="#">Контакты</a></li>
     </ul>
 </nav-drawer>
-<!--Глобавльный доступ к состоянию-->
-document.querySelector('nav-drawer')?.drawer 
+
+<!-- программное управление -->
+<script>
+    document.querySelector('nav-drawer').drawer.toggle()
+    document.querySelector('nav-drawer').drawer.open()
+    document.querySelector('nav-drawer').drawer.close()
 </script>
-</code></pre>
+</script></code></pre>
 
         <div data-theme="dark">
             <toggle-drawer></toggle-drawer>
             <div class="margin-line">
-                <button class=" btn-accent" onclick="document.querySelector('nav-drawer')?.drawer.toggle()">Открыть
-                    через
-                    глобальную функцию
+                <button class="btn-accent" onclick="document.querySelector('nav-drawer')?.drawer.toggle()">
+                    Открыть через глобальную функцию
                 </button>
             </div>
             <nav-drawer>
@@ -428,15 +479,16 @@ document.querySelector('nav-drawer')?.drawer
             </nav-drawer>
         </div>
 
-        <h2 id="grid" class="text-2xl font-semibold mt-10">Пример сетки</h2>
-        <p>Ты можешь делать колонки с помощью классов <code>.row</code> и <code>.col-*</code>.</p>
+
+        <h2 id="grid">Пример сетки</h2>
+        <p>Колонки через классы <code>.row</code> и <code>.col-*</code>.</p>
 
         <div class="row" style="margin-top:20px;">
             <div class="col col-6">
-                <div class="box">Колонка 50%</div>
+                <div class="box">50%</div>
             </div>
             <div class="col col-6">
-                <div class="box">Колонка 50%</div>
+                <div class="box">50%</div>
             </div>
         </div>
 

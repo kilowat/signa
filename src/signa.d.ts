@@ -1,74 +1,46 @@
-// signa.d.ts
 import type {
     Signal as PreactSignal,
     ReadonlySignal as PreactReadonlySignal,
-} from "@preact/signals-core";
+} from '@preact/signals-core';
 
 declare global {
-    // --------------------------------
-    // Signals
-    // --------------------------------
     type Signal<T = any> = PreactSignal<T>;
     type ReadonlySignal<T = any> = PreactReadonlySignal<T>;
 
-    // --------------------------------
-    // Store system
-    // --------------------------------
-    interface StoreContext {
-        signal: <T = any>(initial?: T) => Signal<T>;
-        computed: <T = any>(fn: () => T) => ReadonlySignal<T>;
-        effect: (fn: () => any) => void;
-        store<T = any>(key: string): T;
-        provide<T = any>(key: string, value: T): void;
-        inject<T = any>(key: string): T;
-        eventBus: EventBus;
+    // ---- Bus ----
+
+    interface Bus {
+        emit(type: string, payload?: any): void;
+        on(type: string, handler: (payload: any) => void): () => void;
     }
 
-    interface StoreRegistry {
-        [key: string]: any;
-    }
+    // ---- Router ----
 
-    // --------------------------------
-    // Slots
-    // --------------------------------
-    type SlotFn = ((name?: string) => any[]) & { default: any[] };
-
-    // --------------------------------
-    // Router
-    // --------------------------------
     interface RouteDefinition {
         name?: string;
         path: string;
         render: (params?: Record<string, string>) => any;
     }
 
-    interface ParsedRoute {
-        path: string;
-        params: Record<string, string>;
-        route: RouteDefinition;
-    }
-
     interface Router {
-        current: ReadonlySignal<ParsedRoute>;
+        current: ReadonlySignal<{ path: string; params: Record<string, string>; route: RouteDefinition }>;
         navigate(nameOrPath: string, params?: Record<string, any>): void;
         route(name: string, params?: Record<string, any>): string;
         view(): any;
     }
 
-    // --------------------------------
-    // Event bus
-    // --------------------------------
-    interface EventBus {
-        emit(type: string, payload?: any): void;
-        on(type: string, handler: (payload: any) => void): void;
+    // ---- State context ----
+
+    interface StateContext {
+        signal: <T>(initial?: T) => Signal<T>;
+        computed: <T>(fn: () => T) => ReadonlySignal<T>;
+        effect: (fn: () => any) => void;
+        state<T = any>(key: string): T;
     }
 
-    // --------------------------------
-    // Component context
-    // --------------------------------
+    // ---- Prop types ----
 
-    // Маппинг типа → тип сигнала
-    type PropTypeMap<T> =
+    type PropType<T> =
         T extends typeof String ? ReadonlySignal<string> :
         T extends typeof Number ? ReadonlySignal<number> :
         T extends typeof Boolean ? ReadonlySignal<boolean> :
@@ -77,53 +49,38 @@ declare global {
         T extends FunctionConstructor ? Function :
         never;
 
+    type SlotFn = ((name?: string) => Node[]) & { default: Node[] };
+
+    // ---- Component context ----
+
     interface ComponentContext {
         $this: HTMLElement;
-
         html: (strings: TemplateStringsArray, ...values: any[]) => any;
-        htmlFor: (ref: any) => any;
-        svg: (content: string) => any,
-        signal: <T = any>(initial?: T) => Signal<T>;
-        computed: <T = any>(fn: () => T) => ReadonlySignal<T>;
-        effect: (fn: () => any) => void;
-
-        // -------- prop: строго выводимый тип через PropTypeMap --------
-        prop<T extends
-            typeof String |
-            typeof Number |
-            typeof Boolean |
-            typeof Object |
-            typeof Array |
-            FunctionConstructor>(options: {
-                name: string;
-                type: T;
-                default?: any;
-            }): PropTypeMap<T>;
-
+        signal: <T>(initial?: T) => Signal<T>;
+        computed: <T>(fn: () => T) => ReadonlySignal<T>;
+        effect: (fn: () => (() => void) | void) => void;
+        prop<T extends typeof String | typeof Number | typeof Boolean | typeof Object | typeof Array | FunctionConstructor>(
+            name: string, type?: T, defaultValue?: any
+        ): PropType<T>;
         slot: SlotFn;
-
-        store<T = any>(key: string): T;
-
-        provide<T = any>(key: string, value: T): void;
-        inject<T = any>(key: string): T;
-
-        createRouter(routes: RouteDefinition[]): Router;
-
-        eventBus: EventBus;
+        state: <T = any>(key: string) => T;
+        bus: Bus;
     }
 
-    // --------------------------------
-    // Global API
-    // --------------------------------
-    const defComponent: (
-        tagName: string,
-        setup: (ctx: ComponentContext) => (() => any) | void
-    ) => void;
+    // ---- Global sig() ----
 
-    const defStore: (
-        key: string,
-        factory: (ctx: StoreContext) => any
-    ) => void;
+    interface Sig {
+        // define component
+        (tagName: string, setup: (ctx: ComponentContext) => (() => any) | void): void;
+        // define state / composable
+        (key: string, factory: (ctx: StateContext) => any): void;
+        // get state instance
+        <T = any>(key: string): T;
+        // create router
+        router(routes: RouteDefinition[]): Router;
+    }
+
+    const sig: Sig;
 }
 
 export { };
