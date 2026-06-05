@@ -129,6 +129,7 @@ html`<user-card .onSelect=${(id) => console.log(id)}></user-card>`
 
 ```js
 // child reads it the same way either way
+const short    = prop('short') // Short variant without type
 const score    = prop('score', Number, 0)
 const onSelect = prop('onSelect')
 
