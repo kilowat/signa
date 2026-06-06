@@ -85,14 +85,12 @@ export function createRouter(routes, { mode = 'hash' } = {}) {
     }
 
     function navigate(nameOrPath, params) {
-        const path = routeMap[nameOrPath]
-            ? (mode === 'hash' ? '' : '') + routeMap[nameOrPath].path.replace(
-                /:([^/]+)/g,
-                (_, k) => params?.[k] ?? `:${k}`
-            )
-            : nameOrPath;
-
-        adapter.push(path.startsWith('#') ? path.slice(1) : path);
+        if (routeMap[nameOrPath]) {
+            const href = route(nameOrPath, params);
+            adapter.push(mode === 'hash' ? href.slice(1) : href);
+        } else {
+            adapter.push(nameOrPath);
+        }
     }
 
     function view() {
