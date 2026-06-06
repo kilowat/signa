@@ -290,7 +290,7 @@ sig('appRouter', ({html}) => {
     { name: 'home',  path: '/',          render: () => html`<h1>Home</h1>` },
     { name: 'user',  path: '/users/:id', render: ({ id }) => html`<h1>User ${id}</h1>` },
     { name: '404',   path: '*',          render: () => html`<h1>Not found</h1>` },
-  ])
+  ], {mode: 'hash' || 'history'}) // default hash mode
 })
 ```
 
