@@ -14,7 +14,10 @@ export function defState(key, factory) {
 
 export function resolveState(key) {
     const entry = registry[key];
-    if (!entry) throw new Error(`State "${key}" is not defined`);
+    if (!entry) {
+        console.warn(`[sig] "${key}" is not defined yet`);
+        return undefined;
+    }
     if (!entry.instance) {
         entry.instance = entry.factory({ signal, effect, computed, html, state: resolveState });
     }
