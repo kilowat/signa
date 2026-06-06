@@ -1,15 +1,14 @@
-//router.js
 import { signal } from '@preact/signals-core';
 import { html } from 'uhtml/reactive';
 
-export function createRouter(routes) {
+export function createRouter(routes, { mode = 'hash' } = {}) {
     const routeMap = {};
     const compiledRoutes = routes.map(r => {
         if (r.path === "*") {
-            routeMap[r.name || "*"] = { ...r, keys: [], regex: null, catchAll: true };
-            return { ...r, keys: [], regex: null, catchAll: true };
+            const entry = { ...r, keys: [], regex: null, catchAll: true };
+            routeMap[r.name || "*"] = entry;
+            return entry;
         }
-
         const keys = [];
         const regex = new RegExp(
             "^" +
@@ -19,18 +18,44 @@ export function createRouter(routes) {
             }) +
             "$"
         );
-        routeMap[r.name] = { ...r, keys, regex };
-        return { ...r, keys, regex };
+        const entry = { ...r, keys, regex };
+        routeMap[r.name] = entry;
+        return entry;
     });
 
-    const current = signal(parse(location.hash));
+    const adapter = {
+        getPath() {
+            return mode === 'hash'
+                ? location.hash.slice(1) || '/'
+                : location.pathname || '/';
+        },
+        push(path) {
+            if (mode === 'hash') {
+                location.hash = path;
+            } else {
+                history.pushState(null, '', path);
+                current.value = parse(path);
+            }
+        },
+        listen(cb) {
+            if (mode === 'hash') {
+                window.addEventListener('hashchange', cb);
+                return () => window.removeEventListener('hashchange', cb);
+            } else {
+                window.addEventListener('popstate', cb);
+                return () => window.removeEventListener('popstate', cb);
+            }
+        }
+    };
 
-    window.addEventListener("hashchange", () => {
-        current.value = parse(location.hash);
+    const current = signal(parse(adapter.getPath()));
+
+    adapter.listen(() => {
+        current.value = parse(adapter.getPath());
     });
 
-    function parse(hash) {
-        const path = hash.slice(1) || "/";
+    function parse(path) {
+        path = path || '/';
         for (const route of compiledRoutes) {
             if (route.catchAll) continue;
             const match = path.match(route.regex);
@@ -54,17 +79,20 @@ export function createRouter(routes) {
         let path = r.path;
         for (const key of r.keys) {
             if (!(key in params)) throw new Error(`Missing param "${key}" for route "${name}"`);
-            path = path.replace(":" + key, params[key]);
+            path = path.replace(':' + key, params[key]);
         }
-        return "#" + path;
+        return mode === 'hash' ? '#' + path : path;
     }
 
     function navigate(nameOrPath, params) {
-        if (routeMap[nameOrPath]) {
-            location.hash = route(nameOrPath, params);
-        } else {
-            location.hash = nameOrPath;
-        }
+        const path = routeMap[nameOrPath]
+            ? (mode === 'hash' ? '' : '') + routeMap[nameOrPath].path.replace(
+                /:([^/]+)/g,
+                (_, k) => params?.[k] ?? `:${k}`
+            )
+            : nameOrPath;
+
+        adapter.push(path.startsWith('#') ? path.slice(1) : path);
     }
 
     function view() {

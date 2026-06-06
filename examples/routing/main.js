@@ -4,7 +4,7 @@ sig('appRouter', ({ html }) => {
         { name: "user", path: "/users/:id", render: ({ id }) => html`<h1>User ${id}</h1>` },
         { name: "about", path: "/about", render: () => html`<h1>About</h1>` },
         { name: "notfound", path: "*", render: () => html`<h1>404 Not Found</h1>` }
-    ]);
+    ], { mode: 'hash' });
 });
 
 sig("app-root", ({ html, state, signal }) => {

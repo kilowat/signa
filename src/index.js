@@ -3,7 +3,7 @@ import { defState, resolveState } from './state.js';
 import { createRouter } from './router.js';
 import './bus.js';
 
-function def(id, factory) {
+function sig(id, factory) {
     if (factory === undefined) {
         return resolveState(id);
     }
@@ -14,6 +14,6 @@ function def(id, factory) {
     }
 }
 
-def.router = createRouter;
+sig.router = createRouter;
 
-window.def = def;
+window.sig = sig;
