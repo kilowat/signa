@@ -148,7 +148,6 @@ export function defComponent(tagName, setup) {
                         const clean = uRender(this, renderFn);
                         if (typeof clean === 'function') this.#cleanups.push(clean);
                     }
-                    queueMicrotask(() => bus.emit('sig:ready'));
                 } catch (e) {
                     console.error(`[sig] error mounting <${tagName}>:`, e);
                 }

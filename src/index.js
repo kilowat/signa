@@ -1,7 +1,7 @@
 import { defComponent } from './component.js';
 import { defState, resolveState } from './state.js';
 import { createRouter } from './router.js';
-import './bus.js';
+import { bus } from './bus.js';
 
 function sig(id, factory) {
     if (factory === undefined) {
@@ -15,5 +15,6 @@ function sig(id, factory) {
 }
 
 sig.router = createRouter;
+sig.bus = bus;
 
 window.sig = sig;

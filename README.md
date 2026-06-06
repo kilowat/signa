@@ -11,12 +11,12 @@ One function on `window` — `sig()` — does everything:
 ```js
 sig(id, fn)   // two args → define component or state
 sig(id)       // one arg  → get state instance
-sig.router()  // create a hash router
+sig.router()  // create a router
 ```
 
-- `id` contains a hyphen → **component** (`my-cart`, `user-card`)
-- `id` is camelCase, `fn` returns an object → **singleton state**
-- `id` is camelCase, `fn` returns a function → **composable**
+- `id` contains '-' → **component** (`my-cart`, `user-card`)
+- `id`, `fn` returns an object → **singleton state**
+- `id`, `fn` returns a function → **composable**
 
 ---
 
@@ -269,12 +269,6 @@ sig('send-btn', ({ html, bus }) => {
 })
 ```
 
-**Built-in event:**
-```js
-bus.on('sig:ready', () => {
-  // fires after each component finishes mounting
-})
-```
 
 ---
 
