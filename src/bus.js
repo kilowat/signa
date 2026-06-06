@@ -1,24 +1,17 @@
-import { signal, effect } from '@preact/signals-core';
-import { defState, resolveState } from './state.js';
+const listeners = new Map();
 
-defState('__bus__', () => {
-    const events = signal([]);
+const getOrCreate = type => {
+    if (!listeners.has(type)) listeners.set(type, new Set());
+    return listeners.get(type);
+};
 
-    return {
-        emit(type, payload) {
-            events.value = [...events.value, { type, payload }];
-        },
-        on(type, handler) {
-            const stop = effect(() => {
-                const matched = events.value.filter(e => e.type === type);
-                if (matched.length) {
-                    matched.forEach(e => handler(e.payload));
-                    events.value = events.value.filter(e => e.type !== type);
-                }
-            });
-            return stop;
-        },
-    };
-});
-
-export const bus = resolveState('__bus__');
+export const bus = {
+    emit(type, payload) {
+        listeners.get(type)?.forEach(fn => fn(payload));
+    },
+    on(type, handler) {
+        const set = getOrCreate(type);
+        set.add(handler);
+        return () => set.delete(handler);
+    },
+};
