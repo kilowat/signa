@@ -7,6 +7,17 @@ declare global {
     type Signal<T = any> = PreactSignal<T>;
     type ReadonlySignal<T = any> = PreactReadonlySignal<T>;
 
+    // ---- Registry ----
+    // Augment this interface in your project to get typed sig() lookups:
+    //
+    //   declare global {
+    //     interface SigRegistry {
+    //       cartState: { items: Signal<Item[]>; total: ReadonlySignal<number> }
+    //     }
+    //   }
+    //
+    interface SigRegistry { }
+
     // ---- Bus ----
 
     interface Bus {
@@ -35,7 +46,6 @@ declare global {
         signal: <T>(initial?: T) => Signal<T>;
         computed: <T>(fn: () => T) => ReadonlySignal<T>;
         effect: (fn: () => any) => void;
-        state<T = any>(key: string): T;
     }
 
     // ---- Prop types ----
@@ -63,7 +73,6 @@ declare global {
             name: string, type?: T, defaultValue?: any
         ): PropType<T>;
         slot: SlotFn;
-        state: <T = any>(key: string) => T;
         bus: Bus;
     }
 
@@ -73,11 +82,12 @@ declare global {
         // define component
         (tagName: string, setup: (ctx: ComponentContext) => (() => any) | void): void;
         // define state / composable
-        (key: string, factory: (ctx: StateContext) => any): void;
-        // get state instance
+        <K extends string>(key: K, factory: (ctx: StateContext) => any): void;
+        // get state instance — registry keys are typed, unknown keys fall back to T
+        <K extends keyof SigRegistry>(key: K): SigRegistry[K];
         <T = any>(key: string): T;
         // create router
-        router(routes: RouteDefinition[]): Router;
+        router(routes: RouteDefinition[], options?: { mode?: 'hash' | 'history' }): Router;
     }
 
     const sig: Sig;

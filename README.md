@@ -64,7 +64,7 @@ TypeScript types are available at `dist/signa.d.ts`.
 `sig('tag-name', setup)` registers a custom element. The setup function receives a context object and must return a render function.
 
 ```js
-sig('user-card', ({ html, signal, computed, effect, prop, slot, state, bus, $this }) => {
+sig('user-card', ({ html, signal, computed, effect, prop, slot, bus, $this }) => {
 
   // props
   const name  = prop('name', String, 'Anonymous')
@@ -104,7 +104,6 @@ sig('user-card', ({ html, signal, computed, effect, prop, slot, state, bus, $thi
 | `effect(fn)` | Side effect, return fn for cleanup |
 | `prop(name, Type?, default?)` | Reactive read-only prop |
 | `slot` / `slot('name')` | Access slotted children |
-| `state(key)` | Get a state instance |
 | `bus` | Event bus |
 
 ### Props
@@ -129,7 +128,7 @@ html`<user-card .onSelect=${(id) => console.log(id)}></user-card>`
 
 ```js
 // child reads it the same way either way
-const short    = prop('short') // Short variant without type
+const short    = prop('short') // short variant without type
 const score    = prop('score', Number, 0)
 const onSelect = prop('onSelect')
 
@@ -161,7 +160,7 @@ sig('user-card', ({ html, slot }) => {
 
 ## State
 
-`sig('key', factory)` registers state. The factory receives `{ signal, computed, effect, state }`.
+`sig('key', factory)` registers state. The factory receives `{ signal, computed, effect }`.
 
 **Return an object → singleton:**
 ```js
@@ -180,10 +179,10 @@ sig('useCounter', ({ signal }) => (start = 0) => {
 })
 ```
 
-**Get instance anywhere:**
+**Get instance anywhere with `sig(key)`:**
 ```js
-// in a component
-const cart = state('cartState')
+// inside a component
+const cart = sig('cartState')
 
 // on the page (PHP sets initial data)
 sig('cartState').items.value = <?= json_encode($cart['items']) ?>
@@ -191,20 +190,19 @@ sig('cartState').items.value = <?= json_encode($cart['items']) ?>
 
 **Composable — call the returned function:**
 ```js
-// in a component
-const counter = state('useCounter')(10)
+const counter = sig('useCounter')(10)
 counter.inc()
 ```
 
 **State can use other state:**
 ```js
-sig('orderState', ({ signal, state }) => {
-  const cart = state('cartState')
+sig('orderState', ({ signal }) => {
   const submitted = signal(false)
 
   return {
     submitted,
     submit() {
+      const cart = sig('cartState')
       if (!cart.items.value.length) return
       submitted.value = true
     }
@@ -216,7 +214,7 @@ sig('orderState', ({ signal, state }) => {
 
 ## PHP integration
 
-State can be seeded from the server by simply writing to it after the bundle loads. `sig(key)` resolves the instance on first call, so you can write before any component mounts.
+State can be seeded from the server by writing to it after the bundle loads. `sig(key)` resolves the instance on first call, so you can write before any component mounts.
 
 ```html
 <script src="/dist/signa.min.js"></script>
@@ -282,21 +280,21 @@ bus.on('sig:ready', () => {
 
 ## Router
 
-`sig.router(routes)` returns a router instance. Define it once, share via state.
+`sig.router(routes)` returns a router instance. Define it once, share via `sig()`.
 
 ```js
-sig('appRouter', ({html}) => {
+sig('appRouter', ({ html }) => {
   return sig.router([
     { name: 'home',  path: '/',          render: () => html`<h1>Home</h1>` },
     { name: 'user',  path: '/users/:id', render: ({ id }) => html`<h1>User ${id}</h1>` },
     { name: '404',   path: '*',          render: () => html`<h1>Not found</h1>` },
-  ], {mode: 'hash' || 'history'}) // default hash mode
+  ], { mode: 'hash' || 'history' }) // default hash mode
 })
 ```
 
 ```js
-sig('app-root', ({ html, state }) => {
-  const router = state('appRouter')
+sig('app-root', ({ html }) => {
+  const router = sig('appRouter')
   return () => html`
     <nav>
       <a href=${router.route('home')}>Home</a>
@@ -309,8 +307,8 @@ sig('app-root', ({ html, state }) => {
 
 ```js
 // navigate programmatically
-state('appRouter').navigate('user', { id: 42 })
-state('appRouter').navigate('/users/42')
+sig('appRouter').navigate('user', { id: 42 })
+sig('appRouter').navigate('/users/42')
 ```
 
 ---

@@ -7,8 +7,8 @@ sig('appRouter', ({ html }) => {
     ], { mode: 'hash' });
 });
 
-sig("app-root", ({ html, state, signal }) => {
-    const router = state('appRouter');
+sig("app-root", ({ html, signal }) => {
+    const router = sig('appRouter');
     const params = signal({ id: '1' });
 
     return () => html`
@@ -39,11 +39,11 @@ sig("app-root", ({ html, state, signal }) => {
     `;
 });
 
-sig("route-link", ({ prop, html, slot, $this, state, effect }) => {
+sig("route-link", ({ prop, html, slot, $this, effect }) => {
     const to = prop("to", String, "");
     const params = prop("params", Object, {});
 
-    const router = state('appRouter');
+    const router = sig('appRouter');
     const p = params.value?.value ?? params.value;
     const getHref = () => {
         const p = params.value?.value ?? params.value;

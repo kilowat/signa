@@ -8,8 +8,8 @@ sig('useNavdrawer', ({ signal }) => {
     };
 });
 
-sig('nav-drawer', ({ html, state, slot, $this }) => {
-    const drawer = state('useNavdrawer');
+sig('nav-drawer', ({ html, slot, $this }) => {
+    const drawer = sig('useNavdrawer');
     $this.drawer = drawer;
 
     return () => html`
@@ -21,8 +21,8 @@ sig('nav-drawer', ({ html, state, slot, $this }) => {
     `;
 });
 
-sig('toggle-drawer', ({ html, state, effect, $this }) => {
-    const drawer = state('useNavdrawer');
+sig('toggle-drawer', ({ html, effect, $this }) => {
+    const drawer = sig('useNavdrawer');
 
     effect(() => {
         $this.addEventListener('click', drawer.toggle);

@@ -95,7 +95,7 @@ sig('my-counter', ({ html, signal }) => {
         </p>
 
         <pre><code class="language-javascript"><script type="text/plain">
-sig('my-component', ({ html, signal, computed, effect, prop, slot, state, bus, $this }) => {
+sig('my-component', ({ html, signal, computed, effect, prop, slot, bus, $this }) => {
 
     const title = prop('title', String, 'Default')
     const count = signal(0)
@@ -153,10 +153,6 @@ sig('my-component', ({ html, signal, computed, effect, prop, slot, state, bus, $
                     <td>Слотированный контент</td>
                 </tr>
                 <tr>
-                    <td><code>state(key)</code></td>
-                    <td>Получить инстанс стейта</td>
-                </tr>
-                <tr>
                     <td><code>bus</code></td>
                     <td>Event bus</td>
                 </tr>
@@ -197,7 +193,7 @@ sig('child-comp', ({ html, prop }) => {
 })
 
 // передать функцию
-sig('my-btn', ({ prop }) => {
+sig('my-btn', ({ html, prop }) => {
     const onClick = prop('onClick')  // не сигнал, а функция напрямую
     return () => html`<button onclick=${onClick}>Click</button>`
 })
@@ -246,10 +242,10 @@ sig('useCounter', ({ signal }) => (start = 0) => {
 </script></code></pre>
 
         <pre><code class="language-javascript"><script type="text/plain">
-// использование в компоненте
-sig('my-cart', ({ html, state }) => {
-    const cart    = state('cartState')       // синглтон
-    const counter = state('useCounter')(10)  // composable — вызвать сразу
+// использование в компоненте через sig()
+sig('my-cart', ({ html }) => {
+    const cart    = sig('cartState')       // синглтон
+    const counter = sig('useCounter')(10)  // composable — вызвать сразу
 
     return () => html`
         <div>
@@ -263,12 +259,12 @@ sig('my-cart', ({ html, state }) => {
 
         <pre><code class="language-javascript"><script type="text/plain">
 // стейт может использовать другой стейт
-sig('orderState', ({ signal, state }) => {
-    const cart = state('cartState')
+sig('orderState', ({ signal }) => {
     const submitted = signal(false)
     return {
         submitted,
         submit() {
+            const cart = sig('cartState')
             if (!cart.items.value.length) return
             submitted.value = true
         }
@@ -319,14 +315,14 @@ bus.on('sig:ready', () => {
         <p>Хэш-роутер. Создаётся через <code>sig.router()</code>, удобно хранить в стейте.</p>
 
         <pre><code class="language-javascript"><script type="text/plain">
-sig('appRouter', ({html}) => sig.router([
+sig('appRouter', ({ html }) => sig.router([
     { name: 'home',  path: '/',          render: () => html`<h1>Home</h1>` },
     { name: 'user',  path: '/users/:id', render: ({ id }) => html`<h1>User ${id}</h1>` },
     { name: '404',   path: '*',          render: () => html`<h1>Not found</h1>` },
 ]))
 
-sig('app-root', ({ html, state }) => {
-    const router = state('appRouter')
+sig('app-root', ({ html }) => {
+    const router = sig('appRouter')
 
     return () => html`
         <nav>
@@ -338,7 +334,7 @@ sig('app-root', ({ html, state }) => {
 })
 
 // программная навигация
-state('appRouter').navigate('user', { id: 42 })
+sig('appRouter').navigate('user', { id: 42 })
 </script></code></pre>
 
 

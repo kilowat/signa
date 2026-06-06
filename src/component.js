@@ -1,6 +1,6 @@
 import { reactive, html } from 'uhtml/reactive';
 import { effect, signal, computed } from '@preact/signals-core';
-import { resolveState, isSignal } from './state.js';
+import { isSignal } from './state.js';
 import { bus } from './bus.js';
 
 function toKebab(str) {
@@ -118,7 +118,6 @@ export function defComponent(tagName, setup) {
                 html,
                 prop: (name, type, def) => this.#resolveProp(name, type, def),
                 slot,
-                state: resolveState,
                 bus,
             };
         }

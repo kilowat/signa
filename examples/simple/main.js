@@ -29,7 +29,6 @@ sig('counter-component', (ctx) => {
         prop,
         slot,
         render,
-        state,
         inject,
         provide,
         eventBus,
@@ -63,8 +62,8 @@ sig('counter-component', (ctx) => {
         default: null
     });
 
-    const counterStore = state('counterStore');
-    const counterState = state('useCounter')(10);
+    const counterStore = sig('counterStore');
+    const counterState = sig('useCounter')(10);
 
     const count = signal(countProp.value);
     const title = signal('My title');
