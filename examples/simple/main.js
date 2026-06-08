@@ -31,7 +31,7 @@ sig('counter-component', (ctx) => {
         render,
         inject,
         provide,
-        eventBus,
+        bus,
         createRouter,
     } = ctx;
 
@@ -68,7 +68,7 @@ sig('counter-component', (ctx) => {
 
     const count = signal(countProp.value);
     const title = signal('My title');
-
+    bus.on('test', () => console.log('test'))
     effect(() => {
 
         console.log('mount');
@@ -102,8 +102,9 @@ sig('counter-component', (ctx) => {
     `;
 });
 
-sig('parent-component', ({ signal, html }) => {
+sig('parent-component', ({ signal, html, bus }) => {
     const count = signal(10);
+    bus.emit('test');
     return () => html`
         <div>
             <div>Parent: ${count.value}</div>
