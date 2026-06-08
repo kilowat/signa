@@ -40,6 +40,7 @@ sig('counter-component', (ctx) => {
 
     //Current created root dom element
     console.log($this)
+
     // Props
     const countProp = prop('count', {
         type: Number,
@@ -69,6 +70,7 @@ sig('counter-component', (ctx) => {
     const title = signal('My title');
 
     effect(() => {
+
         console.log('mount');
         return () => console.log('unmount');
     })
