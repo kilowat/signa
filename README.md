@@ -6,12 +6,12 @@ Lightweight wrapper around Web Components, [uhtml](https://github.com/WebReflect
 
 ## How it works
 
-One function on `window` — `sig()` — does everything:
+One function on `window` — `$$()` — does everything:
 
 ```js
-sig(id, fn)   // two args → define component or state
-sig(id)       // one arg  → get state instance
-sig.router()  // create a router
+$$(id, fn)   // two args → define component or state
+$$(id)       // one arg  → get state instance
+$$.router()  // create a router
 ```
 
 - `id` contains '-' → **component** (`my-cart`, `user-card`)
@@ -43,7 +43,7 @@ TypeScript types are available at `dist/signa.d.ts`.
 <script src="/dist/signa.min.js"></script>
 
 <script>
-  sig('my-counter', ({ html, signal }) => {
+  $$('my-counter', ({ html, signal }) => {
     const count = signal(0)
     return () => html`
       <div>
@@ -61,10 +61,10 @@ TypeScript types are available at `dist/signa.d.ts`.
 
 ## Components
 
-`sig('tag-name', setup)` registers a custom element. The setup function receives a context object and must return a render function.
+`$$('tag-name', setup)` registers a custom element. The setup function receives a context object and must return a render function.
 
 ```js
-sig('user-card', ({ html, signal, computed, effect, prop, slot, bus, $this }) => {
+$$('user-card', ({ html, signal, computed, effect, prop, slot, bus, $this }) => {
 
   // props
   const name  = prop('name', String, 'Anonymous')
@@ -146,7 +146,7 @@ onSelect(item.id)
 ```
 
 ```js
-sig('user-card', ({ html, slot }) => {
+$$('user-card', ({ html, slot }) => {
   return () => html`
     <div>
       ${slot.default}
@@ -160,11 +160,11 @@ sig('user-card', ({ html, slot }) => {
 
 ## State
 
-`sig('key', factory)` registers state. The factory receives `{ signal, computed, effect }`.
+`$$('key', factory)` registers state. The factory receives `{ signal, computed, effect }`.
 
 **Return an object → singleton:**
 ```js
-sig('cartState', ({ signal, computed }) => {
+$$('cartState', ({ signal, computed }) => {
   const items = signal([])
   const total = computed(() => items.value.reduce((s, i) => s + i.price, 0))
   return { items, total }
@@ -173,36 +173,36 @@ sig('cartState', ({ signal, computed }) => {
 
 **Return a function → composable:**
 ```js
-sig('useCounter', ({ signal }) => (start = 0) => {
+$$('useCounter', ({ signal }) => (start = 0) => {
   const count = signal(start)
   return { count, inc: () => count.value++ }
 })
 ```
 
-**Get instance anywhere with `sig(key)`:**
+**Get instance anywhere with `$$(key)`:**
 ```js
 // inside a component
-const cart = sig('cartState')
+const cart = $$('cartState')
 
 // on the page (PHP sets initial data)
-sig('cartState').items.value = <?= json_encode($cart['items']) ?>
+$$('cartState').items.value = <?= json_encode($cart['items']) ?>
 ```
 
 **Composable — call the returned function:**
 ```js
-const counter = sig('useCounter')(10)
+const counter = $$('useCounter')(10)
 counter.inc()
 ```
 
 **State can use other state:**
 ```js
-sig('orderState', ({ signal }) => {
+$$('orderState', ({ signal }) => {
   const submitted = signal(false)
 
   return {
     submitted,
     submit() {
-      const cart = sig('cartState')
+      const cart = $$('cartState')
       if (!cart.items.value.length) return
       submitted.value = true
     }
@@ -214,13 +214,13 @@ sig('orderState', ({ signal }) => {
 
 ## PHP integration
 
-State can be seeded from the server by writing to it after the bundle loads. `sig(key)` resolves the instance on first call, so you can write before any component mounts.
+State can be seeded from the server by writing to it after the bundle loads. `$$(key)` resolves the instance on first call, so you can write before any component mounts.
 
 ```html
 <script src="/dist/signa.min.js"></script>
 <script>
-  sig('cartState').items.value = <?= json_encode($cart) ?>
-  sig('userState').profile.value = <?= json_encode($user) ?>
+  $$('cartState').items.value = <?= json_encode($cart) ?>
+  $$('userState').profile.value = <?= json_encode($user) ?>
 </script>
 
 <my-cart></my-cart>
@@ -230,7 +230,7 @@ Or define state directly on the page before the components mount:
 
 ```html
 <script>
-  sig('pageState', ({ signal }) => {
+  $$('pageState', ({ signal }) => {
     const filters = signal(<?= json_encode($filters) ?>)
     return { filters }
   })
@@ -244,7 +244,7 @@ Or define state directly on the page before the components mount:
 `bus.on` returns an unsubscribe function. Use it inside `effect` for automatic cleanup.
 
 ```js
-sig('my-widget', ({ html, bus, effect, signal }) => {
+$$('my-widget', ({ html, bus, effect, signal }) => {
   const message = signal('')
 
   effect(() => {
@@ -260,7 +260,7 @@ sig('my-widget', ({ html, bus, effect, signal }) => {
 
 Emit from anywhere:
 ```js
-sig('send-btn', ({ html, bus }) => {
+$$('send-btn', ({ html, bus }) => {
   return () => html`
     <button onclick=${() => bus.emit('chat:message', { text: 'Hello' })}>
       Send
@@ -274,11 +274,11 @@ sig('send-btn', ({ html, bus }) => {
 
 ## Router
 
-`sig.router(routes)` returns a router instance. Define it once, share via `sig()`.
+`$$.router(routes)` returns a router instance. Define it once, share via `$$()`.
 
 ```js
-sig('appRouter', ({ html }) => {
-  return sig.router([
+$$('appRouter', ({ html }) => {
+  return $$.router([
     { name: 'home',  path: '/',          render: () => html`<h1>Home</h1>` },
     { name: 'user',  path: '/users/:id', render: ({ id }) => html`<h1>User ${id}</h1>` },
     { name: '404',   path: '*',          render: () => html`<h1>Not found</h1>` },
@@ -287,8 +287,8 @@ sig('appRouter', ({ html }) => {
 ```
 
 ```js
-sig('app-root', ({ html }) => {
-  const router = sig('appRouter')
+$$('app-root', ({ html }) => {
+  const router = $$('appRouter')
   return () => html`
     <nav>
       <a href=${router.route('home')}>Home</a>
@@ -301,8 +301,8 @@ sig('app-root', ({ html }) => {
 
 ```js
 // navigate programmatically
-sig('appRouter').navigate('user', { id: 42 })
-sig('appRouter').navigate('/users/42')
+$$('appRouter').navigate('user', { id: 42 })
+$$('appRouter').navigate('/users/42')
 ```
 
 ---
@@ -311,7 +311,7 @@ sig('appRouter').navigate('/users/42')
 
 ```
 src/
-  index.js      entry — defines sig(), mounts on window
+  index.js      entry — defines $$(), mounts on window
   component.js  custom element factory
   state.js      state registry and resolver
   bus.js        event bus (built-in state)

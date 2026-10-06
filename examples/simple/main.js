@@ -1,4 +1,4 @@
-sig('counterStore', (ctx) => {
+$$('counterStore', (ctx) => {
     console.log(ctx);
     const count = ctx.signal(0);
     const inc = () => count.value++;
@@ -8,7 +8,7 @@ sig('counterStore', (ctx) => {
     }
 })
 //composable
-sig('useCounter', ({ signal }) =>
+$$('useCounter', ({ signal }) =>
     (value) => {
         const count = signal(value);
         const inc = () => count.value++;
@@ -19,7 +19,7 @@ sig('useCounter', ({ signal }) =>
     }
 )
 
-sig('counter-component', (ctx) => {
+$$('counter-component', (ctx) => {
     const {
         $this,
         signal,
@@ -63,8 +63,8 @@ sig('counter-component', (ctx) => {
         default: null
     });
 
-    const counterStore = sig('counterStore');
-    const counterState = sig('useCounter')(10);
+    const counterStore = $$('counterStore');
+    const counterState = $$('useCounter')(10);
 
     const count = signal(countProp.value);
     const title = signal('My title');
@@ -102,7 +102,7 @@ sig('counter-component', (ctx) => {
     `;
 });
 
-sig('parent-component', ({ signal, html, bus }) => {
+$$('parent-component', ({ signal, html, bus }) => {
     const count = signal(10);
     bus.emit('test');
     return () => html`
@@ -114,7 +114,7 @@ sig('parent-component', ({ signal, html, bus }) => {
     `;
 });
 
-sig('child-component', ({ prop, html, signal }) => {
+$$('child-component', ({ prop, html, signal }) => {
     const propCount = prop('count', { type: Number });
     const count = signal(propCount.value);
     const myClick = prop('myClick', { type: Function });

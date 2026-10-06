@@ -1,4 +1,4 @@
-sig('popup-window', ({ signal, html, bus, effect, $this }) => {
+$$('popup-window', ({ signal, html, bus, effect, $this }) => {
     const isOpen = signal(false);
     const title = signal('');
     const body = signal('');
@@ -160,7 +160,7 @@ sig('popup-window', ({ signal, html, bus, effect, $this }) => {
     `;
 });
 
-sig('popup-trigger', ({ prop, bus, effect, $this }) => {
+$$('popup-trigger', ({ prop, bus, effect, $this }) => {
     const contentId = prop('contentId');
     const componentName = prop('component');
 

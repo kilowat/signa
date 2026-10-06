@@ -50,7 +50,7 @@
 
         <h2 id="features">Возможности</h2>
         <ul>
-            <li>Одна функция <code>sig()</code> — компоненты, стейт, composable</li>
+            <li>Одна функция <code>$$()</code> — компоненты, стейт, composable</li>
             <li>HTML-шаблоны на базе uhtml</li>
             <li>Реактивность через @preact/signals-core</li>
             <li>State: синглтон и composable</li>
@@ -64,15 +64,15 @@
 <script src="signa.min.js"></script>
 </script></code></pre>
 
-        <p>На <code>window</code> появляется одна функция <code>sig()</code>:</p>
+        <p>На <code>window</code> появляется одна функция <code>$$()</code>:</p>
         <pre><code class="language-javascript"><script type="text/plain">
-sig(id, fn)   // два аргумента — определить компонент или стейт
-sig(id)       // один аргумент — получить инстанс стейта
-sig.router()  // создать роутер
+$$(id, fn)   // два аргумента — определить компонент или стейт
+$$(id)       // один аргумент — получить инстанс стейта
+$$.router()  // создать роутер
 </script></code></pre>
 
         <pre><code class="language-javascript"><script type="text/plain">
-sig('my-counter', ({ html, signal }) => {
+$$('my-counter', ({ html, signal }) => {
     const count = signal(0)
 
     return () => html`
@@ -95,7 +95,7 @@ sig('my-counter', ({ html, signal }) => {
         </p>
 
         <pre><code class="language-javascript"><script type="text/plain">
-sig('my-component', ({ html, signal, computed, effect, prop, slot, bus, $this }) => {
+$$('my-component', ({ html, signal, computed, effect, prop, slot, bus, $this }) => {
 
     const title = prop('title', String, 'Default')
     const count = signal(0)
@@ -182,18 +182,18 @@ const title = prop('title')
 
         <pre><code class="language-javascript"><script type="text/plain">
 // передать сигнал из родителя — ребёнок читает как read-only
-sig('parent-comp', ({ html, signal }) => {
+$$('parent-comp', ({ html, signal }) => {
     const count = signal(0)
     return () => html`<child-comp .count=${count}></child-comp>`
 })
 
-sig('child-comp', ({ html, prop }) => {
+$$('child-comp', ({ html, prop }) => {
     const count = prop('count', Number, 0)
     return () => html`<span>${count.value}</span>`
 })
 
 // передать функцию
-sig('my-btn', ({ html, prop }) => {
+$$('my-btn', ({ html, prop }) => {
     const onClick = prop('onClick')  // не сигнал, а функция напрямую
     return () => html`<button onclick=${onClick}>Click</button>`
 })
@@ -209,7 +209,7 @@ sig('my-btn', ({ html, prop }) => {
 </script></code></pre>
 
         <pre><code class="language-javascript"><script type="text/plain">
-sig('my-card', ({ html, slot }) => {
+$$('my-card', ({ html, slot }) => {
     return () => html`
         <div class="card">
             <div class="card__header">${slot('header')}</div>
@@ -228,24 +228,24 @@ sig('my-card', ({ html, slot }) => {
 
         <pre><code class="language-javascript"><script type="text/plain">
 // синглтон — fn возвращает объект
-sig('cartState', ({ signal, computed }) => {
+$$('cartState', ({ signal, computed }) => {
     const items = signal([])
     const total = computed(() => items.value.reduce((s, i) => s + i.price, 0))
     return { items, total }
 })
 
 // composable — fn возвращает функцию
-sig('useCounter', ({ signal }) => (start = 0) => {
+$$('useCounter', ({ signal }) => (start = 0) => {
     const count = signal(start)
     return { count, inc: () => count.value++ }
 })
 </script></code></pre>
 
         <pre><code class="language-javascript"><script type="text/plain">
-// использование в компоненте через sig()
-sig('my-cart', ({ html }) => {
-    const cart    = sig('cartState')       // синглтон
-    const counter = sig('useCounter')(10)  // composable — вызвать сразу
+// использование в компоненте через $$()
+$$('my-cart', ({ html }) => {
+    const cart    = $$('cartState')       // синглтон
+    const counter = $$('useCounter')(10)  // composable — вызвать сразу
 
     return () => html`
         <div>
@@ -259,12 +259,12 @@ sig('my-cart', ({ html }) => {
 
         <pre><code class="language-javascript"><script type="text/plain">
 // стейт может использовать другой стейт
-sig('orderState', ({ signal }) => {
+$$('orderState', ({ signal }) => {
     const submitted = signal(false)
     return {
         submitted,
         submit() {
-            const cart = sig('cartState')
+            const cart = $$('cartState')
             if (!cart.items.value.length) return
             submitted.value = true
         }
@@ -280,7 +280,7 @@ sig('orderState', ({ signal }) => {
         </p>
 
         <pre><code class="language-javascript"><script type="text/plain">
-sig('my-widget', ({ html, bus, effect, signal }) => {
+$$('my-widget', ({ html, bus, effect, signal }) => {
     const message = signal('')
 
     effect(() => {
@@ -294,7 +294,7 @@ sig('my-widget', ({ html, bus, effect, signal }) => {
 })
 
 // emit откуда угодно
-sig('send-btn', ({ html, bus }) => {
+$$('send-btn', ({ html, bus }) => {
     return () => html`
         <button onclick=${() => bus.emit('chat:message', { text: 'Hello' })}>
             Отправить
@@ -305,24 +305,24 @@ sig('send-btn', ({ html, bus }) => {
 
         <pre><code class="language-javascript"><script type="text/plain">
 // встроенное событие — все компоненты смонтированы
-bus.on('sig:ready', () => {
+bus.on('$$:ready', () => {
     console.log('все компоненты готовы')
 })
 </script></code></pre>
 
 
         <h2 id="routing">Роутинг</h2>
-        <p>Хэш-роутер. Создаётся через <code>sig.router()</code>, удобно хранить в стейте.</p>
+        <p>Хэш-роутер. Создаётся через <code>$$.router()</code>, удобно хранить в стейте.</p>
 
         <pre><code class="language-javascript"><script type="text/plain">
-sig('appRouter', ({ html }) => sig.router([
+$$('appRouter', ({ html }) => $$.router([
     { name: 'home',  path: '/',          render: () => html`<h1>Home</h1>` },
     { name: 'user',  path: '/users/:id', render: ({ id }) => html`<h1>User ${id}</h1>` },
     { name: '404',   path: '*',          render: () => html`<h1>Not found</h1>` },
 ]))
 
-sig('app-root', ({ html }) => {
-    const router = sig('appRouter')
+$$('app-root', ({ html }) => {
+    const router = $$('appRouter')
 
     return () => html`
         <nav>
@@ -334,13 +334,13 @@ sig('app-root', ({ html }) => {
 })
 
 // программная навигация
-sig('appRouter').navigate('user', { id: 42 })
+$$('appRouter').navigate('user', { id: 42 })
 </script></code></pre>
 
 
         <h2 id="php">PHP интеграция</h2>
         <p>
-            <code>sig(key)</code> с одним аргументом возвращает инстанс стейта.
+            <code>$$(key)</code> с одним аргументом возвращает инстанс стейта.
             Инстанс создаётся лениво при первом вызове, поэтому можно писать в него
             до монтирования компонентов.
         </p>
@@ -348,8 +348,8 @@ sig('appRouter').navigate('user', { id: 42 })
         <pre><code class="language-html"><script type="text/plain">
 <script src="signa.min.js"></script>
 <script>
-    sig('cartState').items.value = <?= json_encode($cart['items']) ?>
-        sig('userState').profile.value = <?= json_encode($user) ?>
+    $$('cartState').items.value = <?= json_encode($cart['items']) ?>
+        $$('userState').profile.value = <?= json_encode($user) ?>
 </script>
 
 <my-cart></my-cart>
@@ -386,7 +386,7 @@ document.querySelector('popup-window').open({
 })
 
 // через bus внутри компонента
-sig('my-comp', ({ html, bus }) => {
+$$('my-comp', ({ html, bus }) => {
     const open = () => bus.emit('popup:open', {
         content: () => html`<my-user .userId=${'22'}></my-user>`
     })
@@ -422,12 +422,12 @@ bus.emit('popup:close')
         </p>
 
         <script>
-                sig('my-user', ({ html, prop }) => {
+                $$('my-user', ({ html, prop }) => {
                     const userId = prop('userId')
                     return () => html`<div>userId: ${userId.value}</div>`
                 })
 
-            sig('bus-open', ({ html, bus }) => {
+            $$('bus-open', ({ html, bus }) => {
                     const userId = '22'
                     const open = () => bus.emit('popup:open', {
                         content: () => html`<my-user .userId=${userId}></my-user>`

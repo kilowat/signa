@@ -8,7 +8,7 @@ declare global {
     type ReadonlySignal<T = any> = PreactReadonlySignal<T>;
 
     // ---- Registry ----
-    // Augment this interface in your project to get typed sig() lookups:
+    // Augment this interface in your project to get typed $$() lookups:
     //
     //   declare global {
     //     interface SigRegistry {
@@ -76,9 +76,9 @@ declare global {
         bus: Bus;
     }
 
-    // ---- Global sig() ----
+    // ---- Global $$() ----
 
-    interface Sig {
+    interface $$ {
         // define component
         (tagName: string, setup: (ctx: ComponentContext) => (() => any) | void): void;
         // define state / composable
@@ -90,7 +90,7 @@ declare global {
         router(routes: RouteDefinition[], options?: { mode?: 'hash' | 'history' }): Router;
     }
 
-    const sig: Sig;
+    const $$: $$;
 }
 
 export { };

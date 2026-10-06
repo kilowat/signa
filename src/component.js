@@ -236,7 +236,7 @@ export function defComponent(tagName, setup) {
                     }
                 } catch (e) {
                     console.error(
-                        `[sig] error mounting <${tagName}>:`,
+                        `[$$] error mounting <${tagName}>:`,
                         e
                     );
                 }
@@ -259,7 +259,7 @@ export function defComponent(tagName, setup) {
     }
 
     if (customElements.get(tagName)) {
-        throw new Error(`[sig] <${tagName}> is already defined`);
+        throw new Error(`[$$] <${tagName}> is already defined`);
     }
 
     customElements.define(tagName, Component);

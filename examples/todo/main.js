@@ -1,6 +1,6 @@
 
 
-sig('todo-list', (ctx) => {
+$$('todo-list', (ctx) => {
     const { html, signal } = ctx;
 
     const todoList = signal([

@@ -1,5 +1,5 @@
-sig('appRouter', ({ html }) => {
-    return sig.router([
+$$('appRouter', ({ html }) => {
+    return $$.router([
         { name: "home", path: "/", render: () => html`<h1>Home</h1>` },
         { name: "user", path: "/users/:id", render: ({ id }) => html`<h1>User ${id}</h1>` },
         { name: "about", path: "/about", render: () => html`<h1>About</h1>` },
@@ -7,8 +7,8 @@ sig('appRouter', ({ html }) => {
     ], { mode: 'hash' });
 });
 
-sig("app-root", ({ html, signal }) => {
-    const router = sig('appRouter');
+$$("app-root", ({ html, signal }) => {
+    const router = $$('appRouter');
     const params = signal({ id: '1' });
 
     return () => html`
@@ -39,11 +39,11 @@ sig("app-root", ({ html, signal }) => {
     `;
 });
 
-sig("route-link", ({ prop, html, slot, $this, effect }) => {
+$$("route-link", ({ prop, html, slot, $this, effect }) => {
     const to = prop("to", String, "");
     const params = prop("params", Object, {});
 
-    const router = sig('appRouter');
+    const router = $$('appRouter');
     const p = params.value?.value ?? params.value;
     const getHref = () => {
         const p = params.value?.value ?? params.value;
