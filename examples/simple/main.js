@@ -19,7 +19,79 @@ $$('useCounter', ({ signal }) =>
     }
 )
 
-$$('counter-component', (ctx) => {
+$$('useTimer', ({ signal, effect }) =>
+    interval => {
+        const seconds = signal(0);
+
+        effect(() => {
+            const timer = setInterval(() => {
+                seconds.value++;
+                console.log('timer ' + seconds.value)
+            }, interval);
+
+            return () => {
+                clearInterval(timer);
+            };
+        });
+
+        return {
+            seconds,
+        };
+    }
+);
+
+$$('timer-component', ({ signal, html }, {
+    useCounter,
+    useTimer,
+    counterStore,
+}) => {
+    const counterState = useCounter(10);
+    const timer = useTimer(1000);
+
+    const count = signal(0);
+
+    return () => html`
+        <div>
+            Local: ${count.value}
+        </div>
+
+        <div>
+            Store: ${counterStore.count.value}
+
+            <button
+                onclick=${() =>
+            counterStore.inc()}
+            >
+                Increment store
+            </button>
+        </div>
+
+        <div>
+            Counter:
+            ${counterState.count.value}
+
+            <button
+                onclick=${() =>
+            counterState.inc()}
+            >
+                Increment counter
+            </button>
+        </div>
+
+        <div>
+            Timer:
+            ${timer.seconds.value}
+        </div>
+
+        <button
+            onclick=${() => count.value++}
+        >
+            Increment local
+        </button>
+    `;
+});
+
+$$('counter-component', (ctx, { useCounter, counterStore }) => {
     const {
         $this,
         signal,
@@ -63,8 +135,7 @@ $$('counter-component', (ctx) => {
         default: null
     });
 
-    const counterStore = $$('counterStore');
-    const counterState = $$('useCounter')(10);
+    const counterState = useCounter(10);
 
     const count = signal(countProp.value);
     const title = signal('My title');

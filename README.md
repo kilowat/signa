@@ -1,6 +1,6 @@
 # Signa
 
-Lightweight wrapper around Web Components, [uhtml](https://github.com/WebReflection/uhtml) and [@preact/signals-core](https://www.npmjs.com/package/@preact/signals-core). Designed for regular HTML and PHP sites — no build step required on the page itself.
+Lightweight wrapper around [uhtml](https://github.com/WebReflection/uhtml) and [@preact/signals-core](https://www.npmjs.com/package/@preact/signals-core). Designed for regular HTML and PHP sites — no build step required on the page itself.
 
 **~20kb minified, ~8kb gzip.**
 
@@ -9,12 +9,13 @@ Lightweight wrapper around Web Components, [uhtml](https://github.com/WebReflect
 One function on `window` — `$$()` — does everything:
 
 ```js
-$$(id, fn)   // two args → define component or state
-$$(id)       // one arg  → get state instance
-$$.router()  // create a router
+$$(id, fn)  // two args → define component or state
+$$(id)      // one arg  → get state instance
+$$.router() // create a router
+$$.location // reactive browser location
 ```
 
-- `id` contains '-' → **component** (`my-cart`, `user-card`)
+- `id` contains `-` → **component** (`my-cart`, `user-card`)
 - `id`, `fn` returns an object → **singleton state**
 - `id`, `fn` returns a function → **composable**
 
@@ -43,15 +44,16 @@ TypeScript types are available at `dist/signa.d.ts`.
 <script src="/dist/signa.min.js"></script>
 
 <script>
-  $$('my-counter', ({ html, signal }) => {
+$$('my-counter', ({ html, signal }) => {
     const count = signal(0)
+
     return () => html`
-      <div>
-        <p>Count: ${count.value}</p>
-        <button onclick=${() => count.value++}>+</button>
-      </div>
+        <div>
+            <p>Count: ${count.value}</p>
+            <button onclick=${() => count.value++}>+</button>
+        </div>
     `
-  })
+})
 </script>
 
 <my-counter></my-counter>
@@ -64,32 +66,51 @@ TypeScript types are available at `dist/signa.d.ts`.
 `$$('tag-name', setup)` registers a custom element. The setup function receives a context object and must return a render function.
 
 ```js
-$$('user-card', ({ html, signal, computed, effect, prop, slot, bus, $this }) => {
+$$('user-card', ({
+    html,
+    signal,
+    computed,
+    effect,
+    prop,
+    slot,
+    bus,
+    $this
+}) => {
 
-  // props
-  const name  = prop('name', String, 'Anonymous')
-  const score = prop('score', Number, 0)
+    const name = prop('name', String, 'Anonymous')
+    const score = prop('score', Number, 0)
 
-  // local state
-  const open = signal(false)
+    const open = signal(false)
 
-  // computed
-  const label = computed(() => open.value ? 'Close' : 'Open')
+    const label = computed(() =>
+        open.value ? 'Close' : 'Open'
+    )
 
-  // side effect with optional cleanup
-  effect(() => {
-    console.log('score changed:', score.value)
-    return () => console.log('cleanup')
-  })
+    effect(() => {
+        console.log('score changed:', score.value)
 
-  // render
-  return () => html`
-    <div>
-      <h2>${name.value} — ${score.value} pts</h2>
-      <button onclick=${() => open.value = !open.value}>${label.value}</button>
-      ${open.value ? html`<div>${slot.default}</div>` : null}
-    </div>
-  `
+        return () => {
+            console.log('cleanup')
+        }
+    })
+
+    return () => html`
+        <div>
+            <h2>
+                ${name.value} — ${score.value} pts
+            </h2>
+
+            <button
+                onclick=${() => open.value = !open.value}
+            >
+                ${label.value}
+            </button>
+
+            ${open.value
+                ? html`<div>${slot.default}</div>`
+                : null}
+        </div>
+    `
 })
 ```
 
@@ -108,28 +129,50 @@ $$('user-card', ({ html, signal, computed, effect, prop, slot, bus, $this }) => 
 
 ### Props
 
-Props are **read-only** inside a component. They can be passed as:
+Props are **read-only** inside a component.
 
-**HTML attributes** (from PHP or static HTML):
+They can be passed as HTML attributes:
+
 ```html
-<user-card data-name="Alex" data-score="42"></user-card>
-<!-- kebab-case also works -->
+<user-card
+    data-name="Alex"
+    data-score="42"
+></user-card>
+```
+
+Kebab-case also works:
+
+```html
 <user-card data-first-name="Alex"></user-card>
 ```
 
-**JS property** (signal or plain value from a parent component):
-```js
-// parent passing a signal down
-html`<user-card .score=${mySignal}></user-card>`
+Or as JavaScript properties:
 
-// parent passing a callback
-html`<user-card .onSelect=${(id) => console.log(id)}></user-card>`
+```js
+html`
+    <user-card .score=${mySignal}></user-card>
+`
 ```
 
 ```js
-// child reads it the same way either way
-const short    = prop('short') // short variant without type
-const score    = prop('score', Number, 0)
+html`
+    <user-card
+        .onSelect=${id => console.log(id)}
+    ></user-card>
+`
+```
+
+The child reads them the same way:
+
+```js
+const short = prop('short')
+
+const score = prop(
+    'score',
+    Number,
+    0
+)
+
 const onSelect = prop('onSelect')
 
 // onSelect is a function, not a signal
@@ -140,19 +183,30 @@ onSelect(item.id)
 
 ```html
 <user-card data-name="Alex">
-  <div data-slot="footer">Footer content</div>
-  <p>Default slot content</p>
+
+    <div data-slot="footer">
+        Footer content
+    </div>
+
+    <p>
+        Default slot content
+    </p>
+
 </user-card>
 ```
 
 ```js
 $$('user-card', ({ html, slot }) => {
-  return () => html`
-    <div>
-      ${slot.default}
-      <footer>${slot('footer')}</footer>
-    </div>
-  `
+
+    return () => html`
+        <div>
+            ${slot.default}
+
+            <footer>
+                ${slot('footer')}
+            </footer>
+        </div>
+    `
 })
 ```
 
@@ -160,53 +214,96 @@ $$('user-card', ({ html, slot }) => {
 
 ## State
 
-`$$('key', factory)` registers state. The factory receives `{ signal, computed, effect }`.
+`$$('key', factory)` registers state.
 
-**Return an object → singleton:**
+The factory receives:
+
+```js
+{
+    signal,
+    computed,
+    effect
+}
+```
+
+### Return an object → singleton
+
 ```js
 $$('cartState', ({ signal, computed }) => {
-  const items = signal([])
-  const total = computed(() => items.value.reduce((s, i) => s + i.price, 0))
-  return { items, total }
+
+    const items = signal([])
+
+    const total = computed(() =>
+        items.value.reduce(
+            (sum, item) => sum + item.price,
+            0
+        )
+    )
+
+    return {
+        items,
+        total
+    }
 })
 ```
 
-**Return a function → composable:**
+### Return a function → composable
+
 ```js
-$$('useCounter', ({ signal }) => (start = 0) => {
-  const count = signal(start)
-  return { count, inc: () => count.value++ }
+$$('useCounter', ({ signal }) => start => {
+
+    const count = signal(start)
+
+    return {
+        count,
+        inc: () => count.value++
+    }
 })
 ```
 
-**Get instance anywhere with `$$(key)`:**
+### Get instance anywhere with `$$()`
+
 ```js
-// inside a component
 const cart = $$('cartState')
-
-// on the page (PHP sets initial data)
-$$('cartState').items.value = <?= json_encode($cart['items']) ?>
 ```
 
-**Composable — call the returned function:**
+State can also be initialized directly from PHP:
+
+```html
+<script>
+$$('cartState').items.value =
+    <?= json_encode($cart['items']) ?>
+</script>
+```
+
+### Composable
+
 ```js
 const counter = $$('useCounter')(10)
+
 counter.inc()
 ```
 
-**State can use other state:**
+### State can use other state
+
 ```js
 $$('orderState', ({ signal }) => {
-  const submitted = signal(false)
 
-  return {
-    submitted,
-    submit() {
-      const cart = $$('cartState')
-      if (!cart.items.value.length) return
-      submitted.value = true
+    const submitted = signal(false)
+
+    return {
+        submitted,
+
+        submit() {
+            const cart = $$('cartState')
+
+            if (!cart.items.value.length) {
+                return
+            }
+
+            submitted.value = true
+        }
     }
-  }
 })
 ```
 
@@ -214,13 +311,19 @@ $$('orderState', ({ signal }) => {
 
 ## PHP integration
 
-State can be seeded from the server by writing to it after the bundle loads. `$$(key)` resolves the instance on first call, so you can write before any component mounts.
+State can be seeded from the server by writing to it after the bundle loads.
+
+`$$(key)` resolves the state instance on first call, so it can be initialized before any component mounts.
 
 ```html
 <script src="/dist/signa.min.js"></script>
+
 <script>
-  $$('cartState').items.value = <?= json_encode($cart) ?>
-  $$('userState').profile.value = <?= json_encode($user) ?>
+$$('cartState').items.value =
+    <?= json_encode($cart['items']) ?>
+
+$$('userState').profile.value =
+    <?= json_encode($user) ?>
 </script>
 
 <my-cart></my-cart>
@@ -230,10 +333,16 @@ Or define state directly on the page before the components mount:
 
 ```html
 <script>
-  $$('pageState', ({ signal }) => {
-    const filters = signal(<?= json_encode($filters) ?>)
-    return { filters }
-  })
+$$('pageState', ({ signal }) => {
+
+    const filters = signal(
+        <?= json_encode($filters) ?>
+    )
+
+    return {
+        filters
+    }
+})
 </script>
 ```
 
@@ -241,82 +350,538 @@ Or define state directly on the page before the components mount:
 
 ## Event bus
 
-`bus.on` returns an unsubscribe function. Use it inside `effect` for automatic cleanup.
+`bus.on()` returns an unsubscribe function.
+
+Use it inside `effect()` for automatic cleanup.
 
 ```js
-$$('my-widget', ({ html, bus, effect, signal }) => {
-  const message = signal('')
+$$('my-widget', ({
+    html,
+    bus,
+    effect,
+    signal
+}) => {
 
-  effect(() => {
-    const off = bus.on('chat:message', payload => {
-      message.value = payload.text
+    const message = signal('')
+
+    effect(() => {
+
+        const off = bus.on(
+            'chat:message',
+            payload => {
+                message.value = payload.text
+            }
+        )
+
+        return off
     })
-    return off
-  })
 
-  return () => html`<div>${message.value}</div>`
+    return () => html`
+        <div>
+            ${message.value}
+        </div>
+    `
 })
 ```
 
 Emit from anywhere:
+
 ```js
 $$('send-btn', ({ html, bus }) => {
-  return () => html`
-    <button onclick=${() => bus.emit('chat:message', { text: 'Hello' })}>
-      Send
-    </button>
-  `
+
+    return () => html`
+        <button
+            onclick=${() =>
+                bus.emit(
+                    'chat:message',
+                    { text: 'Hello' }
+                )
+            }
+        >
+            Send
+        </button>
+    `
 })
 ```
-
 
 ---
 
-## Router
+# Router
 
-`$$.router(routes)` returns a router instance. Define it once, share via `$$()`.
+`$$.router(routes)` creates a reactive router.
+
+The router supports:
+
+- hash mode
+- history mode
+- named routes
+- route parameters
+- programmatic navigation
+- browser Back / Forward
+- native `history.pushState()`
+- native `history.replaceState()`
+- native `hashchange`
+
+The router does **not** depend on `$$.location`.
+
+### Define a router
 
 ```js
-$$('appRouter', ({ html }) => {
-  return $$.router([
-    { name: 'home',  path: '/',          render: () => html`<h1>Home</h1>` },
-    { name: 'user',  path: '/users/:id', render: ({ id }) => html`<h1>User ${id}</h1>` },
-    { name: '404',   path: '*',          render: () => html`<h1>Not found</h1>` },
-  ], { mode: 'hash' || 'history' }) // default hash mode
+$$('router', ({ html }) => {
+
+    return $$.router([
+
+        {
+            name: 'home',
+            path: '/',
+            render: () =>
+                html`<h1>Home</h1>`
+        },
+
+        {
+            name: 'user',
+            path: '/users/:id',
+            render: ({ id }) =>
+                html`<h1>User ${id}</h1>`
+        },
+
+        {
+            name: '404',
+            path: '*',
+            render: () =>
+                html`<h1>Not found</h1>`
+        }
+
+    ], {
+        mode: 'hash'
+    })
 })
 ```
 
+Available modes:
+
 ```js
-$$('app-root', ({ html }) => {
-  const router = $$('appRouter')
-  return () => html`
-    <nav>
-      <a href=${router.route('home')}>Home</a>
-      <a href=${router.route('user', { id: 1 })}>User 1</a>
-    </nav>
-    <main>${router.view()}</main>
-  `
+{ mode: 'hash' }
+```
+
+or:
+
+```js
+{ mode: 'history' }
+```
+
+Hash mode is the default.
+
+### Use the router
+
+```js
+$$('app-root', ({ html }, { router }) => {
+
+    return () => html`
+        <nav>
+
+            <a href=${router.route('home')}>
+                Home
+            </a>
+
+            <a href=${router.route('user', { id: 1 })}>
+                User 1
+            </a>
+
+        </nav>
+
+        <main>
+            ${router.view()}
+        </main>
+    `
 })
 ```
 
+### Named routes
+
+Generate a URL without navigating:
+
 ```js
-// navigate programmatically
-$$('appRouter').navigate('user', { id: 42 })
-$$('appRouter').navigate('/users/42')
+router.route('user', {
+    id: 42
+})
 ```
+
+For hash mode this returns:
+
+```text
+#/users/42
+```
+
+For history mode:
+
+```text
+/users/42
+```
+
+### Programmatic navigation
+
+Navigate to a named route:
+
+```js
+$$('router').go('user', {
+    id: 42
+})
+```
+
+Or navigate directly to a path:
+
+```js
+$$('router').go('/users/42')
+```
+
+### Reactive current route
+
+The current route is available through `router.current`:
+
+```js
+const router = $$('router')
+
+console.log(router.current.value)
+```
+
+Example:
+
+```js
+{
+    path: '/users/42',
+    route: {
+        name: 'user',
+        path: '/users/:id'
+    },
+    params: {
+        id: '42'
+    }
+}
+```
+
+Because `current` is a Signal, components automatically update when the URL changes.
+
+### Native URL changes
+
+The router watches the browser URL directly.
+
+For example:
+
+```js
+history.pushState(
+    null,
+    '',
+    '/users/42'
+)
+```
+
+The router automatically updates:
+
+```js
+router.current.value
+```
+
+The same applies to:
+
+```js
+history.replaceState(
+    null,
+    '',
+    '/users/42'
+)
+```
+
+Browser navigation is also detected:
+
+```js
+history.back()
+history.forward()
+```
+
+In hash mode, changing the hash is detected as well:
+
+```js
+window.location.hash = '/users/42'
+```
+
+This means the router can work together with other code that changes the URL without requiring `$$.location`.
+
+---
+
+# Location
+
+`$$.location` is a reactive wrapper around the browser's native URL.
+
+It is useful when you need to work with the current URL, pathname and query parameters independently of routing.
+
+The location API does **not** depend on the router.
+
+You can use `$$.location` with or without `$$.router`.
+
+## Current URL
+
+Get the complete current URL:
+
+```js
+$$.location.url()
+```
+
+Example:
+
+```text
+/catalog?page=2&sort=price
+```
+
+Get the current pathname:
+
+```js
+$$.location.path()
+```
+
+Example:
+
+```text
+/catalog
+```
+
+Get the current query parameters:
+
+```js
+$$.location.query.value
+```
+
+Example:
+
+```js
+{
+    page: '2',
+    sort: 'price'
+}
+```
+
+## Read query parameters
+
+Get a single parameter:
+
+```js
+$$.location.get('page')
+```
+
+Get all parameters:
+
+```js
+$$.location.getAll()
+```
+
+Example:
+
+```js
+{
+    page: '2',
+    sort: 'price'
+}
+```
+
+## Set query parameters
+
+Set one parameter:
+
+```js
+$$.location.set(
+    'page',
+    2
+)
+```
+
+Or several parameters:
+
+```js
+$$.location.set({
+    page: 2,
+    sort: 'price'
+})
+```
+
+The resulting URL:
+
+```text
+/catalog?page=2&sort=price
+```
+
+`null` removes a parameter:
+
+```js
+$$.location.set({
+    page: null,
+    sort: 'price'
+})
+```
+
+Result:
+
+```text
+/catalog?sort=price
+```
+
+The current path is preserved.
+
+## Replace the current path
+
+```js
+$$.location.path('/catalog')
+```
+
+The existing query parameters are preserved.
+
+For example, if the current URL is:
+
+```text
+/shop?page=2
+```
+
+then:
+
+```js
+$$.location.path('/catalog')
+```
+
+produces:
+
+```text
+/catalog?page=2
+```
+
+## Replace the complete URL
+
+```js
+$$.location.url(
+    '/catalog?page=2&sort=price'
+)
+```
+
+This changes the browser URL without reloading the page.
+
+## Reactive location
+
+`$$.location.current` is a Signal.
+
+```js
+$$('catalog-page', ({ html }, { location }) => {
+
+    return () => html`
+        <div>
+            Path:
+            ${location.current.value.path}
+
+            Page:
+            ${location.current.value.query.page}
+        </div>
+    `
+})
+```
+
+The location state contains:
+
+```js
+{
+    url,
+    path,
+    query
+}
+```
+
+The query is also available separately:
+
+```js
+$$.location.query
+```
+
+## Browser navigation
+
+For normal browser navigation with a page reload:
+
+```js
+$$.location.go('/login')
+```
+
+This is equivalent to navigating the browser to the specified URL.
+
+Browser history:
+
+```js
+$$.location.back()
+```
+
+```js
+$$.location.forward()
+```
+
+## Replace history entry
+
+Use `replace()` when the current browser history entry should be replaced instead of creating a new one:
+
+```js
+$$.location.replace(
+    '/catalog?page=1'
+)
+```
+
+## Location and Router together
+
+`$$.location` and `$$.router` solve different problems.
+
+Use **Router** for application routes:
+
+```js
+router.go('user', {
+    id: 42
+})
+```
+
+Use **Location** for URL state such as filters, sorting and pagination:
+
+```js
+$$.location.set({
+    page: 2,
+    sort: 'price'
+})
+```
+
+They can be used together:
+
+```js
+$$('catalogState', ({ signal }) => {
+
+    const page = signal(
+        Number(
+            $$.location.get('page') || 1
+        )
+    )
+
+    return {
+        page
+    }
+})
+```
+
+The router and location are independent, but both react to native browser URL changes.
 
 ---
 
 ## File structure
 
-```
+```text
 src/
-  index.js      entry — defines $$(), mounts on window
-  component.js  custom element factory
-  state.js      state registry and resolver
-  bus.js        event bus (built-in state)
-  router.js     hash router
-  signa.d.ts    TypeScript declarations
+    index.js       entry — defines $$(), mounts on window
+    component.js   custom element factory
+    state.js       state registry and resolver
+    scope.js       lifecycle scopes and effects
+    bus.js         event bus
+    router.js      reactive router
+    location.js    reactive browser location
+    signa.d.ts     TypeScript declarations
+
 build.js
 ```
 
@@ -324,7 +889,12 @@ build.js
 
 ## Browser support
 
-All modern browsers with Web Components support: Chrome, Firefox, Safari, Edge.
+All modern browsers with Web Components support:
+
+- Chrome
+- Firefox
+- Safari
+- Edge
 
 ---
 

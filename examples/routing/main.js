@@ -1,4 +1,4 @@
-$$('appRouter', ({ html }) => {
+$$('router', ({ html }) => {
     return $$.router([
         { name: "home", path: "/", render: () => html`<h1>Home</h1>` },
         { name: "user", path: "/users/:id", render: ({ id }) => html`<h1>User ${id}</h1>` },
@@ -7,8 +7,8 @@ $$('appRouter', ({ html }) => {
     ], { mode: 'hash' });
 });
 
-$$("app-root", ({ html, signal }) => {
-    const router = $$('appRouter');
+$$("app-root", ({ html, signal }, { router }) => {
+
     const params = signal({ id: '1' });
 
     return () => html`
@@ -39,11 +39,11 @@ $$("app-root", ({ html, signal }) => {
     `;
 });
 
-$$("route-link", ({ prop, html, slot, $this, effect }) => {
+$$("route-link", ({ prop, html, slot, $this, effect }, { router }) => {
     const to = prop("to", String, "");
     const params = prop("params", Object, {});
 
-    const router = $$('appRouter');
+
     const p = params.value?.value ?? params.value;
     const getHref = () => {
         const p = params.value?.value ?? params.value;

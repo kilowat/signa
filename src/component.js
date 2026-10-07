@@ -1,16 +1,32 @@
+
 import { reactive, html } from 'uhtml/reactive';
-import { effect, signal, computed } from '@preact/signals-core';
-import { isSignal } from './state.js';
+import {
+    effect as rawEffect,
+    signal,
+    computed,
+} from '@preact/signals-core';
+import { isSignal, createStateAccess } from './state.js';
+import {
+    createScope,
+    withScope,
+    effectInScope,
+    addCleanup,
+    disposeScope,
+} from './scope.js';
 import { bus } from './bus.js';
 
 const signalTypes = new WeakMap();
 
 function toKebab(str) {
-    return str.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+    return str
+        .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+        .toLowerCase();
 }
 
 function parseAttr(value, type) {
-    if (value === null) return null;
+    if (value === null) {
+        return null;
+    }
 
     switch (type) {
         case Number:
@@ -55,19 +71,14 @@ function defaultFor(type) {
 }
 
 export function defComponent(tagName, setup) {
-    const uRender = reactive(effect);
+    const uRender = reactive(rawEffect);
 
     class Component extends HTMLElement {
-        #cleanups = [];
         #props = new Map();
         #rawProps = {};
         #slots = { default: [] };
         #mounted = false;
-
-        #addEffect(fn) {
-            const stop = effect(fn);
-            this.#cleanups.push(stop);
-        }
+        #scope = null;
 
         #resolveProp(name, type, defaultValue) {
             if (this.#props.has(name)) {
@@ -83,6 +94,7 @@ export function defComponent(tagName, setup) {
 
                 this.#props.set(name, raw);
                 this.#rawProps[name] = raw;
+
                 return raw;
             }
 
@@ -103,7 +115,10 @@ export function defComponent(tagName, setup) {
                 } else if (attrVal !== null) {
                     if (!isNaN(Number(attrVal))) {
                         finalType = Number;
-                    } else if (attrVal === 'true' || attrVal === 'false') {
+                    } else if (
+                        attrVal === 'true' ||
+                        attrVal === 'false'
+                    ) {
                         finalType = Boolean;
                     } else if (
                         attrVal.startsWith('{') ||
@@ -138,11 +153,14 @@ export function defComponent(tagName, setup) {
                 get value() {
                     return s.value;
                 },
+
                 set value(_) { },
+
                 peek: s.peek.bind(s),
             };
 
             this.#props.set(name, readonly);
+
             return readonly;
         }
 
@@ -179,7 +197,7 @@ export function defComponent(tagName, setup) {
                 $this: this,
                 signal,
                 computed,
-                effect: this.#addEffect.bind(this),
+                effect: effectInScope,
                 html,
                 prop: (name, type, def) =>
                     this.#resolveProp(name, type, def),
@@ -189,7 +207,12 @@ export function defComponent(tagName, setup) {
         }
 
         connectedCallback() {
+            if (this.#mounted) {
+                return;
+            }
+
             this.#mounted = true;
+            this.#scope = createScope();
 
             this._observer = new MutationObserver(muts => {
                 for (const m of muts) {
@@ -220,25 +243,41 @@ export function defComponent(tagName, setup) {
             });
 
             requestAnimationFrame(() => {
-                if (!this.#mounted) return;
+                if (
+                    !this.#mounted ||
+                    !this.#scope ||
+                    this.#scope.disposed
+                ) {
+                    return;
+                }
 
                 try {
                     this.#collectSlots();
 
-                    const renderFn = setup(this.#ctx());
+                    withScope(this.#scope, () => {
+                        const renderFn = setup(
+                            this.#ctx(),
+                            createStateAccess()
+                        );
 
-                    if (typeof renderFn === 'function') {
-                        const clean = uRender(this, renderFn);
+                        if (typeof renderFn === 'function') {
+                            const clean = uRender(this, renderFn);
 
-                        if (typeof clean === 'function') {
-                            this.#cleanups.push(clean);
+                            if (typeof clean === 'function') {
+                                addCleanup(clean);
+                            }
                         }
-                    }
+                    });
                 } catch (e) {
                     console.error(
                         `[$$] error mounting <${tagName}>:`,
                         e
                     );
+
+                    disposeScope(this.#scope);
+
+                    this.#scope = null;
+                    this.#mounted = false;
                 }
             });
         }
@@ -247,20 +286,18 @@ export function defComponent(tagName, setup) {
             this.#mounted = false;
 
             this._observer?.disconnect();
+            disposeScope(this.#scope);
 
-            this.#cleanups.forEach(fn => {
-                try {
-                    fn();
-                } catch { }
-            });
-
-            this.#cleanups = [];
+            this.#scope = null;
         }
     }
 
     if (customElements.get(tagName)) {
-        throw new Error(`[$$] <${tagName}> is already defined`);
+        throw new Error(
+            `[$$] <${tagName}> is already defined`
+        );
     }
 
     customElements.define(tagName, Component);
 }
+
