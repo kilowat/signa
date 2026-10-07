@@ -266,6 +266,19 @@ $$('useCounter', ({ signal }) => start => {
 ```js
 const cart = $$('cartState')
 ```
+or use desctructor second arg
+
+```js
+$$('useCounter', ({ signal }, { cartState }) => start => {
+
+    const count = signal(start)
+
+    return {
+        count,
+        inc: () => count.value++
+    }
+})
+```
 
 State can also be initialized directly from PHP:
 
