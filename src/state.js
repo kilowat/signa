@@ -1,3 +1,4 @@
+
 import {
     signal,
     computed,
@@ -15,20 +16,23 @@ import {
 const registry = new Map();
 
 export function isSignal(obj) {
-    return obj &&
+    return (
+        obj &&
         typeof obj === 'object' &&
         typeof obj.peek === 'function' &&
-        'value' in obj;
+        'value' in obj
+    );
 }
 
 export function defState(key, factory) {
     if (registry.has(key)) {
         throw new Error(
-            `[$$] state "${key}" is already defined`
+            `[$$] "${key}" is already registered`
         );
     }
 
     registry.set(key, {
+        type: 'state',
         factory,
     });
 }
@@ -39,6 +43,12 @@ export function resolveState(key) {
     if (!entry) {
         throw new Error(
             `[$$] state "${key}" is not defined`
+        );
+    }
+
+    if (entry.type !== 'state') {
+        throw new Error(
+            `[$$] "${key}" is not a state`
         );
     }
 
@@ -102,4 +112,12 @@ export function createStateAccess() {
             },
         }
     );
+}
+
+export function hasState(key) {
+    return registry.get(key)?.type === 'state';
+}
+
+export function getRegisteredKeys() {
+    return [...registry.keys()];
 }
