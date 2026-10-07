@@ -20,6 +20,7 @@ import {
 } from './scope.js';
 
 import { bus } from './bus.js';
+import { location } from './location.js';
 
 
 function toKebab(str) {
@@ -262,6 +263,7 @@ export function defComponent(tagName, setup) {
 
                 slot,
                 bus,
+                location,
             };
         }
 

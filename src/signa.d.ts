@@ -9,7 +9,18 @@ declare global {
 
     type ReadonlySignal<T = any> = PreactReadonlySignal<T>;
 
+    /**
+     * Реестр состояний. Расширяется через declaration merging:
+     *
+     *   interface SigRegistry { counter: { count: Signal<number> } }
+     *
+     * После этого $$('counter') и $$.app.counter типизированы.
+     */
     interface SigRegistry { }
+
+    // ---------------------------------------------------------------
+    // Bus
+    // ---------------------------------------------------------------
 
     interface Bus {
         emit(
@@ -17,11 +28,16 @@ declare global {
             payload?: any
         ): void;
 
+        /** Возвращает функцию отписки. */
         on(
             type: string,
             handler: (payload: any) => void
         ): () => void;
     }
+
+    // ---------------------------------------------------------------
+    // Router
+    // ---------------------------------------------------------------
 
     interface RouteDefinition {
         name?: string;
@@ -52,95 +68,99 @@ declare global {
         view(): any;
     }
 
+    // ---------------------------------------------------------------
+    // Location
+    //
+    // Назван SignaLocation, а не Location: глобальный Location из lib.dom
+    // слился бы с этим интерфейсом и "загрязнил" тип window.location.
+    // ---------------------------------------------------------------
+
+    type LocationQuery = Record<string, string | string[]>;
+
+    type LocationValue =
+        | string
+        | number
+        | boolean
+        | string[]
+        | number[]
+        | null
+        | undefined;
+
     interface LocationState {
         url: string;
         path: string;
-        query: Record<string, string | string[]>;
+        hash: string;
+        query: LocationQuery;
     }
 
-    interface Location {
+    interface SignaLocation {
         current: ReadonlySignal<LocationState>;
 
-        query: ReadonlySignal<
-            Record<string, string | string[]>
-        >;
+        query: ReadonlySignal<LocationQuery>;
 
         url(): string;
-
         url(value: string): string;
 
         path(): string;
-
         path(value: string): string;
 
-        get(
-            key: string
-        ): string | string[] | undefined;
+        get(key: string): string | string[] | undefined;
 
-        getAll(): Record<string, string | string[]>;
+        getAll(): LocationQuery;
 
-        set(
-            key: string,
-            value: string | number | boolean | null
-        ): string;
+        /** null / undefined удаляют ключ. Без записи в историю. */
+        set(key: string, value: LocationValue): string;
+        set(values: Record<string, LocationValue>): string;
 
-        set(
-            values: Record<
-                string,
-                string | number | boolean | string[] | number[] | null
-            >
-        ): string;
+        /** Полная перезагрузка страницы. */
+        go(value?: string): void;
 
-        go(
-            value?: string
-        ): void;
+        /** Меняет URL без новой записи в истории. */
+        replace(value?: string): string;
 
-        replace(
-            value?: string
-        ): string;
+        /** Меняет URL с новой записью в истории. */
+        push(value?: string): string;
 
         back(): void;
 
         forward(): void;
     }
 
-    interface StateContext {
-        signal: <T>(
-            initial?: T
-        ) => Signal<T>;
+    // ---------------------------------------------------------------
+    // Props
+    // ---------------------------------------------------------------
 
-        computed: <T>(
-            fn: () => T
-        ) => ReadonlySignal<T>;
+    type PropConstructor =
+        | StringConstructor
+        | NumberConstructor
+        | BooleanConstructor
+        | ObjectConstructor
+        | ArrayConstructor
+        | FunctionConstructor;
 
-        effect: (
-            fn: () => (() => void) | void
-        ) => void;
+    type PropValue<T extends PropConstructor> =
+        T extends StringConstructor ? string
+        : T extends NumberConstructor ? number
+        : T extends BooleanConstructor ? boolean
+        : T extends ArrayConstructor ? any[]
+        : T extends ObjectConstructor ? Record<string, any>
+        : T extends FunctionConstructor ? Function
+        : never;
 
-        html: (
-            strings: TemplateStringsArray,
-            ...values: any[]
-        ) => any;
-
-        state: <T = any>(
-            key: string
-        ) => T;
+    /**
+     * Что реально возвращает prop(): объект с value/peek.
+     * Если родитель передал настоящий сигнал, придёт он сам
+     * (он тоже подходит под этот тип).
+     */
+    interface Prop<T = any> {
+        readonly value: T;
+        peek(): T;
     }
 
-    type PropType<T> =
-        T extends typeof String
-        ? ReadonlySignal<string>
-        : T extends typeof Number
-        ? ReadonlySignal<number>
-        : T extends typeof Boolean
-        ? ReadonlySignal<boolean>
-        : T extends typeof Object
-        ? ReadonlySignal<object>
-        : T extends typeof Array
-        ? ReadonlySignal<any[]>
-        : T extends FunctionConstructor
+    type PropType<T extends PropConstructor> =
+        T extends FunctionConstructor
         ? Function
-        : never;
+        : Prop<PropValue<T>>;
 
     type SlotFn =
         ((name?: string) => Node[]) & {
@@ -152,54 +172,69 @@ declare global {
             [key: string]: any;
         };
 
-    interface ComponentContext {
-        $this: HTMLElement;
+    // ---------------------------------------------------------------
+    // Contexts
+    // ---------------------------------------------------------------
 
-        html: (
-            strings: TemplateStringsArray,
-            ...values: any[]
-        ) => any;
+    type HtmlTag = (
+        strings: TemplateStringsArray,
+        ...values: any[]
+    ) => any;
 
-        signal: <T>(
-            initial?: T
-        ) => Signal<T>;
+    interface BaseContext {
+        signal: <T>(initial?: T) => Signal<T>;
 
-        computed: <T>(
-            fn: () => T
-        ) => ReadonlySignal<T>;
+        computed: <T>(fn: () => T) => ReadonlySignal<T>;
 
+        /** Эффект живёт в scope и останавливается автоматически. Возвращает stop. */
         effect: (
             fn: () => (() => void) | void
-        ) => void;
+        ) => () => void;
 
-        prop<
-            T extends
-            typeof String |
-            typeof Number |
-            typeof Boolean |
-            typeof Object |
-            typeof Array |
-            FunctionConstructor
-        >(
+        html: HtmlTag;
+
+        location: SignaLocation;
+    }
+
+    interface StateContext extends BaseContext {
+        state: <T = any>(key: string) => T;
+    }
+
+    interface ComponentContext extends BaseContext {
+        $this: HTMLElement;
+
+        prop<T extends PropConstructor>(
             name: string,
-            type?: T,
-            defaultValue?: any
+            type: T,
+            defaultValue?: PropValue<T>
         ): PropType<T>;
+
+        prop<V = any>(
+            name: string,
+            type?: undefined,
+            defaultValue?: V
+        ): Prop<V>;
 
         slot: SlotFn;
 
         bus: Bus;
     }
 
+    // ---------------------------------------------------------------
+    // $$
+    // ---------------------------------------------------------------
+
     interface $$ {
+        /** Компонент: имя тега обязательно содержит дефис. */
         (
-            tagName: string,
+            tagName: `${string}-${string}`,
             setup: (
                 ctx: ComponentContext,
                 states: StateAccess
             ) => (() => any) | void
         ): void;
 
+        /** Состояние. */
         <K extends string>(
             key: K,
             factory: (
@@ -208,13 +243,9 @@ declare global {
             ) => any
         ): void;
 
-        <K extends keyof SigRegistry>(
-            key: K
-        ): SigRegistry[K];
+        <K extends keyof SigRegistry>(key: K): SigRegistry[K];
 
-        <T = any>(
-            key: string
-        ): T;
+        <T = any>(key: string): T;
 
         router(
             routes: RouteDefinition[],
@@ -223,10 +254,16 @@ declare global {
             }
         ): Router;
 
-        location: Location;
+        location: SignaLocation;
+
+        bus: Bus;
+
+        /** Все зарегистрированные состояния (ленивые геттеры). */
+        app: StateAccess;
     }
 
-    const $$: $$;
+    // var, а не const: тогда доступно и как window.$$
+    var $$: $$;
 }
 
 export { };

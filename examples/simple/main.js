@@ -202,3 +202,16 @@ $$('child-component', ({ prop, html, signal }) => {
      </div>
     `
 });
+
+$$('location-test', ({ html, location }) => {
+
+    return () => html`
+        <div>
+            Path:
+            ${location.current.value.path}
+
+            Page:
+            ${location.current.value.query}
+        </div>
+    `
+})

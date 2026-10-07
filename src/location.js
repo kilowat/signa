@@ -42,24 +42,35 @@ function getPath() {
     return window.location.pathname || '/';
 }
 
-function getUrl() {
-    return getPath() + window.location.search + window.location.hash;
+function getHash() {
+    return window.location.hash;
 }
 
-const current = signal({
-    url: getUrl(),
-    path: getPath(),
-    query: parseQuery(),
-});
+function getUrl() {
+    return getPath() + window.location.search + getHash();
+}
+
+function snapshot() {
+    return {
+        url: getUrl(),
+        path: getPath(),
+        hash: getHash(),
+        query: parseQuery(),
+    };
+}
+
+const current = signal(snapshot());
 
 const query = computed(() => current.value.query);
 
 function sync() {
-    current.value = {
-        url: getUrl(),
-        path: getPath(),
-        query: parseQuery(),
-    };
+    // не создаём новый объект, если URL не изменился,
+    // чтобы не вызывать лишние перерисовки
+    if (getUrl() === current.peek().url) {
+        return;
+    }
+
+    current.value = snapshot();
 }
 
 function update(url, replace = true) {
@@ -72,6 +83,12 @@ function update(url, replace = true) {
     sync();
 
     return url;
+}
+
+function withQuery(path, next) {
+    const search = stringifyQuery(next);
+
+    return path + (search ? `?${search}` : '');
 }
 
 export const location = {
@@ -91,11 +108,7 @@ export const location = {
             return getPath();
         }
 
-        const search = stringifyQuery(current.value.query);
-
-        return update(
-            value + (search ? `?${search}` : '')
-        );
+        return update(withQuery(value, current.value.query));
     },
 
     get(key) {
@@ -117,27 +130,29 @@ export const location = {
             };
         }
 
-        for (const [key, value] of Object.entries(values)) {
-            if (value === null) {
+        for (const [key, val] of Object.entries(values)) {
+            if (val == null) {
                 delete next[key];
             } else {
-                next[key] = value;
+                next[key] = val;
             }
         }
 
-        const search = stringifyQuery(next);
-
-        return update(
-            getPath() + (search ? `?${search}` : '')
-        );
+        return update(withQuery(getPath(), next));
     },
 
     go(value) {
         window.location.href = value ?? getUrl();
     },
 
+    // меняет URL без записи в историю
     replace(value) {
-        return update(value ?? getUrl());
+        return update(value ?? getUrl(), true);
+    },
+
+    // меняет URL с новой записью в истории (работает кнопка «назад»)
+    push(value) {
+        return update(value ?? getUrl(), false);
     },
 
     back() {

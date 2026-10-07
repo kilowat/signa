@@ -74,6 +74,7 @@ $$('user-card', ({
     prop,
     slot,
     bus,
+    location,
     $this
 }) => {
 
@@ -126,7 +127,7 @@ $$('user-card', ({
 | `prop(name, Type?, default?)` | Reactive read-only prop |
 | `slot` / `slot('name')` | Access slotted children |
 | `bus` | Event bus |
-
+| `location` | reactive location util |
 ### Props
 
 Props are **read-only** inside a component.
