@@ -4,7 +4,9 @@ import type {
 } from '@preact/signals-core';
 
 declare global {
+
     type Signal<T = any> = PreactSignal<T>;
+
     type ReadonlySignal<T = any> = PreactReadonlySignal<T>;
 
     interface SigRegistry { }
@@ -37,10 +39,10 @@ declare global {
             route: RouteDefinition;
         }>;
 
-        navigate(
+        go(
             nameOrPath: string,
             params?: Record<string, any>
-        ): void;
+        ): string;
 
         route(
             name: string,
@@ -48,6 +50,58 @@ declare global {
         ): string;
 
         view(): any;
+    }
+
+    interface LocationState {
+        url: string;
+        path: string;
+        query: Record<string, string | string[]>;
+    }
+
+    interface Location {
+        current: ReadonlySignal<LocationState>;
+
+        query: ReadonlySignal<
+            Record<string, string | string[]>
+        >;
+
+        url(): string;
+
+        url(value: string): string;
+
+        path(): string;
+
+        path(value: string): string;
+
+        get(
+            key: string
+        ): string | string[] | undefined;
+
+        getAll(): Record<string, string | string[]>;
+
+        set(
+            key: string,
+            value: string | number | boolean | null
+        ): string;
+
+        set(
+            values: Record<
+                string,
+                string | number | boolean | string[] | number[] | null
+            >
+        ): string;
+
+        go(
+            value?: string
+        ): void;
+
+        replace(
+            value?: string
+        ): string;
+
+        back(): void;
+
+        forward(): void;
     }
 
     interface StateContext {
@@ -168,6 +222,8 @@ declare global {
                 mode?: 'hash' | 'history';
             }
         ): Router;
+
+        location: Location;
     }
 
     const $$: $$;
