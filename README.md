@@ -44,16 +44,16 @@ TypeScript types are available at `dist/signa.d.ts`.
 <script src="/dist/signa.min.js"></script>
 
 <script>
-$$('my-counter', ({ html, signal }) => {
+  $$('my-counter', ({ html, signal }) => {
     const count = signal(0)
 
     return () => html`
-        <div>
-            <p>Count: ${count.value}</p>
-            <button onclick=${() => count.value++}>+</button>
-        </div>
+      <div>
+        <p>Count: ${count.value}</p>
+        <button onclick=${() => count.value++}>+</button>
+      </div>
     `
-})
+  })
 </script>
 
 <my-counter></my-counter>
@@ -67,67 +67,58 @@ $$('my-counter', ({ html, signal }) => {
 
 ```js
 $$('user-card', ({
-    html,
-    signal,
-    computed,
-    effect,
-    prop,
-    slot,
-    bus,
-    location,
-    $this
+  html,
+  signal,
+  computed,
+  effect,
+  prop,
+  slot,
+  bus,
+  location,
+  $this
 }) => {
+  const name = prop('name', String, 'Anonymous')
+  const score = prop('score', Number, 0)
 
-    const name = prop('name', String, 'Anonymous')
-    const score = prop('score', Number, 0)
+  const open = signal(false)
+  const label = computed(() => (open.value ? 'Close' : 'Open'))
 
-    const open = signal(false)
+  effect(() => {
+    console.log('score changed:', score.value)
 
-    const label = computed(() =>
-        open.value ? 'Close' : 'Open'
-    )
+    return () => {
+      console.log('cleanup')
+    }
+  })
 
-    effect(() => {
-        console.log('score changed:', score.value)
-
-        return () => {
-            console.log('cleanup')
-        }
-    })
-
-    return () => html`
-        <div>
-            <h2>
-                ${name.value} — ${score.value} pts
-            </h2>
-
-            <button
-                onclick=${() => open.value = !open.value}
-            >
-                ${label.value}
-            </button>
-
-            ${open.value
-                ? html`<div>${slot.default}</div>`
-                : null}
-        </div>
-    `
+  return () => html`
+    <div>
+      <h2>${name.value} — ${score.value} pts</h2>
+      <button onclick=${() => (open.value = !open.value)}>
+        ${label.value}
+      </button>
+      ${open.value
+        ? html`<div>${slot.default}</div>`
+        : null}
+    </div>
+  `
 })
 ```
 
 ### Context API
 
-| Key | Description |
-|---|---|
-| `$this` | The HTMLElement instance |
-| `html` | uhtml tagged template |
-| `signal(val)` | Create reactive value |
-| `computed(fn)` | Create derived value |
-| `effect(fn)` | Side effect, return fn for cleanup |
-| `prop(name, Type?, default?)` | Reactive read-only prop |
-| `slot` / `slot('name')` | Access slotted children |
-| `bus` | Event bus |
-| `location` | reactive location util |
+| Key                           | Description                        |
+| ----------------------------- | ---------------------------------- |
+| `$this`                       | The HTMLElement instance           |
+| `html`                        | uhtml tagged template              |
+| `signal(val)`                 | Create reactive value              |
+| `computed(fn)`                | Create derived value               |
+| `effect(fn)`                  | Side effect, return fn for cleanup |
+| `prop(name, Type?, default?)` | Reactive read-only prop            |
+| `slot` / `slot('name')`       | Access slotted children            |
+| `bus`                         | Event bus                          |
+| `location`                    | Reactive location util             |
+
 ### Props
 
 Props are **read-only** inside a component.
@@ -135,10 +126,7 @@ Props are **read-only** inside a component.
 They can be passed as HTML attributes:
 
 ```html
-<user-card
-    data-name="Alex"
-    data-score="42"
-></user-card>
+<user-card data-name="Alex" data-score="42"></user-card>
 ```
 
 Kebab-case also works:
@@ -150,16 +138,12 @@ Kebab-case also works:
 Or as JavaScript properties:
 
 ```js
-html`
-    <user-card .score=${mySignal}></user-card>
-`
+html`<user-card .score=${mySignal}></user-card>`
 ```
 
 ```js
 html`
-    <user-card
-        .onSelect=${id => console.log(id)}
-    ></user-card>
+  <user-card .onSelect=${id => console.log(id)}></user-card>
 `
 ```
 
@@ -167,13 +151,7 @@ The child reads them the same way:
 
 ```js
 const short = prop('short')
-
-const score = prop(
-    'score',
-    Number,
-    0
-)
-
+const score = prop('score', Number, 0)
 const onSelect = prop('onSelect')
 
 // onSelect is a function, not a signal
@@ -184,30 +162,19 @@ onSelect(item.id)
 
 ```html
 <user-card data-name="Alex">
-
-    <div data-slot="footer">
-        Footer content
-    </div>
-
-    <p>
-        Default slot content
-    </p>
-
+  <div data-slot="footer">Footer content</div>
+  <p>Default slot content</p>
 </user-card>
 ```
 
 ```js
 $$('user-card', ({ html, slot }) => {
-
-    return () => html`
-        <div>
-            ${slot.default}
-
-            <footer>
-                ${slot('footer')}
-            </footer>
-        </div>
-    `
+  return () => html`
+    <div>
+      ${slot.default}
+      <footer>${slot('footer')}</footer>
+    </div>
+  `
 })
 ```
 
@@ -220,31 +187,20 @@ $$('user-card', ({ html, slot }) => {
 The factory receives:
 
 ```js
-{
-    signal,
-    computed,
-    effect
-}
+{ signal, computed, effect }
 ```
 
 ### Return an object → singleton
 
 ```js
 $$('cartState', ({ signal, computed }) => {
+  const items = signal([])
 
-    const items = signal([])
+  const total = computed(() =>
+    items.value.reduce((sum, item) => sum + item.price, 0)
+  )
 
-    const total = computed(() =>
-        items.value.reduce(
-            (sum, item) => sum + item.price,
-            0
-        )
-    )
-
-    return {
-        items,
-        total
-    }
+  return { items, total }
 })
 ```
 
@@ -252,13 +208,12 @@ $$('cartState', ({ signal, computed }) => {
 
 ```js
 $$('useCounter', ({ signal }) => start => {
+  const count = signal(start)
 
-    const count = signal(start)
-
-    return {
-        count,
-        inc: () => count.value++
-    }
+  return {
+    count,
+    inc: () => count.value++
+  }
 })
 ```
 
@@ -267,17 +222,17 @@ $$('useCounter', ({ signal }) => start => {
 ```js
 const cart = $$('cartState')
 ```
-or use desctructor second arg
+
+Or use destructuring in the second argument:
 
 ```js
 $$('useCounter', ({ signal }, { cartState }) => start => {
+  const count = signal(start)
 
-    const count = signal(start)
-
-    return {
-        count,
-        inc: () => count.value++
-    }
+  return {
+    count,
+    inc: () => count.value++
+  }
 })
 ```
 
@@ -285,8 +240,7 @@ State can also be initialized directly from PHP:
 
 ```html
 <script>
-$$('cartState').items.value =
-    <?= json_encode($cart['items']) ?>
+  $$('cartState').items.value = <?= json_encode($cart['items']) ?>
 </script>
 ```
 
@@ -302,22 +256,18 @@ counter.inc()
 
 ```js
 $$('orderState', ({ signal }) => {
+  const submitted = signal(false)
 
-    const submitted = signal(false)
+  return {
+    submitted,
+    submit() {
+      const cart = $$('cartState')
 
-    return {
-        submitted,
+      if (!cart.items.value.length) return
 
-        submit() {
-            const cart = $$('cartState')
-
-            if (!cart.items.value.length) {
-                return
-            }
-
-            submitted.value = true
-        }
+      submitted.value = true
     }
+  }
 })
 ```
 
@@ -333,11 +283,8 @@ State can be seeded from the server by writing to it after the bundle loads.
 <script src="/dist/signa.min.js"></script>
 
 <script>
-$$('cartState').items.value =
-    <?= json_encode($cart['items']) ?>
-
-$$('userState').profile.value =
-    <?= json_encode($user) ?>
+  $$('cartState').items.value = <?= json_encode($cart['items']) ?>
+  $$('userState').profile.value = <?= json_encode($user) ?>
 </script>
 
 <my-cart></my-cart>
@@ -347,16 +294,11 @@ Or define state directly on the page before the components mount:
 
 ```html
 <script>
-$$('pageState', ({ signal }) => {
+  $$('pageState', ({ signal }) => {
+    const filters = signal(<?= json_encode($filters) ?>)
 
-    const filters = signal(
-        <?= json_encode($filters) ?>
-    )
-
-    return {
-        filters
-    }
-})
+    return { filters }
+  })
 </script>
 ```
 
@@ -369,32 +311,18 @@ $$('pageState', ({ signal }) => {
 Use it inside `effect()` for automatic cleanup.
 
 ```js
-$$('my-widget', ({
-    html,
-    bus,
-    effect,
-    signal
-}) => {
+$$('my-widget', ({ html, bus, effect, signal }) => {
+  const message = signal('')
 
-    const message = signal('')
-
-    effect(() => {
-
-        const off = bus.on(
-            'chat:message',
-            payload => {
-                message.value = payload.text
-            }
-        )
-
-        return off
+  effect(() => {
+    const off = bus.on('chat:message', payload => {
+      message.value = payload.text
     })
 
-    return () => html`
-        <div>
-            ${message.value}
-        </div>
-    `
+    return off
+  })
+
+  return () => html`<div>${message.value}</div>`
 })
 ```
 
@@ -402,19 +330,11 @@ Emit from anywhere:
 
 ```js
 $$('send-btn', ({ html, bus }) => {
-
-    return () => html`
-        <button
-            onclick=${() =>
-                bus.emit(
-                    'chat:message',
-                    { text: 'Hello' }
-                )
-            }
-        >
-            Send
-        </button>
-    `
+  return () => html`
+    <button onclick=${() => bus.emit('chat:message', { text: 'Hello' })}>
+      Send
+    </button>
+  `
 })
 ```
 
@@ -442,33 +362,26 @@ The router does **not** depend on `$$.location`.
 
 ```js
 $$('router', ({ html }) => {
-
-    return $$.router([
-
-        {
-            name: 'home',
-            path: '/',
-            render: () =>
-                html`<h1>Home</h1>`
-        },
-
-        {
-            name: 'user',
-            path: '/users/:id',
-            render: ({ id }) =>
-                html`<h1>User ${id}</h1>`
-        },
-
-        {
-            name: '404',
-            path: '*',
-            render: () =>
-                html`<h1>Not found</h1>`
-        }
-
-    ], {
-        mode: 'hash'
-    })
+  return $$.router(
+    [
+      {
+        name: 'home',
+        path: '/',
+        render: () => html`<h1>Home</h1>`
+      },
+      {
+        name: 'user',
+        path: '/users/:id',
+        render: ({ id }) => html`<h1>User ${id}</h1>`
+      },
+      {
+        name: '404',
+        path: '*',
+        render: () => html`<h1>Not found</h1>`
+      }
+    ],
+    { mode: 'hash' }
+  )
 })
 ```
 
@@ -490,24 +403,14 @@ Hash mode is the default.
 
 ```js
 $$('app-root', ({ html }, { router }) => {
+  return () => html`
+    <nav>
+      <a href=${router.route('home')}>Home</a>
+      <a href=${router.route('user', { id: 1 })}>User 1</a>
+    </nav>
 
-    return () => html`
-        <nav>
-
-            <a href=${router.route('home')}>
-                Home
-            </a>
-
-            <a href=${router.route('user', { id: 1 })}>
-                User 1
-            </a>
-
-        </nav>
-
-        <main>
-            ${router.view()}
-        </main>
-    `
+    <main>${router.view()}</main>
+  `
 })
 ```
 
@@ -516,9 +419,7 @@ $$('app-root', ({ html }, { router }) => {
 Generate a URL without navigating:
 
 ```js
-router.route('user', {
-    id: 42
-})
+router.route('user', { id: 42 })
 ```
 
 For hash mode this returns:
@@ -538,9 +439,7 @@ For history mode:
 Navigate to a named route:
 
 ```js
-$$('router').go('user', {
-    id: 42
-})
+$$('router').go('user', { id: 42 })
 ```
 
 Or navigate directly to a path:
@@ -563,14 +462,14 @@ Example:
 
 ```js
 {
-    path: '/users/42',
-    route: {
-        name: 'user',
-        path: '/users/:id'
-    },
-    params: {
-        id: '42'
-    }
+  path: '/users/42',
+  route: {
+    name: 'user',
+    path: '/users/:id'
+  },
+  params: {
+    id: '42'
+  }
 }
 ```
 
@@ -583,11 +482,7 @@ The router watches the browser URL directly.
 For example:
 
 ```js
-history.pushState(
-    null,
-    '',
-    '/users/42'
-)
+history.pushState(null, '', '/users/42')
 ```
 
 The router automatically updates:
@@ -599,11 +494,7 @@ router.current.value
 The same applies to:
 
 ```js
-history.replaceState(
-    null,
-    '',
-    '/users/42'
-)
+history.replaceState(null, '', '/users/42')
 ```
 
 Browser navigation is also detected:
@@ -669,8 +560,8 @@ Example:
 
 ```js
 {
-    page: '2',
-    sort: 'price'
+  page: '2',
+  sort: 'price'
 }
 ```
 
@@ -692,8 +583,8 @@ Example:
 
 ```js
 {
-    page: '2',
-    sort: 'price'
+  page: '2',
+  sort: 'price'
 }
 ```
 
@@ -702,18 +593,15 @@ Example:
 Set one parameter:
 
 ```js
-$$.location.set(
-    'page',
-    2
-)
+$$.location.set('page', 2)
 ```
 
 Or several parameters:
 
 ```js
 $$.location.set({
-    page: 2,
-    sort: 'price'
+  page: 2,
+  sort: 'price'
 })
 ```
 
@@ -727,8 +615,8 @@ The resulting URL:
 
 ```js
 $$.location.set({
-    page: null,
-    sort: 'price'
+  page: null,
+  sort: 'price'
 })
 ```
 
@@ -769,9 +657,7 @@ produces:
 ## Replace the complete URL
 
 ```js
-$$.location.url(
-    '/catalog?page=2&sort=price'
-)
+$$.location.url('/catalog?page=2&sort=price')
 ```
 
 This changes the browser URL without reloading the page.
@@ -782,27 +668,19 @@ This changes the browser URL without reloading the page.
 
 ```js
 $$('catalog-page', ({ html }, { location }) => {
-
-    return () => html`
-        <div>
-            Path:
-            ${location.current.value.path}
-
-            Page:
-            ${location.current.value.query.page}
-        </div>
-    `
+  return () => html`
+    <div>
+      Path: ${location.current.value.path}
+      Page: ${location.current.value.query.page}
+    </div>
+  `
 })
 ```
 
 The location state contains:
 
 ```js
-{
-    url,
-    path,
-    query
-}
+{ url, path, query }
 ```
 
 The query is also available separately:
@@ -836,9 +714,7 @@ $$.location.forward()
 Use `replace()` when the current browser history entry should be replaced instead of creating a new one:
 
 ```js
-$$.location.replace(
-    '/catalog?page=1'
-)
+$$.location.replace('/catalog?page=1')
 ```
 
 ## Location and Router together
@@ -848,17 +724,15 @@ $$.location.replace(
 Use **Router** for application routes:
 
 ```js
-router.go('user', {
-    id: 42
-})
+router.go('user', { id: 42 })
 ```
 
 Use **Location** for URL state such as filters, sorting and pagination:
 
 ```js
 $$.location.set({
-    page: 2,
-    sort: 'price'
+  page: 2,
+  sort: 'price'
 })
 ```
 
@@ -866,16 +740,9 @@ They can be used together:
 
 ```js
 $$('catalogState', ({ signal }) => {
+  const page = signal(Number($$.location.get('page') || 1))
 
-    const page = signal(
-        Number(
-            $$.location.get('page') || 1
-        )
-    )
-
-    return {
-        page
-    }
+  return { page }
 })
 ```
 
@@ -887,14 +754,14 @@ The router and location are independent, but both react to native browser URL ch
 
 ```text
 src/
-    index.js       entry — defines $$(), mounts on window
-    component.js   custom element factory
-    state.js       state registry and resolver
-    scope.js       lifecycle scopes and effects
-    bus.js         event bus
-    router.js      reactive router
-    location.js    reactive browser location
-    signa.d.ts     TypeScript declarations
+  index.js       entry — defines $$(), mounts on window
+  component.js   custom element factory
+  state.js       state registry and resolver
+  scope.js       lifecycle scopes and effects
+  bus.js         event bus
+  router.js      reactive router
+  location.js    reactive browser location
+  signa.d.ts     TypeScript declarations
 
 build.js
 ```
